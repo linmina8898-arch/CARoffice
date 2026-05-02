@@ -190,9 +190,9 @@
                         </button>
                     </div>
 
-                    <!-- 訂單卡片列表 (動態渲染) -->
-                    <div id="ordersContainer" class="grid grid-cols-1 xl:grid-cols-2 gap-4 pb-10">
-                        <!-- 卡片由 JS 生成 -->
+                    <!-- 訂單列表 (動態渲染表格) -->
+                    <div id="ordersContainer" class="w-full pb-10 overflow-x-auto">
+                        <!-- 列表由 JS 生成 -->
                     </div>
                 </div>
 
@@ -501,48 +501,102 @@
             const container = document.getElementById('ordersContainer');
             container.innerHTML = '';
             
+            // 確保容器支援水平捲動
+            container.className = 'w-full pb-10 overflow-x-auto';
+            
             const filteredOrders = allOrders.filter(o => {
                 if (selectedDateForDetail && String(o.date) !== selectedDateForDetail) return false;
                 const isAssigned = o.status === '已派車' || o.status === '完成';
                 return currentTab === 'unassigned' ? !isAssigned : isAssigned;
             });
 
+            // 依據乘車時間 (time) 從早到晚排序
+            filteredOrders.sort((a, b) => {
+                const timeA = a.time || "00:00";
+                const timeB = b.time || "00:00";
+                return timeA.localeCompare(timeB);
+            });
+
             if(filteredOrders.length === 0) {
-                container.innerHTML = `<div class="col-span-full text-center py-16 bg-white rounded-xl shadow-sm border border-gray-200"><i class="far fa-folder-open text-4xl text-gray-300 mb-3 block"></i><p class="text-gray-500 font-bold">該日期目前沒有訂單</p></div>`;
+                container.innerHTML = `<div class="w-full text-center py-16 bg-white rounded-xl shadow-sm border border-gray-200"><i class="far fa-folder-open text-4xl text-gray-300 mb-3 block"></i><p class="text-gray-500 font-bold">該日期目前沒有訂單</p></div>`;
                 return;
             }
 
-            filteredOrders.forEach(o => {
-                const card = document.createElement('div');
-                card.className = "bg-white rounded-xl shadow-md hover:shadow-lg transition border border-gray-200 overflow-hidden flex flex-col";
-                const headerColor = o.type === "送機" ? "bg-blue-600 text-white" : "bg-emerald-600 text-white";
-                
-                let actionBtn = (currentUser.permissions.disp && currentTab === 'unassigned') 
-                    ? `<button onclick="openAssignModal(${o.rowIndex}, '${o.orderId}')" class="mt-4 w-full bg-[#f07cad] text-white font-bold py-3 rounded-lg shadow-sm hover:bg-[#e06b9b] transition text-sm flex items-center justify-center"><i class="fas fa-hand-pointer mr-2"></i>指派司機</button>`
-                    : `<div class="mt-4 bg-gray-100 text-gray-700 text-sm font-bold p-3 rounded-lg text-center border border-gray-200"><i class="fas fa-user-check mr-2"></i>已派發：${o.driverCode || '系統處理中'}</div>`;
+            // 建立橫式表格結構
+            let tableHtml = `
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden min-w-[1000px]">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-[#553f62] text-white font-bold tracking-wider border-b-4 border-[#f07cad]">
+                            <tr>
+                                <th class="px-4 py-3 text-center whitespace-nowrap w-16">序號</th>
+                                <th class="px-4 py-3 whitespace-nowrap w-24">乘車日期</th>
+                                <th class="px-4 py-3 whitespace-nowrap w-24">乘車時間</th>
+                                <th class="px-4 py-3 whitespace-nowrap w-20">類別</th>
+                                <th class="px-4 py-3 whitespace-nowrap w-32">車型</th>
+                                <th class="px-4 py-3 min-w-[200px]">行程</th>
+                                <th class="px-4 py-3 whitespace-nowrap w-24">人數</th>
+                                <th class="px-4 py-3 whitespace-nowrap w-24">行李</th>
+                                <th class="px-4 py-3 min-w-[200px]">備註</th>
+                                <th class="px-4 py-3 text-center whitespace-nowrap w-32">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+            `;
 
-                // 核心修復：更完整的卡片內容呈現，不怕備註漏看
-                card.innerHTML = `
-                    <div class="px-4 py-3 flex justify-between items-center ${headerColor}">
-                        <div class="font-bold text-base flex items-center"><i class="far fa-clock mr-2"></i>${o.time} 乘車</div>
-                        <div class="text-[10px] font-mono font-bold bg-white/20 px-2 py-1 rounded border border-white/30">${o.orderId}</div>
-                    </div>
-                    <div class="p-4 flex-1 flex flex-col space-y-3">
-                        <div class="flex items-start">
-                            <span class="bg-[#553f62] text-white text-[10px] font-bold px-2 py-1 rounded mr-2 mt-0.5 whitespace-nowrap">${o.type}</span>
-                            <span class="text-base font-bold text-gray-800 leading-snug">${o.route}</span>
-                        </div>
-                        <div class="grid grid-cols-1 gap-2 text-sm">
-                            <div class="flex items-center text-gray-700 font-bold"><i class="fas fa-user w-5 text-[#f07cad]"></i>乘車人：${o.paxName} (${o.paxPhone})</div>
-                            <div class="flex items-center text-gray-600"><i class="fas fa-car-side w-5 text-[#f07cad]"></i>車型需求：${o.car}</div>
-                            <div class="flex items-center text-gray-600"><i class="fas fa-suitcase w-5 text-[#f07cad]"></i>${o.paxLug}</div>
-                        </div>
-                        ${o.remarks && o.remarks !== '無' ? `<div class="bg-red-50 p-3 rounded-lg border border-red-200 text-red-600 text-sm font-bold animate-pulse"><i class="fas fa-exclamation-circle mr-1"></i>重要備註：${o.remarks}</div>` : ''}
-                        ${actionBtn}
-                    </div>
+            filteredOrders.forEach((o, index) => {
+                // 自動拆解人數與行李字串
+                let paxStr = o.paxLug || "";
+                let lugStr = "";
+                if (paxStr.includes("登機")) {
+                    let parts = paxStr.split(" 登機");
+                    paxStr = parts[0];
+                    lugStr = "登機" + parts[1];
+                } else {
+                    paxStr = o.paxLug; // 備用方案
+                }
+
+                let actionBtn = (currentUser.permissions.disp && currentTab === 'unassigned') 
+                    ? `<button onclick="openAssignModal(${o.rowIndex}, '${o.orderId}')" class="bg-[#f07cad] text-white font-bold px-4 py-2 rounded-lg shadow-sm hover:bg-[#e06b9b] transition text-xs whitespace-nowrap"><i class="fas fa-hand-pointer mr-1"></i>指派司機</button>`
+                    : `<div class="bg-gray-100 text-gray-700 text-xs font-bold px-3 py-2 rounded-lg text-center border border-gray-200 whitespace-nowrap"><i class="fas fa-user-check mr-1"></i>已派發：<br><span class="text-[#553f62]">${o.driverCode || '系統處理中'}</span></div>`;
+
+                const typeBadgeColor = o.type === "送機" ? "bg-blue-100 text-blue-800 border border-blue-200" : "bg-emerald-100 text-emerald-800 border border-emerald-200";
+
+                tableHtml += `
+                    <tr class="hover:bg-purple-50 transition duration-150">
+                        <td class="px-4 py-4 text-center font-bold text-gray-500">${index + 1}</td>
+                        <td class="px-4 py-4 whitespace-nowrap text-gray-700 font-medium">${o.date}</td>
+                        <td class="px-4 py-4 whitespace-nowrap font-black text-[#553f62] text-base">${o.time}</td>
+                        <td class="px-4 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 rounded text-xs font-bold shadow-sm ${typeBadgeColor}">${o.type}</span>
+                        </td>
+                        <td class="px-4 py-4 whitespace-nowrap text-gray-800 font-bold">${o.car}</td>
+                        <td class="px-4 py-4 text-gray-800 font-bold leading-relaxed">
+                            ${o.route}
+                        </td>
+                        <td class="px-4 py-4 whitespace-nowrap text-gray-600 text-xs leading-snug">
+                            ${paxStr.replace(/ /g, '<br>')}
+                        </td>
+                        <td class="px-4 py-4 whitespace-nowrap text-gray-600 text-xs leading-snug">
+                            ${lugStr.replace(/ /g, '<br>')}
+                        </td>
+                        <td class="px-4 py-4 text-gray-600 text-xs leading-relaxed">
+                            ${o.remarks && o.remarks !== '無' ? `<span class="text-red-600 font-bold bg-red-50 px-2 py-1 rounded block border border-red-100 shadow-sm">${o.remarks}</span>` : '<span class="text-gray-400">-</span>'}
+                        </td>
+                        <td class="px-4 py-4 text-center align-middle">
+                            ${actionBtn}
+                            <div class="text-[9px] text-gray-400 mt-2 font-mono" title="預約編號">${o.orderId}</div>
+                        </td>
+                    </tr>
                 `;
-                container.appendChild(card);
             });
+
+            tableHtml += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            container.innerHTML = tableHtml;
         }
 
         document.querySelectorAll('.tab-btn').forEach(btn => {
