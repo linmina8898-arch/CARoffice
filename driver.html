@@ -150,15 +150,12 @@
                 } else {
                     Swal.fire({
                         title: '綁定失敗',
-                        text: result.error + '，請確認輸入資訊或聯絡客服',
+                        text: result.error, // 修正：移除了多餘的重複文字，直接使用後端回傳的錯誤訊息
                         icon: 'error',
                         confirmButtonColor: '#553f62',
-                        confirmButtonText: '重新輸入',
+                        confirmButtonText: '確定', // 修正：將「重新輸入」改為「確定」
                         allowOutsideClick: false
-                    }).then(() => {
-                        btn.disabled = false;
-                        btn.innerText = '確認綁定';
-                    });
+                    }).then(autoClose); // 修正：按下確定後統一執行自動關閉
                 }
             } catch (err) {
                 Swal.fire({
