@@ -202,7 +202,7 @@
 
     <!-- 派車彈出視窗 (Modal) -->
     <div id="assignModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-md-sm overflow-hidden">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
             <div class="bg-[#553f62] p-4 text-white flex justify-between items-center">
                 <h3 class="font-bold text-lg"><i class="fas fa-car mr-2"></i>指派司機</h3>
                 <button id="closeModalBtn" class="text-white hover:text-gray-300"><i class="fas fa-times text-xl"></i></button>
@@ -244,16 +244,19 @@
         // --- 輔助工具：處理 Google 試算表的時間/日期亂碼問題 ---
         function formatGasDate(rawDate) {
             if (!rawDate) return "";
-            // 如果是物件格式 (Date 物件)
-            if (typeof rawDate === 'object' && rawDate instanceof Date) {
-                const y = rawDate.getFullYear();
-                const m = String(rawDate.getMonth() + 1).padStart(2, '0');
-                const d = String(rawDate.getDate()).padStart(2, '0');
-                return `${y}-${m}-${d}`;
-            }
-            // 如果是字串，嘗試切割 YYYY-MM-DD
             const str = String(rawDate);
-            if (str.includes('T')) return str.split('T')[0];
+            
+            // 如果原本是物件或是帶有時區的 ISO 字串 (舊資料常見)
+            if (str.includes('T')) {
+                // 將 UTC 時區的字串轉回本地瀏覽器時間 (台灣時間)
+                const d = new Date(str);
+                const y = d.getFullYear();
+                const m = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${y}-${m}-${day}`;
+            }
+            
+            // 新資料 (單引號純文字)，直接截取 YYYY-MM-DD
             return str.substring(0, 10);
         }
 
@@ -291,6 +294,11 @@
         // --- 登入邏輯 ---
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            if(!GAS_URL || GAS_URL.includes("在此貼上")) {
+                Swal.fire("錯誤", "請先在程式碼設定正確的 GAS_URL", "error");
+                return;
+            }
+
             const acc = document.getElementById('accInput').value.trim();
             const pwd = document.getElementById('pwdInput').value.trim();
             const btn = document.getElementById('loginBtn');
@@ -324,15 +332,21 @@
         function setupPermissions() {
             document.getElementById('userNameDisplay').innerText = currentUser.name;
             const p = currentUser.permissions;
+            
             if(p.view) document.getElementById('menu-view').classList.remove('hidden');
             if(p.fin) document.getElementById('menu-fin').classList.remove('hidden');
             if(p.drv) document.getElementById('menu-drv').classList.remove('hidden');
             if(p.sys) document.getElementById('menu-sys').classList.remove('hidden');
+
+            if(!p.view) {
+                document.getElementById('calendarView').innerHTML = '<div class="text-center py-20 text-gray-400 font-bold text-xl">您沒有查看預約單的權限</div>';
+            }
         }
 
         // --- 載入資料 ---
         async function loadDashboardData() {
             if(!currentUser.permissions.view) return;
+            
             Swal.fire({ title: '同步資料中...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
             
             try {
@@ -342,7 +356,7 @@
                 ]);
 
                 if(orderRes.success) {
-                    // 核心修復：強制格式化所有訂單的日期與時間
+                    // 核心修復：強制格式化所有訂單的日期與時間，過濾時間偏移與亂碼
                     allOrders = orderRes.orders.map(o => {
                         o.date = formatGasDate(o.date);
                         o.time = formatGasTime(o.time);
@@ -357,7 +371,12 @@
                     document.getElementById('driverSelect').innerHTML = drvHtml;
                 }
                 
-                if (selectedDateForDetail) renderOrders(); else renderCalendar();
+                if (selectedDateForDetail) {
+                    renderOrders();
+                } else {
+                    renderCalendar();
+                }
+
                 Swal.close();
             } catch(err) {
                 Swal.fire('錯誤', '資料抓取失敗', 'error');
@@ -368,10 +387,13 @@
         function renderCalendar() {
             const year = currentMonthDate.getFullYear();
             const month = currentMonthDate.getMonth();
+            
             document.getElementById('calendarMonthYear').innerText = `【${year}年 ${month + 1}月】`;
 
             const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
-            let totalMonth = 0, assignedMonth = 0, unassignedMonth = 0;
+            let totalMonth = 0;
+            let assignedMonth = 0;
+            let unassignedMonth = 0;
 
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             const firstDayOfWeek = new Date(year, month, 1).getDay();
@@ -383,13 +405,17 @@
             }
 
             allOrders.forEach(o => {
-                if (o.date && o.date.startsWith(monthPrefix)) {
+                if (o.date && String(o.date).startsWith(monthPrefix)) {
                     totalMonth++;
                     const isAssigned = o.status === '已派車' || o.status === '完成';
-                    if (isAssigned) assignedMonth++; else unassignedMonth++;
-                    if (dailyData[o.date]) {
-                        dailyData[o.date].total++;
-                        if (isAssigned) dailyData[o.date].assigned++; else dailyData[o.date].unassigned++;
+                    if (isAssigned) assignedMonth++;
+                    else unassignedMonth++;
+
+                    const dateKey = String(o.date);
+                    if (dailyData[dateKey]) {
+                        dailyData[dateKey].total++;
+                        if (isAssigned) dailyData[dateKey].assigned++;
+                        else dailyData[dateKey].unassigned++;
                     }
                 }
             });
@@ -402,32 +428,51 @@
 
             const grid = document.getElementById('calendarGrid');
             grid.innerHTML = '';
+            
             for(let i = 0; i < firstDayOfWeek; i++) {
                 grid.innerHTML += `<div class="bg-gray-100/50 border border-gray-50 rounded-xl h-[120px] calendar-cell opacity-40"></div>`;
             }
 
             const todayStr = new Date().toISOString().split('T')[0];
+
             for(let i = 1; i <= daysInMonth; i++) {
                 const dateStr = `${monthPrefix}-${String(i).padStart(2, '0')}`;
                 const data = dailyData[dateStr];
+                
                 let bgClass = "bg-white border-gray-200 hover:border-[#553f62]";
                 let alertHtml = "";
+                
                 if (data.total > 0) {
-                    bgClass = (data.unassigned > 0) ? "bg-red-50 border-red-200 shadow-sm ring-1 ring-red-100" : "bg-emerald-50 border-emerald-100";
-                    alertHtml = `<div class="mt-1 md:mt-2 text-[10px] md:text-[11px] font-bold space-y-1 flex-1 flex flex-col justify-end">
-                            ${data.unassigned > 0 ? `<div class="text-red-600 bg-white rounded-md px-1 py-0.5 md:py-1 shadow-sm border border-red-50 w-full calendar-info-text text-center">🔴 ${data.unassigned}</div>` : ''}
-                            ${data.assigned > 0 ? `<div class="text-emerald-700 bg-white rounded-md px-1 py-0.5 md:py-1 shadow-sm border border-emerald-50 w-full calendar-info-text text-center">🟢 ${data.assigned}</div>` : ''}
-                        </div>`;
+                    if (data.unassigned > 0) {
+                        bgClass = "bg-red-50 border-red-200 shadow-sm ring-1 ring-red-100";
+                    } else {
+                        bgClass = "bg-emerald-50 border-emerald-100";
+                    }
+                    
+                    alertHtml = `
+                        <div class="mt-1 md:mt-2 text-[10px] md:text-[11px] font-bold space-y-1 flex-1 flex flex-col justify-end">
+                            ${data.unassigned > 0 ? `<div class="text-red-600 bg-white rounded-md px-1 py-0.5 md:py-1 shadow-sm border border-red-50 w-full calendar-info-text text-center md:text-left">🔴 ${data.unassigned}</div>` : ''}
+                            ${data.assigned > 0 ? `<div class="text-emerald-700 bg-white rounded-md px-1 py-0.5 md:py-1 shadow-sm border border-emerald-50 w-full calendar-info-text text-center md:text-left">🟢 ${data.assigned}</div>` : ''}
+                        </div>
+                    `;
                 } else {
                     bgClass = "bg-white border-gray-100 opacity-60";
                     alertHtml = `<div class="mt-2 text-[10px] text-gray-300 flex-1 flex items-end hidden md:flex">無任務</div>`;
                 }
+
                 const isToday = (dateStr === todayStr);
-                const dayCircleClass = isToday ? "bg-[#553f62] text-white w-6 h-6 md:w-7 md:h-7 rounded-full flex items-center justify-center text-xs md:text-sm font-bold shadow" : "text-gray-700 font-bold text-xs md:text-sm w-6 h-6 md:w-7 md:h-7 flex items-center justify-center";
-                grid.innerHTML += `<div class="border rounded-xl h-[120px] calendar-cell p-1.5 md:p-2 flex flex-col cursor-pointer transition ${bgClass}" onclick="openDayDetail('${dateStr}')">
-                        <div class="flex justify-between items-start"><span class="${dayCircleClass}">${i}</span></div>
+                const dayCircleClass = isToday 
+                    ? "bg-[#553f62] text-white w-6 h-6 md:w-7 md:h-7 rounded-full flex items-center justify-center text-xs md:text-sm font-bold shadow calendar-date-num" 
+                    : "text-gray-700 font-bold text-xs md:text-sm w-6 h-6 md:w-7 md:h-7 flex items-center justify-center calendar-date-num";
+
+                grid.innerHTML += `
+                    <div class="border rounded-xl h-[120px] calendar-cell p-1.5 md:p-2 flex flex-col cursor-pointer transition ${bgClass}" onclick="openDayDetail('${dateStr}')">
+                        <div class="flex justify-between items-start">
+                            <span class="${dayCircleClass}">${i}</span>
+                        </div>
                         ${alertHtml}
-                    </div>`;
+                    </div>
+                `;
             }
         }
 
@@ -447,6 +492,7 @@
         document.getElementById('backToCalendarBtn').addEventListener('click', () => {
             selectedDateForDetail = null;
             document.getElementById('detailView').classList.add('hidden');
+            document.getElementById('detailView').classList.remove('flex');
             document.getElementById('calendarView').classList.remove('hidden');
             renderCalendar();
         });
@@ -454,14 +500,15 @@
         function renderOrders() {
             const container = document.getElementById('ordersContainer');
             container.innerHTML = '';
+            
             const filteredOrders = allOrders.filter(o => {
-                if (selectedDateForDetail && o.date !== selectedDateForDetail) return false;
+                if (selectedDateForDetail && String(o.date) !== selectedDateForDetail) return false;
                 const isAssigned = o.status === '已派車' || o.status === '完成';
                 return currentTab === 'unassigned' ? !isAssigned : isAssigned;
             });
 
             if(filteredOrders.length === 0) {
-                container.innerHTML = `<div class="col-span-full text-center py-16 bg-white rounded-xl shadow-sm border border-gray-200"><p class="text-gray-500 font-bold">該日期目前沒有訂單</p></div>`;
+                container.innerHTML = `<div class="col-span-full text-center py-16 bg-white rounded-xl shadow-sm border border-gray-200"><i class="far fa-folder-open text-4xl text-gray-300 mb-3 block"></i><p class="text-gray-500 font-bold">該日期目前沒有訂單</p></div>`;
                 return;
             }
 
@@ -474,7 +521,7 @@
                     ? `<button onclick="openAssignModal(${o.rowIndex}, '${o.orderId}')" class="mt-4 w-full bg-[#f07cad] text-white font-bold py-3 rounded-lg shadow-sm hover:bg-[#e06b9b] transition text-sm flex items-center justify-center"><i class="fas fa-hand-pointer mr-2"></i>指派司機</button>`
                     : `<div class="mt-4 bg-gray-100 text-gray-700 text-sm font-bold p-3 rounded-lg text-center border border-gray-200"><i class="fas fa-user-check mr-2"></i>已派發：${o.driverCode || '系統處理中'}</div>`;
 
-                // 核心修復：更完整的卡片內容呈現
+                // 核心修復：更完整的卡片內容呈現，不怕備註漏看
                 card.innerHTML = `
                     <div class="px-4 py-3 flex justify-between items-center ${headerColor}">
                         <div class="font-bold text-base flex items-center"><i class="far fa-clock mr-2"></i>${o.time} 乘車</div>
@@ -534,8 +581,9 @@
                 });
                 const result = await res.json();
                 if(result.success) {
-                    Swal.fire({ title: '派車成功！', icon: 'success', timer: 1500, showConfirmButton: false });
-                    closeModal(); loadDashboardData();
+                    Swal.fire({ title: '派車成功！', text: '已更新試算表狀態', icon: 'success', timer: 1500, showConfirmButton: false });
+                    closeModal();
+                    loadDashboardData();
                 } else { Swal.fire('派車失敗', result.error, 'error'); }
             } catch (err) { Swal.fire('連線錯誤', '派送時發生錯誤', 'error'); } 
             finally { btn.disabled = false; btn.innerHTML = '確認派車'; }
