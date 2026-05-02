@@ -29,7 +29,7 @@
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
 
-        /* 表格響應式優化：電腦版不強制 min-width */
+        /* 表格響應式優化 */
         .table-container { 
             width: 100%;
             overflow-x: auto;
@@ -38,47 +38,54 @@
 
         /* 排序表頭樣式 */
         .sortable { cursor: pointer; user-select: none; transition: background 0.2s; }
-        .sortable:hover { background-color: rgba(255, 255, 255, 0.15); }
-        .sort-icon { font-size: 0.8em; margin-left: 4px; opacity: 0.5; }
+        .sortable:hover { background-color: rgba(0, 0, 0, 0.1); }
+        .sort-icon { font-size: 0.8em; margin-left: 2px; opacity: 0.5; }
         .active-sort { color: #f07cad !important; opacity: 1 !important; }
 
-        /* 篩選元件樣式 */
+        /* 改進後的篩選元件：解決標頭一片慘白的問題 */
         .filter-input {
-            background-color: rgba(255, 255, 255, 0.95);
-            color: #553f62;
+            background-color: rgba(255, 255, 255, 0.15); /* 平時半透明，融入紫色背景 */
+            color: white;
             font-size: 10px;
-            padding: 2px 4px;
+            padding: 3px 5px;
             border-radius: 4px;
-            border: 1px solid transparent;
-            margin-top: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            margin-top: 5px;
             outline: none;
             width: 100%;
             font-weight: normal;
+            transition: all 0.2s;
         }
-        .filter-input:focus { border-color: #f07cad; background-color: white; }
-        .filter-input::placeholder { color: #9ca3af; }
+        .filter-input:focus { 
+            background-color: white; 
+            color: #553f62; 
+            border-color: #f07cad; 
+            box-shadow: 0 0 5px rgba(240, 124, 173, 0.5);
+        }
+        .filter-input::placeholder { color: rgba(255, 255, 255, 0.5); }
+        .filter-input:focus::placeholder { color: #9ca3af; }
 
         .filter-select {
-            background-color: rgba(255, 255, 255, 0.95);
-            color: #553f62;
+            background-color: rgba(255, 255, 255, 0.15);
+            color: white;
             font-size: 10px;
             padding: 2px 4px;
             border-radius: 4px;
-            border: none;
-            margin-top: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            margin-top: 5px;
             outline: none;
             width: 100%;
             font-weight: normal;
             cursor: pointer;
         }
+        .filter-select option { color: #553f62; background-color: white; }
 
         /* 手機版日曆格高度調整 */
         @media (max-width: 768px) {
             .calendar-cell { height: 90px !important; }
             .calendar-date-num { font-size: 12px !important; width: 20px !important; height: 20px !important; }
             .calendar-info-text { font-size: 9px !important; padding: 2px !important; }
-            /* 手機版表格還是需要滑動 */
-            .min-w-custom { min-width: 1100px !important; }
+            .min-w-custom { min-width: 1000px !important; } /* 手機版才需要左右拉動 */
         }
     </style>
 </head>
@@ -452,50 +459,50 @@
                 return sortConfig.dir === 'asc' ? '<i class="fas fa-sort-up sort-icon active-sort"></i>' : '<i class="fas fa-sort-down sort-icon active-sort"></i>';
             };
 
-            // 極致壓縮欄位寬度邏輯
+            // 極致壓縮欄位寬度與鎖定背景顏色
             container.innerHTML = `
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden min-w-custom">
-                    <table id="ordersTable" class="w-full text-xs text-left table-fixed">
+                    <table id="ordersTable" class="w-full text-[11px] text-left table-fixed">
                         <thead class="bg-[#553f62] text-white font-bold border-b-4 border-[#f07cad]">
                             <tr>
-                                <th style="width: 40px;" class="px-1 py-3 text-center">序</th>
-                                <th style="width: 95px;" class="px-2 py-3 sortable">
+                                <th style="width: 30px; background-color: #553f62;" class="px-1 py-3 text-center">序</th>
+                                <th style="width: 85px; background-color: #553f62;" class="px-2 py-3 sortable">
                                     <div onclick="handleSort('date')">日期 ${getSortIcon('date')}</div>
                                     <input type="text" class="filter-input" placeholder="搜尋..." value="${filterConfigs.date}" oninput="handleFilter('date', this.value)" onclick="event.stopPropagation()">
                                 </th>
-                                <th style="width: 65px;" class="px-1 py-3 sortable">
+                                <th style="width: 55px; background-color: #553f62;" class="px-1 py-3 sortable">
                                     <div onclick="handleSort('time')">時間 ${getSortIcon('time')}</div>
                                     <input type="text" class="filter-input" placeholder="..." value="${filterConfigs.time}" oninput="handleFilter('time', this.value)" onclick="event.stopPropagation()">
                                 </th>
-                                <th style="width: 70px;" class="px-1 py-3 sortable">
+                                <th style="width: 60px; background-color: #553f62;" class="px-1 py-3 sortable">
                                     <div onclick="handleSort('type')">類別 ${getSortIcon('type')}</div>
                                     <select class="filter-select" onchange="handleFilter('type', this.value)" onclick="event.stopPropagation()">
                                         <option value="all">全部</option><option value="送機" ${filterConfigs.type === '送機' ? 'selected' : ''}>送機</option><option value="接機" ${filterConfigs.type === '接機' ? 'selected' : ''}>接機</option>
                                     </select>
                                 </th>
-                                <th style="width: 85px;" class="px-1 py-3 sortable">
+                                <th style="width: 80px; background-color: #553f62;" class="px-1 py-3 sortable">
                                     <div onclick="handleSort('car')">車型 ${getSortIcon('car')}</div>
                                     <select class="filter-select" onchange="handleFilter('car', this.value)" onclick="event.stopPropagation()">
                                         <option value="all">全部</option>${currentDayCarTypes.map(t => `<option value="${t}" ${filterConfigs.car === t ? 'selected' : ''}>${t}</option>`).join('')}
                                     </select>
                                 </th>
-                                <th class="px-2 py-3 sortable" style="width: auto;">
+                                <th class="px-2 py-3 sortable" style="width: auto; background-color: #553f62;">
                                     <div onclick="handleSort('route')">行程 ${getSortIcon('route')}</div>
-                                    <input type="text" class="filter-input" placeholder="地區關鍵字..." value="${filterConfigs.route}" oninput="handleFilter('route', this.value)" onclick="event.stopPropagation()">
+                                    <input type="text" class="filter-input" placeholder="搜尋行程關鍵字..." value="${filterConfigs.route}" oninput="handleFilter('route', this.value)" onclick="event.stopPropagation()">
                                 </th>
-                                <th style="width: 65px;" class="px-1 py-3 sortable">
+                                <th style="width: 55px; background-color: #553f62;" class="px-1 py-3 sortable">
                                     <div onclick="handleSort('paxLug')">人數 ${getSortIcon('paxLug')}</div>
                                     <input type="text" class="filter-input" placeholder="..." value="${filterConfigs.pax}" oninput="handleFilter('pax', this.value)" onclick="event.stopPropagation()">
                                 </th>
-                                <th style="width: 65px;" class="px-1 py-3 sortable">
+                                <th style="width: 55px; background-color: #553f62;" class="px-1 py-3 sortable">
                                     <div onclick="handleSort('paxLug')">行李 ${getSortIcon('paxLug')}</div>
                                     <input type="text" class="filter-input" placeholder="..." value="${filterConfigs.lug}" oninput="handleFilter('lug', this.value)" onclick="event.stopPropagation()">
                                 </th>
-                                <th style="width: 180px;" class="px-2 py-3 sortable">
+                                <th style="width: 160px; background-color: #553f62;" class="px-2 py-3 sortable">
                                     <div onclick="handleSort('remarks')">備註細項 ${getSortIcon('remarks')}</div>
-                                    <input type="text" class="filter-input" placeholder="搜尋..." value="${filterConfigs.remarks}" oninput="handleFilter('remarks', this.value)" onclick="event.stopPropagation()">
+                                    <input type="text" class="filter-input" placeholder="搜尋備註內容..." value="${filterConfigs.remarks}" oninput="handleFilter('remarks', this.value)" onclick="event.stopPropagation()">
                                 </th>
-                                <th style="width: 100px;" class="px-1 py-3 text-center">操作</th>
+                                <th style="width: 90px; background-color: #553f62;" class="px-1 py-3 text-center">操作</th>
                             </tr>
                         </thead>
                         <tbody id="ordersTableBody" class="divide-y divide-gray-200"></tbody>
@@ -558,21 +565,21 @@
                 let actionBtn = (currentUser.permissions.disp && currentTab === 'unassigned') 
                     ? `<button onclick="openAssignModal(${o.rowIndex}, '${o.orderId}')" class="bg-[#f07cad] text-white font-bold px-2 py-1.5 rounded-lg shadow-sm hover:bg-[#e06b9b] transition text-[10px] w-full">指派司機</button>`
                     : `<div class="bg-gray-100 text-gray-700 text-[10px] font-bold px-1 py-1 rounded text-center border border-gray-200">${o.driverCode || '已派'}</div>`;
-                let sport = o.sport && o.sport !== "無" && o.sport !== "undefined" ? `<div class="text-[#f07cad] mb-0.5">胖胖箱: ${o.sport}</div>` : "";
-                let seat = o.seat && o.seat !== "無" && o.seat !== "undefined" ? `<div class="text-[#f07cad] mb-0.5">座椅: ${o.seat}</div>` : "";
-                let remark = o.remarks && o.remarks !== "無" && o.remarks !== "undefined" ? `<div class="text-red-600 font-bold">備註: ${o.remarks}</div>` : "";
+                let sport = o.sport && o.sport !== "無" && o.sport !== "undefined" ? `<div class="text-[#f07cad] mb-0.5">胖箱: ${o.sport}</div>` : "";
+                let seat = o.seat && o.seat !== "無" && o.seat !== "undefined" ? `<div class="text-[#f07cad] mb-0.5">椅: ${o.seat}</div>` : "";
+                let remark = o.remarks && o.remarks !== "無" && o.remarks !== "undefined" ? `<div class="text-red-600 font-bold">註: ${o.remarks}</div>` : "";
                 let remarksHtml = (!sport && !seat && !remark) ? '<span class="text-gray-400">-</span>' : `<div class="bg-red-50/50 p-1.5 rounded text-[10px] leading-tight font-medium">${sport}${seat}${remark}</div>`;
                 
                 rowsHtml += `
                     <tr class="hover:bg-purple-50 transition">
                         <td class="px-1 py-3 text-center font-bold text-gray-400 text-[10px]">${index + 1}</td>
-                        <td class="px-2 py-3 whitespace-nowrap font-medium text-gray-600 text-[11px]">${o.date}</td>
-                        <td class="px-1 py-3 whitespace-nowrap font-black text-[#553f62] text-[13px]">${o.time}</td>
-                        <td class="px-1 py-3 whitespace-nowrap"><span class="px-1.5 py-0.5 rounded text-[10px] font-bold border ${o.type === '送機' ? 'bg-blue-100 text-blue-800 border-blue-200' : 'bg-emerald-100 text-emerald-800 border-emerald-200'}">${o.type}</span></td>
-                        <td class="px-1 py-3 whitespace-nowrap font-bold text-gray-700 text-[11px]">${o.car}</td>
-                        <td class="px-2 py-3 text-gray-800 font-bold leading-snug text-[11px]">${o.route}</td>
-                        <td class="px-1 py-3 whitespace-nowrap text-gray-600 text-[10px] leading-tight">${paxStr.replace(/ /g, '<br>')}</td>
-                        <td class="px-1 py-3 whitespace-nowrap text-gray-600 text-[10px] leading-tight">${lugStr.replace(/ /g, '<br>')}</td>
+                        <td class="px-2 py-3 whitespace-nowrap font-medium text-gray-600 text-[10px]">${o.date}</td>
+                        <td class="px-1 py-3 whitespace-nowrap font-black text-[#553f62] text-[12px]">${o.time}</td>
+                        <td class="px-1 py-3 whitespace-nowrap"><span class="px-1.5 py-0.5 rounded text-[9px] font-bold border ${o.type === '送機' ? 'bg-blue-100 text-blue-800 border-blue-200' : 'bg-emerald-100 text-emerald-800 border-emerald-200'}">${o.type}</span></td>
+                        <td class="px-1 py-3 whitespace-nowrap font-bold text-gray-700 text-[10px]">${o.car}</td>
+                        <td class="px-2 py-3 text-gray-800 font-bold leading-snug text-[10px]">${o.route}</td>
+                        <td class="px-1 py-3 whitespace-nowrap text-gray-600 text-[9px] leading-tight">${paxStr.replace(/ /g, '<br>')}</td>
+                        <td class="px-1 py-3 whitespace-nowrap text-gray-600 text-[9px] leading-tight">${lugStr.replace(/ /g, '<br>')}</td>
                         <td class="px-2 py-3">${remarksHtml}</td>
                         <td class="px-1 py-3 text-center">${actionBtn}<div class="text-[8px] text-gray-400 mt-1 font-mono">${o.orderId.slice(-6)}</div></td>
                     </tr>
