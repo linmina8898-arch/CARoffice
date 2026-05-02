@@ -59,21 +59,17 @@
     <script>
         // ⚠️ 請確保這兩個常數與您的實際設定一致
         const LIFF_ID = "2009922945-KmKUgqbg"; 
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbzUDj6qxlO7bCvz7wByuwzyydYsc-CeNh7K-kYVetwEtsRBVz7TzjHH_8umW3VwrhZh/exec
+        const GAS_URL = "https://script.google.com/macros/s/AKfycby_K2QLtt0nm09WsyAQkOsm51mEO6tR0UprTA-tGGlxzZBqssvDEdRlex5JIz8djNpS/exec";
 
-";
-
-        // 更聰明的關閉函式
+        // 更聰明的關閉函式：確保執行完畢即關閉
         function autoClose() {
             if (liff.isInClient()) {
                 liff.closeWindow();
             } else {
                 Swal.fire({
                     title: '操作已結束',
-                    text: '由於目前非 LINE 環境，請手動關閉分頁或點擊「確定」重新整理。',
+                    text: '由於目前非 LINE 環境，請手動關閉分頁。',
                     confirmButtonColor: '#553f62'
-                }).then(() => {
-                    window.location.reload();
                 });
             }
         }
@@ -136,7 +132,7 @@
                 if (result.success) {
                     Swal.fire({
                         title: '綁定成功！',
-                        text: `${result.name} 司機您好，您的 LINE 帳號已成功連結安興租車系統。`,
+                        text: `${result.name} 司機您好，您的 LINE 帳號已成功連結系統。`,
                         icon: 'success',
                         confirmButtonColor: '#553f62',
                         allowOutsideClick: false
@@ -144,7 +140,7 @@
                 } else {
                     Swal.fire({
                         title: '綁定失敗',
-                        text: result.error + '，請確認輸入資訊或聯絡客服',
+                        text: result.error,
                         icon: 'error',
                         confirmButtonColor: '#553f62',
                         allowOutsideClick: false
@@ -153,7 +149,7 @@
             } catch (err) {
                 Swal.fire({
                     title: '連線錯誤',
-                    text: '無法傳送資料，請確認網路或聯絡客服',
+                    text: '無法傳送資料，請聯絡客服協助',
                     icon: 'error',
                     confirmButtonColor: '#553f62',
                     allowOutsideClick: false
