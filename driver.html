@@ -25,8 +25,18 @@
         </div>
 
         <form id="bindForm" class="space-y-5">
-            <!-- 隱藏的 LINE ID -->
+            <!-- 隱藏的 LINE ID 與 顯示名稱 -->
             <input type="hidden" id="lineId">
+            <input type="hidden" id="lineName">
+
+            <!-- 顯示 LINE 帳號資訊 -->
+            <div id="lineProfileBlock" class="hidden flex items-center justify-center space-x-3 bg-gray-50 p-3 rounded-xl border border-gray-200">
+                <img id="lineAvatar" src="" alt="Avatar" class="w-10 h-10 rounded-full shadow-sm hidden">
+                <div class="text-left">
+                    <p class="text-[10px] text-gray-500 font-bold">即將綁定的 LINE 帳號</p>
+                    <p id="displayLineName" class="text-sm font-black text-[#553f62]">載入中...</p>
+                </div>
+            </div>
             
             <div>
                 <label class="block text-sm font-bold text-gray-700 mb-1">司機代號 (例：A001)</label>
@@ -35,7 +45,8 @@
 
             <div>
                 <label class="block text-sm font-bold text-gray-700 mb-1">登記的聯絡電話</label>
-                <input type="tel" id="driverPhone" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#553f62] outline-none font-bold text-gray-800" placeholder="請輸入登記電話" required>
+                <!-- 加入 maxlength="12" -->
+                <input type="tel" id="driverPhone" maxlength="12" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#553f62] outline-none font-bold text-gray-800" placeholder="0900-000-000" required>
             </div>
 
             <button type="submit" id="submitBtn" class="w-full bg-[#553f62] text-white font-bold py-4 rounded-xl shadow-lg hover:bg-opacity-90 transition text-lg">
@@ -57,11 +68,23 @@
     </div>
 
     <script>
-        // ✅ 已更新為司機專用的 LIFF ID
+        // ✅ 司機專用的 LIFF ID
         const LIFF_ID = "2009827083-famMEsm0"; 
         
-        // GAS 網址 (與預約系統共用，無需更改)
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbyMX4faho4ce2dM5VEja21v-WRQ04jLdL2qYcDiI7BplaAjSm1ycMdOLt7k9WU-U6CM/exec";
+        // GAS 網址 (與預約系統共用)
+        const GAS_URL = "https://script.google.com/macros/s/AKfycby2xCCpwmEE69XozoWn0cY0QSjHc9i9O_CwT5jqgXs2O8aCxbzZ_rCmNLOwSinzlN5j/exec";
+
+        // 電話號碼自動格式化邏輯
+        document.getElementById('driverPhone').addEventListener('input', function(e) {
+            let val = this.value.replace(/\D/g, ''); // 移除所有非數字
+            if (val.length > 10) val = val.slice(0, 10); // 強制限制最多10碼數字
+            
+            if (val.length > 4) {
+                // 自動加上 '-'
+                val = val.replace(/(\d{4})(\d{3})?(\d{0,3})?/, (m, p1, p2, p3) => p1 + (p2 ? '-' + p2 : '') + (p3 ? '-' + p3 : ''));
+            }
+            this.value = val;
+        });
 
         function autoClose() {
             try {
@@ -88,6 +111,9 @@
             try {
                 if (window !== window.parent) {
                     document.getElementById('lineId').value = "Preview_User";
+                    document.getElementById('lineName').value = "預覽測試員";
+                    document.getElementById('displayLineName').innerText = "預覽測試員";
+                    document.getElementById('lineProfileBlock').classList.remove('hidden');
                     showMainForm();
                     return;
                 }
@@ -98,7 +124,18 @@
                     return;
                 }
                 const profile = await liff.getProfile();
+                
+                // 抓取並顯示 LINE ID 與 名稱
                 document.getElementById('lineId').value = profile.userId;
+                document.getElementById('lineName').value = profile.displayName;
+                document.getElementById('displayLineName').innerText = profile.displayName;
+                
+                if (profile.pictureUrl) {
+                    document.getElementById('lineAvatar').src = profile.pictureUrl;
+                    document.getElementById('lineAvatar').classList.remove('hidden');
+                }
+                document.getElementById('lineProfileBlock').classList.remove('hidden');
+
                 showMainForm();
             } catch (err) {
                 console.error(err);
@@ -126,8 +163,10 @@
                 action: 'bindDriverLine',
                 data: {
                     driverCode: document.getElementById('driverCode').value.trim().toUpperCase(),
+                    // 送出時再次確保移除了所有 '-' 符號，只傳純數字給後端
                     phone: document.getElementById('driverPhone').value.trim().replace(/\D/g, ''),
-                    lineId: document.getElementById('lineId').value
+                    lineId: document.getElementById('lineId').value,
+                    lineName: document.getElementById('lineName').value
                 }
             };
 
@@ -150,12 +189,12 @@
                 } else {
                     Swal.fire({
                         title: '綁定失敗',
-                        text: result.error, // 修正：移除了多餘的重複文字，直接使用後端回傳的錯誤訊息
+                        text: result.error, 
                         icon: 'error',
                         confirmButtonColor: '#553f62',
-                        confirmButtonText: '確定', // 修正：將「重新輸入」改為「確定」
+                        confirmButtonText: '確定', 
                         allowOutsideClick: false
-                    }).then(autoClose); // 修正：按下確定後統一執行自動關閉
+                    }).then(autoClose); 
                 }
             } catch (err) {
                 Swal.fire({
