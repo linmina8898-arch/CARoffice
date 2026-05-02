@@ -503,40 +503,40 @@
                     <table class="w-full text-sm text-left table-fixed">
                         <thead class="bg-[#553f62] text-white font-bold border-b-4 border-[#f07cad]">
                             <tr>
-                                <th class="px-3 py-4 text-center w-12">序</th>
-                                <th class="px-3 py-4 w-32 sortable">
+                                <th class="px-2 py-4 text-center w-10 text-xs">序</th>
+                                <th class="px-2 py-4 w-28 sortable">
                                     <div onclick="handleSort('date')">日期 ${getSortIcon('date')}</div>
                                     <input type="text" class="filter-input" placeholder="搜尋..." value="${filterConfigs.date}" oninput="handleFilter('date', this.value)" onclick="event.stopPropagation()">
                                 </th>
-                                <th class="px-3 py-4 w-28 sortable">
+                                <th class="px-2 py-4 w-22 sortable">
                                     <div onclick="handleSort('time')">時間 ${getSortIcon('time')}</div>
-                                    <input type="text" class="filter-input" placeholder="搜尋..." value="${filterConfigs.time}" oninput="handleFilter('time', this.value)" onclick="event.stopPropagation()">
+                                    <input type="text" class="filter-input" placeholder="..." value="${filterConfigs.time}" oninput="handleFilter('time', this.value)" onclick="event.stopPropagation()">
                                 </th>
-                                <th class="px-3 py-4 w-28 sortable">
+                                <th class="px-2 py-4 w-22 sortable">
                                     <div onclick="handleSort('type')">類別 ${getSortIcon('type')}</div>
                                     <select class="filter-select" onchange="handleFilter('type', this.value)" onclick="event.stopPropagation()">
                                         <option value="all">全部</option><option value="送機" ${filterConfigs.type === '送機' ? 'selected' : ''}>送機</option><option value="接機" ${filterConfigs.type === '接機' ? 'selected' : ''}>接機</option>
                                     </select>
                                 </th>
-                                <th class="px-3 py-4 w-32 sortable">
+                                <th class="px-2 py-4 w-26 sortable">
                                     <div onclick="handleSort('car')">車型 ${getSortIcon('car')}</div>
                                     <select class="filter-select" onchange="handleFilter('car', this.value)" onclick="event.stopPropagation()">
                                         <option value="all">全部</option>${currentDayCarTypes.map(t => `<option value="${t}" ${filterConfigs.car === t ? 'selected' : ''}>${t}</option>`).join('')}
                                     </select>
                                 </th>
-                                <th class="px-3 py-4 w-64 sortable">
+                                <th class="px-3 py-4 w-auto sortable">
                                     <div onclick="handleSort('route')">行程 ${getSortIcon('route')}</div>
                                     <input type="text" class="filter-input" placeholder="地區/關鍵字..." value="${filterConfigs.route}" oninput="handleFilter('route', this.value)" onclick="event.stopPropagation()">
                                 </th>
-                                <th class="px-3 py-4 w-24 sortable">
+                                <th class="px-2 py-4 w-16 sortable">
                                     <div onclick="handleSort('paxLug')">人數 ${getSortIcon('paxLug')}</div>
                                     <input type="text" class="filter-input" placeholder="..." value="${filterConfigs.pax}" oninput="handleFilter('pax', this.value)" onclick="event.stopPropagation()">
                                 </th>
-                                <th class="px-3 py-4 w-24 sortable">
+                                <th class="px-2 py-4 w-16 sortable">
                                     <div onclick="handleSort('paxLug')">行李 ${getSortIcon('paxLug')}</div>
                                     <input type="text" class="filter-input" placeholder="..." value="${filterConfigs.lug}" oninput="handleFilter('lug', this.value)" onclick="event.stopPropagation()">
                                 </th>
-                                <th class="px-3 py-4 w-48 sortable">
+                                <th class="px-3 py-4 w-44 sortable">
                                     <div onclick="handleSort('remarks')">備註細項 ${getSortIcon('remarks')}</div>
                                     <input type="text" class="filter-input" placeholder="搜尋..." value="${filterConfigs.remarks}" oninput="handleFilter('remarks', this.value)" onclick="event.stopPropagation()">
                                 </th>
@@ -555,17 +555,18 @@
                 let sport = o.sport && o.sport !== "無" && o.sport !== "undefined" ? `<div class="text-[#f07cad] mb-1">胖胖箱: ${o.sport}</div>` : "";
                 let seat = o.seat && o.seat !== "無" && o.seat !== "undefined" ? `<div class="text-[#f07cad] mb-1">座椅: ${o.seat}</div>` : "";
                 let remark = o.remarks && o.remarks !== "無" && o.remarks !== "undefined" ? `<div class="text-red-600 font-bold">備註: ${o.remarks}</div>` : "";
-                let remarksHtml = (!sport && !seat && !remark) ? '<span class="text-gray-400">-</span>' : `<div class="bg-red-50/50 p-2 rounded text-[11px] leading-tight">${sport}${seat}${remark}</div>`;
+                let remarksHtml = (!sport && !seat && !remark) ? '<span class="text-gray-400">-</span>' : `<div class="bg-red-50/50 p-2 rounded text-[11px] leading-tight font-medium">${sport}${seat}${remark}</div>`;
+                
                 tableHtml += `
                     <tr class="hover:bg-purple-50 transition">
-                        <td class="px-3 py-4 text-center font-bold text-gray-400 text-xs">${index + 1}</td>
-                        <td class="px-3 py-4 whitespace-nowrap font-medium text-gray-600 text-xs">${o.date}</td>
-                        <td class="px-3 py-4 whitespace-nowrap font-black text-[#553f62] text-sm">${o.time}</td>
-                        <td class="px-3 py-4 whitespace-nowrap"><span class="px-2 py-1 rounded text-[10px] font-bold border ${o.type === '送機' ? 'bg-blue-100 text-blue-800 border-blue-200' : 'bg-emerald-100 text-emerald-800 border-emerald-200'}">${o.type}</span></td>
-                        <td class="px-3 py-4 whitespace-nowrap font-bold text-gray-700 text-xs">${o.car}</td>
+                        <td class="px-2 py-4 text-center font-bold text-gray-400 text-xs">${index + 1}</td>
+                        <td class="px-2 py-4 whitespace-nowrap font-medium text-gray-600 text-xs">${o.date}</td>
+                        <td class="px-2 py-4 whitespace-nowrap font-black text-[#553f62] text-sm">${o.time}</td>
+                        <td class="px-2 py-4 whitespace-nowrap"><span class="px-2 py-1 rounded text-[10px] font-bold border ${o.type === '送機' ? 'bg-blue-100 text-blue-800 border-blue-200' : 'bg-emerald-100 text-emerald-800 border-emerald-200'}">${o.type}</span></td>
+                        <td class="px-2 py-4 whitespace-nowrap font-bold text-gray-700 text-xs">${o.car}</td>
                         <td class="px-3 py-4 text-gray-800 font-bold leading-snug text-xs">${o.route}</td>
-                        <td class="px-3 py-4 whitespace-nowrap text-gray-600 text-[11px] leading-tight">${paxStr.replace(/ /g, '<br>')}</td>
-                        <td class="px-3 py-4 whitespace-nowrap text-gray-600 text-[11px] leading-tight">${lugStr.replace(/ /g, '<br>')}</td>
+                        <td class="px-2 py-4 whitespace-nowrap text-gray-600 text-[11px] leading-tight">${paxStr.replace(/ /g, '<br>')}</td>
+                        <td class="px-2 py-4 whitespace-nowrap text-gray-600 text-[11px] leading-tight">${lugStr.replace(/ /g, '<br>')}</td>
                         <td class="px-3 py-4">${remarksHtml}</td>
                         <td class="px-3 py-4 text-center">${actionBtn}<div class="text-[9px] text-gray-400 mt-2 font-mono">${o.orderId}</div></td>
                     </tr>
