@@ -289,7 +289,14 @@
                     fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getDriverList' }) }).then(r=>r.json())
                 ]);
 
-                if(orderRes.success) allOrders = orderRes.orders;
+                if(orderRes.success) {
+                    // 將日期字串強制截斷為 YYYY-MM-DD，解決帶時間戳導致格子找不到的問題
+                    allOrders = orderRes.orders.map(o => {
+                        if (o.date) o.date = String(o.date).substring(0, 10);
+                        return o;
+                    });
+                }
+                
                 if(driverRes.success) {
                     allDrivers = driverRes.drivers;
                     let drvHtml = '<option value="" disabled selected>-- 選擇司機 --</option>';
