@@ -244,7 +244,8 @@
         // --- 輔助工具：處理 Google 試算表的時間/日期亂碼問題 ---
         function formatGasDate(rawDate) {
             if (!rawDate) return "";
-            const str = String(rawDate);
+            // 強制去除可能殘留的開頭單引號
+            const str = String(rawDate).replace(/^'/g, "").trim();
             
             // 如果原本是物件或是帶有時區的 ISO 字串 (舊資料常見)
             if (str.includes('T')) {
@@ -256,16 +257,17 @@
                 return `${y}-${m}-${day}`;
             }
             
-            // 新資料 (單引號純文字)，直接截取 YYYY-MM-DD
+            // 新資料直接截取 YYYY-MM-DD
             return str.substring(0, 10);
         }
 
         function formatGasTime(rawTime) {
             if (!rawTime) return "00:00";
-            const str = String(rawTime);
+            // 強制去除可能殘留的開頭單引號
+            const str = String(rawTime).replace(/^'/g, "").trim();
             // 處理 1899 亂碼：若是 Date 格式，提取 HH:mm
             if (str.includes('1899') || str.includes('T')) {
-                const dateObj = new Date(rawTime);
+                const dateObj = new Date(str);
                 const h = String(dateObj.getHours()).padStart(2, '0');
                 const m = String(dateObj.getMinutes()).padStart(2, '0');
                 return `${h}:${m}`;
@@ -358,6 +360,12 @@
                 if(orderRes.success) {
                     // 核心修復：強制格式化所有訂單的日期與時間，過濾時間偏移與亂碼
                     allOrders = orderRes.orders.map(o => {
+                        // 清理所有字串欄位開頭可能殘留的單引號
+                        for (let key in o) {
+                            if (typeof o[key] === 'string') {
+                                o[key] = o[key].replace(/^'/g, "").trim();
+                            }
+                        }
                         o.date = formatGasDate(o.date);
                         o.time = formatGasTime(o.time);
                         return o;
@@ -561,6 +569,18 @@
 
                 const typeBadgeColor = o.type === "送機" ? "bg-blue-100 text-blue-800 border border-blue-200" : "bg-emerald-100 text-emerald-800 border border-emerald-200";
 
+                // 組合備註 (包含胖胖箱、座椅、一般備註)
+                let remarksHtml = "";
+                let sport = o.sport && o.sport !== "無" && o.sport !== "undefined" ? `<div class="text-[#f07cad] mb-1">🧳胖胖箱: ${o.sport}</div>` : "";
+                let seat = o.seat && o.seat !== "無" && o.seat !== "undefined" ? `<div class="text-[#f07cad] mb-1">💺座椅: ${o.seat}</div>` : "";
+                let remark = o.remarks && o.remarks !== "無" && o.remarks !== "undefined" ? `<div class="text-red-600">📝備註: ${o.remarks}</div>` : "";
+
+                if (!sport && !seat && !remark) {
+                    remarksHtml = '<span class="text-gray-400">-</span>';
+                } else {
+                    remarksHtml = `<div class="font-bold bg-red-50/50 p-2 rounded border border-red-100 shadow-sm text-xs text-left">${sport}${seat}${remark}</div>`;
+                }
+
                 tableHtml += `
                     <tr class="hover:bg-purple-50 transition duration-150">
                         <td class="px-4 py-4 text-center font-bold text-gray-500">${index + 1}</td>
@@ -580,7 +600,7 @@
                             ${lugStr.replace(/ /g, '<br>')}
                         </td>
                         <td class="px-4 py-4 text-gray-600 text-xs leading-relaxed">
-                            ${o.remarks && o.remarks !== '無' ? `<span class="text-red-600 font-bold bg-red-50 px-2 py-1 rounded block border border-red-100 shadow-sm">${o.remarks}</span>` : '<span class="text-gray-400">-</span>'}
+                            ${remarksHtml}
                         </td>
                         <td class="px-4 py-4 text-center align-middle">
                             ${actionBtn}
