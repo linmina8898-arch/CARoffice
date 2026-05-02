@@ -57,35 +57,35 @@
     </div>
 
     <script>
-        // ⚠️ 請確保這兩個常數與您的實際設定一致
-        const LIFF_ID = "2009922945-KmKUgqbg"; 
-        const GAS_URL = "https://script.google.com/macros/s/AKfycby_K2QLtt0nm09WsyAQkOsm51mEO6tR0UprTA-tGGlxzZBqssvDEdRlex5JIz8djNpS/exec";
+        // ✅ 已更新為司機專用的 LIFF ID
+        const LIFF_ID = "2009827083-famMEsm0"; 
+        
+        // GAS 網址 (與預約系統共用，無需更改)
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbyMX4faho4ce2dM5VEja21v-WRQ04jLdL2qYcDiI7BplaAjSm1ycMdOLt7k9WU-U6CM/exec";
 
-        // 更聰明的關閉函式：確保能順利關閉視窗
         function autoClose() {
-            // 優先嘗試使用 LIFF SDK 關閉視窗
             try {
                 if (liff.isInClient()) {
                     liff.closeWindow();
                     return;
                 }
+                window.close();
             } catch (e) {
-                console.error("LIFF close error", e);
+                console.error("關閉視窗失敗", e);
             }
-
-            // 如果不在 LINE 環境或是關閉失敗，提示司機手動點擊右上角 X
-            Swal.fire({
-                title: '綁定流程結束',
-                text: '若視窗未自動關閉，請點擊手機右上角的「X」或「完成」離開此頁面。',
-                icon: 'info',
-                confirmButtonColor: '#553f62',
-                confirmButtonText: '我知道了'
-            });
+            setTimeout(() => {
+                Swal.fire({
+                    title: '流程已結束',
+                    html: '系統已記錄您的操作。<br><br>請點擊手機畫面右上角或左上角的「<b>X</b>」或「<b>完成</b>」離開此頁面。',
+                    icon: 'info',
+                    confirmButtonColor: '#553f62',
+                    confirmButtonText: '我知道了'
+                });
+            }, 400);
         }
 
         async function init() {
             try {
-                // 如果是預覽環境
                 if (window !== window.parent) {
                     document.getElementById('lineId').value = "Preview_User";
                     showMainForm();
@@ -156,7 +156,6 @@
                         confirmButtonText: '重新輸入',
                         allowOutsideClick: false
                     }).then(() => {
-                        // 失敗時不強制關閉，讓司機有機會修正資料
                         btn.disabled = false;
                         btn.innerText = '確認綁定';
                     });
