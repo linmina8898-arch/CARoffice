@@ -74,8 +74,8 @@
             <nav class="flex-1 p-4 space-y-2 overflow-y-auto" id="navMenu">
                 <!-- 選單項目會根據權限動態顯示/隱藏 -->
                 <a href="#" id="menu-view" class="flex items-center space-x-3 w-full p-3 rounded-lg bg-white/10 text-white font-bold transition hidden">
-                    <i class="fas fa-clipboard-list w-5 text-center"></i>
-                    <span>派車任務看板</span>
+                    <i class="fas fa-calendar-alt w-5 text-center"></i>
+                    <span>派車任務月曆</span>
                 </a>
                 <a href="#" id="menu-fin" class="flex items-center space-x-3 w-full p-3 rounded-lg hover:bg-white/5 text-gray-300 hover:text-white transition hidden">
                     <i class="fas fa-chart-line w-5 text-center"></i>
@@ -102,29 +102,82 @@
         <!-- 右側主要內容區 -->
         <main class="flex-1 flex flex-col bg-gray-50 h-full overflow-hidden">
             <!-- 頂部導覽列 -->
-            <header class="bg-white shadow-sm h-16 flex items-center justify-between px-6 z-0">
-                <h2 class="text-xl font-bold text-gray-800" id="pageTitle">派車任務看板</h2>
+            <header class="bg-white shadow-sm h-16 flex items-center justify-between px-6 z-0 flex-shrink-0">
+                <h2 class="text-xl font-bold text-gray-800" id="pageTitle">派車任務總覽</h2>
                 <button id="refreshBtn" class="text-[#553f62] hover:bg-purple-50 p-2 rounded-full transition" title="重新整理資料">
                     <i class="fas fa-sync-alt"></i>
                 </button>
             </header>
 
-            <!-- 內容區塊 -->
-            <div class="flex-1 p-6 overflow-auto">
-                <!-- 頁籤切換 -->
-                <div class="flex space-x-1 mb-6 bg-gray-200 p-1 rounded-lg w-max" id="orderTabs">
-                    <button class="tab-btn px-6 py-2 rounded-md font-bold text-sm shadow bg-white text-[#553f62]" data-target="unassigned">
-                        🔴 待派車
-                    </button>
-                    <button class="tab-btn px-6 py-2 rounded-md font-bold text-sm text-gray-500 hover:text-[#553f62]" data-target="assigned">
-                        🟢 已派車
-                    </button>
+            <!-- 內容區塊 (滾動區) -->
+            <div class="flex-1 p-6 overflow-auto relative">
+                
+                <!-- ============================================== -->
+                <!-- 1. 月曆視圖 (Calendar View)                     -->
+                <!-- ============================================== -->
+                <div id="calendarView" class="w-full max-w-5xl mx-auto">
+                    <!-- 月份切換與統計面板 -->
+                    <div class="flex justify-between items-center mb-6 bg-white p-4 rounded-2xl shadow-sm border border-gray-200">
+                        <button id="prevMonthBtn" class="text-gray-400 hover:text-[#553f62] p-2 transition">
+                            <i class="fas fa-chevron-left fa-2x"></i>
+                        </button>
+                        
+                        <div class="text-center">
+                            <h2 id="calendarMonthYear" class="text-2xl font-black text-[#553f62] mb-2 tracking-widest">【載入中】</h2>
+                            <div class="bg-gray-50 inline-block px-4 py-2 rounded-lg border border-gray-100">
+                                <p id="calendarMonthStats" class="text-sm font-bold text-gray-600">
+                                    本月總計：0 趟 ｜ <span class="text-emerald-600">🟢 已派車：0</span> ｜ <span class="text-red-500">🔴 待派車：0</span>
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <button id="nextMonthBtn" class="text-gray-400 hover:text-[#553f62] p-2 transition">
+                            <i class="fas fa-chevron-right fa-2x"></i>
+                        </button>
+                    </div>
+
+                    <!-- 星期標題 -->
+                    <div class="grid grid-cols-7 gap-2 text-center font-bold text-gray-500 mb-2 text-sm">
+                        <div class="text-red-400">日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div class="text-[#553f62]">六</div>
+                    </div>
+
+                    <!-- 日曆網格 (動態生成) -->
+                    <div id="calendarGrid" class="grid grid-cols-7 gap-2 pb-10">
+                        <!-- 透過 JS 注入格子 -->
+                    </div>
                 </div>
 
-                <!-- 訂單卡片列表 (動態渲染) -->
-                <div id="ordersContainer" class="grid grid-cols-1 xl:grid-cols-2 gap-4 pb-10">
-                    <!-- 卡片範例格式將由 JS 生成 -->
+
+                <!-- ============================================== -->
+                <!-- 2. 當日明細視圖 (Detail View - 原本的卡片列表)     -->
+                <!-- ============================================== -->
+                <div id="detailView" class="hidden flex-col w-full">
+                    
+                    <!-- 明細視圖的頂部操作列 -->
+                    <div class="flex items-center justify-between mb-6">
+                        <button id="backToCalendarBtn" class="flex items-center space-x-2 text-[#553f62] font-bold bg-white border border-gray-200 shadow-sm hover:bg-gray-50 px-4 py-2 rounded-xl transition">
+                            <i class="fas fa-arrow-left"></i><span>返回月曆</span>
+                        </button>
+                        <h3 id="detailDateTitle" class="text-xl font-black text-gray-800 bg-white px-5 py-2 rounded-xl shadow-sm border border-gray-200 tracking-wide text-center"></h3>
+                        <div class="w-[110px]"></div> <!-- 佔位符保持置中平衡 -->
+                    </div>
+
+                    <!-- 頁籤切換 -->
+                    <div class="flex space-x-1 mb-6 bg-gray-200 p-1 rounded-lg w-max" id="orderTabs">
+                        <button class="tab-btn px-6 py-2 rounded-md font-bold text-sm shadow bg-white text-[#553f62]" data-target="unassigned">
+                            🔴 待派車
+                        </button>
+                        <button class="tab-btn px-6 py-2 rounded-md font-bold text-sm text-gray-500 hover:text-[#553f62]" data-target="assigned">
+                            🟢 已派車
+                        </button>
+                    </div>
+
+                    <!-- 訂單卡片列表 (動態渲染) -->
+                    <div id="ordersContainer" class="grid grid-cols-1 xl:grid-cols-2 gap-4 pb-10">
+                        <!-- 卡片範例格式將由 JS 生成 -->
+                    </div>
                 </div>
+
             </div>
         </main>
     </div>
@@ -163,8 +216,13 @@
         let currentUser = null;
         let allOrders = [];
         let allDrivers = [];
+        
+        // --- 視圖與狀態控制 ---
         let currentTab = 'unassigned';
         let assigningRowIndex = null;
+        
+        let currentMonthDate = new Date(); // 日曆當前追蹤的月份
+        let selectedDateForDetail = null;  // 進入明細時選中的日期字串 (如 2026-05-15)
 
         // --- 登入邏輯 ---
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -214,7 +272,7 @@
             if(p.sys) document.getElementById('menu-sys').classList.remove('hidden');
 
             if(!p.view) {
-                document.getElementById('ordersContainer').innerHTML = '<div class="col-span-full text-center py-20 text-gray-400 font-bold text-xl">您沒有查看預約單的權限</div>';
+                document.getElementById('calendarView').innerHTML = '<div class="text-center py-20 text-gray-400 font-bold text-xl">您沒有查看預約單的權限</div>';
             }
         }
 
@@ -222,7 +280,7 @@
         async function loadDashboardData() {
             if(!currentUser.permissions.view) return;
             
-            Swal.fire({ title: '載入資料中...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
+            Swal.fire({ title: '同步資料中...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
             
             try {
                 // 平行抓取訂單與司機清單
@@ -239,26 +297,194 @@
                     document.getElementById('driverSelect').innerHTML = drvHtml;
                 }
                 
-                renderOrders();
+                // 根據當前視圖重新渲染
+                if (selectedDateForDetail) {
+                    renderOrders();
+                } else {
+                    renderCalendar();
+                }
+
                 Swal.close();
             } catch(err) {
                 Swal.fire('錯誤', '資料抓取失敗', 'error');
             }
         }
 
-        // --- 渲染訂單卡片 ---
+        // ==========================================
+        // 日曆視圖生成邏輯
+        // ==========================================
+        function renderCalendar() {
+            const year = currentMonthDate.getFullYear();
+            const month = currentMonthDate.getMonth(); // 0-11
+            
+            // 1. 更新標題
+            document.getElementById('calendarMonthYear').innerText = `【${year}年 ${month + 1}月】`;
+
+            // 2. 統計當月數據
+            // 將月份補零以利字串比對，例如 "2026-05"
+            const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
+            
+            let totalMonth = 0;
+            let assignedMonth = 0;
+            let unassignedMonth = 0;
+
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const firstDayOfWeek = new Date(year, month, 1).getDay(); // 0 (Sun) to 6 (Sat)
+
+            // 初始化每日數據容器
+            const dailyData = {};
+            for(let i = 1; i <= daysInMonth; i++) {
+                const dateStr = `${monthPrefix}-${String(i).padStart(2, '0')}`;
+                dailyData[dateStr] = { total: 0, assigned: 0, unassigned: 0 };
+            }
+
+            // 遍歷所有訂單進行累加
+            allOrders.forEach(o => {
+                if (o.date && String(o.date).startsWith(monthPrefix)) {
+                    totalMonth++;
+                    const isAssigned = o.status === '已派車' || o.status === '完成';
+                    
+                    if (isAssigned) {
+                        assignedMonth++;
+                    } else {
+                        unassignedMonth++;
+                    }
+
+                    // 記錄到對應日期
+                    const dateKey = String(o.date);
+                    if (dailyData[dateKey]) {
+                        dailyData[dateKey].total++;
+                        if (isAssigned) dailyData[dateKey].assigned++;
+                        else dailyData[dateKey].unassigned++;
+                    }
+                }
+            });
+
+            // 更新統計字串
+            document.getElementById('calendarMonthStats').innerHTML = `
+                本月總計：${totalMonth} 趟 ｜ 
+                <span class="text-emerald-600">🟢 已派車：${assignedMonth}</span> ｜ 
+                <span class="${unassignedMonth > 0 ? 'text-red-500 font-black' : 'text-gray-500'}">🔴 待派車：${unassignedMonth}</span>
+            `;
+
+            // 3. 渲染日曆網格
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = '';
+            
+            // 填充1號之前的空白格子
+            for(let i = 0; i < firstDayOfWeek; i++) {
+                grid.innerHTML += `<div class="bg-gray-100/50 border border-gray-100 rounded-xl h-28 opacity-60"></div>`;
+            }
+
+            // 填充實際日期格子
+            const todayStr = new Date().toISOString().split('T')[0]; // 用來標註今天
+
+            for(let i = 1; i <= daysInMonth; i++) {
+                const dateStr = `${monthPrefix}-${String(i).padStart(2, '0')}`;
+                const data = dailyData[dateStr];
+                
+                let bgClass = "bg-white border-gray-200 hover:border-[#553f62] hover:shadow-md cursor-pointer transition shadow-sm";
+                let alertHtml = "";
+                
+                if (data.total > 0) {
+                    // 若當天有「未派車」的訂單，格子亮淺紅底色防呆
+                    if (data.unassigned > 0) {
+                        bgClass = "bg-red-50 border-red-300 hover:border-red-500 cursor-pointer transition shadow-md ring-1 ring-red-100";
+                    } else {
+                        // 都有派完了，亮淺綠底色
+                        bgClass = "bg-emerald-50 border-emerald-200 hover:border-emerald-400 cursor-pointer transition shadow-sm";
+                    }
+                    
+                    alertHtml = `
+                        <div class="mt-2 text-[11px] font-bold space-y-1.5 flex-1 flex flex-col justify-end">
+                            ${data.unassigned > 0 ? `<div class="text-red-600 bg-white rounded-md px-1.5 py-1 shadow-sm border border-red-100 w-full text-left">🔴 未派: ${data.unassigned} 趟</div>` : ''}
+                            ${data.assigned > 0 ? `<div class="text-emerald-700 bg-white rounded-md px-1.5 py-1 shadow-sm border border-emerald-100 w-full text-left">🟢 已派: ${data.assigned} 趟</div>` : ''}
+                        </div>
+                    `;
+                } else {
+                    // 該日無任務
+                    bgClass = "bg-white border-gray-200 hover:bg-gray-50 cursor-pointer transition shadow-sm";
+                    alertHtml = `<div class="mt-2 text-xs text-gray-300 flex-1 flex items-end">無任務</div>`;
+                }
+
+                // 若為今日，特別標註
+                const isToday = (dateStr === todayStr);
+                const dayCircleClass = isToday 
+                    ? "bg-[#553f62] text-white w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold shadow" 
+                    : "text-gray-700 font-bold text-sm w-7 h-7 flex items-center justify-center";
+
+                grid.innerHTML += `
+                    <div class="border rounded-xl h-[120px] p-2 flex flex-col ${bgClass}" onclick="openDayDetail('${dateStr}')">
+                        <div class="flex justify-between items-start">
+                            <span class="${dayCircleClass}">${i}</span>
+                        </div>
+                        ${alertHtml}
+                    </div>
+                `;
+            }
+        }
+
+        // 切換月份按鈕
+        document.getElementById('prevMonthBtn').addEventListener('click', () => {
+            currentMonthDate.setMonth(currentMonthDate.getMonth() - 1);
+            renderCalendar();
+        });
+        document.getElementById('nextMonthBtn').addEventListener('click', () => {
+            currentMonthDate.setMonth(currentMonthDate.getMonth() + 1);
+            renderCalendar();
+        });
+
+        // ==========================================
+        // 明細視圖 (點擊日期進入卡片列表)
+        // ==========================================
+        window.openDayDetail = (dateStr) => {
+            selectedDateForDetail = dateStr;
+            
+            // 隱藏日曆，顯示明細
+            document.getElementById('calendarView').classList.add('hidden');
+            document.getElementById('detailView').classList.remove('hidden');
+            document.getElementById('detailView').classList.add('flex');
+            
+            // 更新標題
+            document.getElementById('detailDateTitle').innerHTML = `<i class="far fa-calendar-check mr-2 text-[#f07cad]"></i>${dateStr} 車趟明細`;
+            
+            // 預設切換到「待派車」頁籤
+            document.querySelector('[data-target="unassigned"]').click(); // 這裡會自動呼叫 renderOrders()
+        };
+
+        // 返回日曆按鈕
+        document.getElementById('backToCalendarBtn').addEventListener('click', () => {
+            selectedDateForDetail = null;
+            
+            document.getElementById('detailView').classList.add('hidden');
+            document.getElementById('detailView').classList.remove('flex');
+            document.getElementById('calendarView').classList.remove('hidden');
+            
+            renderCalendar(); // 重整日曆狀態
+        });
+
+        // --- 渲染訂單卡片 (針對單日) ---
         function renderOrders() {
             const container = document.getElementById('ordersContainer');
             container.innerHTML = '';
             
-            // 過濾未派/已派
+            // 過濾：1. 必須是選中的那一天 2. 必須符合未派/已派頁籤
             const filteredOrders = allOrders.filter(o => {
+                // 如果在明細模式中，但日期不符，則過濾掉
+                if (selectedDateForDetail && String(o.date) !== selectedDateForDetail) {
+                    return false;
+                }
+
                 const isAssigned = o.status === '已派車' || o.status === '完成';
                 return currentTab === 'unassigned' ? !isAssigned : isAssigned;
             });
 
             if(filteredOrders.length === 0) {
-                container.innerHTML = `<div class="col-span-full text-center py-12 bg-white rounded-xl shadow-sm border border-gray-200"><p class="text-gray-500 font-bold">目前沒有資料</p></div>`;
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-16 bg-white rounded-xl shadow-sm border border-gray-200">
+                        <i class="far fa-folder-open text-4xl text-gray-300 mb-3 block"></i>
+                        <p class="text-gray-500 font-bold">該分類目前沒有訂單</p>
+                    </div>`;
                 return;
             }
 
@@ -279,7 +505,7 @@
 
                 card.innerHTML = `
                     <div class="px-4 py-3 border-b flex justify-between items-center ${headerColor}">
-                        <div class="font-bold text-sm flex items-center"><i class="far fa-calendar-alt mr-2"></i>${o.date} ${o.time}</div>
+                        <div class="font-bold text-sm flex items-center"><i class="far fa-clock mr-2"></i>${o.time} 乘車</div>
                         <div class="text-xs font-mono font-bold bg-white px-2 py-1 rounded shadow-sm border opacity-80">${o.orderId}</div>
                     </div>
                     <div class="p-4 flex-1 flex flex-col">
@@ -362,6 +588,13 @@
         // --- 登出鈕 ---
         document.getElementById('logoutBtn').addEventListener('click', () => {
             currentUser = null;
+            selectedDateForDetail = null; // 重置選取狀態
+            
+            // 恢復畫面初始狀態
+            document.getElementById('detailView').classList.add('hidden');
+            document.getElementById('detailView').classList.remove('flex');
+            document.getElementById('calendarView').classList.remove('hidden');
+            
             document.getElementById('dashboardScreen').classList.add('hidden');
             document.getElementById('loginScreen').classList.remove('hidden');
             document.getElementById('accInput').value = '';
