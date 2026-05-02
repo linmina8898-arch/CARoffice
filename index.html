@@ -29,7 +29,7 @@
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
 
-        /* 表格響應式優化 */
+        /* 表格響應式優化：電腦版不強制 min-width */
         .table-container { 
             width: 100%;
             overflow-x: auto;
@@ -46,26 +46,26 @@
         .filter-input {
             background-color: rgba(255, 255, 255, 0.95);
             color: #553f62;
-            font-size: 11px;
-            padding: 4px 6px;
+            font-size: 10px;
+            padding: 2px 4px;
             border-radius: 4px;
             border: 1px solid transparent;
-            margin-top: 6px;
+            margin-top: 4px;
             outline: none;
             width: 100%;
             font-weight: normal;
         }
-        .filter-input:focus { border-color: #f07cad; background-color: white; box-shadow: 0 0 0 2px rgba(240, 124, 173, 0.2); }
+        .filter-input:focus { border-color: #f07cad; background-color: white; }
         .filter-input::placeholder { color: #9ca3af; }
 
         .filter-select {
             background-color: rgba(255, 255, 255, 0.95);
             color: #553f62;
-            font-size: 11px;
-            padding: 4px 6px;
+            font-size: 10px;
+            padding: 2px 4px;
             border-radius: 4px;
             border: none;
-            margin-top: 6px;
+            margin-top: 4px;
             outline: none;
             width: 100%;
             font-weight: normal;
@@ -77,12 +77,14 @@
             .calendar-cell { height: 90px !important; }
             .calendar-date-num { font-size: 12px !important; width: 20px !important; height: 20px !important; }
             .calendar-info-text { font-size: 9px !important; padding: 2px !important; }
+            /* 手機版表格還是需要滑動 */
+            .min-w-custom { min-width: 1100px !important; }
         }
     </style>
 </head>
 <body class="h-screen flex overflow-hidden">
 
-    <!-- 登入畫面 (驗證身分) -->
+    <!-- 登入畫面 -->
     <div id="loginScreen" class="fixed inset-0 bg-gray-100 z-50 flex items-center justify-center">
         <div class="bg-white p-8 rounded-2xl shadow-xl w-96 max-w-[90%] border-t-4 border-[#553f62]">
             <div class="text-center mb-6">
@@ -111,10 +113,8 @@
 
     <!-- 主控台介面 -->
     <div id="dashboardScreen" class="flex w-full h-full hidden relative">
-        <!-- 手機版側邊欄遮罩 -->
         <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-20 hidden md:hidden" onclick="toggleSidebar()"></div>
 
-        <!-- 側邊選單 -->
         <aside id="sidebar" class="fixed md:relative w-64 bg-[#553f62] text-white h-full flex flex-col shadow-2xl z-30 transform -translate-x-full md:translate-x-0 transition-transform duration-300">
             <div class="p-6 border-b border-white/10 text-center relative">
                 <h2 class="text-2xl font-black tracking-widest text-[#f07cad]">安興租車</h2>
@@ -146,7 +146,6 @@
             </div>
         </aside>
 
-        <!-- 主要內容 -->
         <main class="flex-1 flex flex-col bg-gray-50 h-full overflow-hidden w-full">
             <header class="bg-white shadow-sm h-16 flex items-center justify-between px-4 md:px-6 z-10 flex-shrink-0">
                 <div class="flex items-center">
@@ -201,7 +200,7 @@
                         <button class="tab-btn flex-1 md:flex-none px-6 py-2 rounded-md font-bold text-sm text-gray-500 hover:text-[#553f62]" data-target="assigned">🟢 已派車</button>
                     </div>
 
-                    <!-- 表格容器 (捲軸區域) -->
+                    <!-- 表格容器 -->
                     <div id="ordersContainer" class="table-container pb-10"></div>
                 </div>
             </div>
@@ -231,7 +230,6 @@
     </div>
 
     <script>
-        // 核心設定：確保您的 GAS 網址與預約系統使用的是同一個
         const GAS_URL = "https://script.google.com/macros/s/AKfycbyR6N8xd7nescCdpyMF6gj9-a1tuRzxKIqLdWD_pFqAe794cdheMsr2q4kJt5piu84C/exec"; 
 
         let currentUser = null;
@@ -242,9 +240,9 @@
         let currentMonthDate = new Date(); 
         let selectedDateForDetail = null;
 
-        // 全域排序與篩選物件
         let sortConfig = { key: 'time', dir: 'asc' };
         let filterConfigs = { date: '', time: '', type: 'all', car: 'all', route: '', pax: '', lug: '', remarks: '' };
+        let currentViewKey = "";
 
         function formatGasDate(rawDate) {
             if (!rawDate) return "";
@@ -294,10 +292,7 @@
             const btn = document.getElementById('loginBtn');
             btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>驗證中...';
             try {
-                const res = await fetch(GAS_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'adminLogin', data: { account: acc, password: pwd } })
-                });
+                const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'adminLogin', data: { account: acc, password: pwd } }) });
                 const result = await res.json();
                 if(result.success) {
                     currentUser = result.user;
@@ -308,11 +303,8 @@
                 } else {
                     Swal.fire({ title: '登入失敗', text: result.error, icon: 'error', confirmButtonColor: '#553f62' });
                 }
-            } catch(err) {
-                Swal.fire('連線錯誤', '無法連上伺服器', 'error');
-            } finally {
-                btn.disabled = false; btn.innerHTML = '登入系統';
-            }
+            } catch(err) { Swal.fire('連線錯誤', '無法連上伺服器', 'error'); } 
+            finally { btn.disabled = false; btn.innerHTML = '登入系統'; }
         });
 
         function setupPermissions() {
@@ -335,13 +327,8 @@
                 ]);
                 if(orderRes.success) {
                     allOrders = orderRes.orders.map(o => {
-                        for (let key in o) {
-                            if (typeof o[key] === 'string' && key !== 'route') {
-                                o[key] = o[key].replace(/^'/g, "").trim();
-                            }
-                        }
-                        o.date = formatGasDate(o.date);
-                        o.time = formatGasTime(o.time);
+                        for (let key in o) { if (typeof o[key] === 'string' && key !== 'route') { o[key] = o[key].replace(/^'/g, "").trim(); } }
+                        o.date = formatGasDate(o.date); o.time = formatGasTime(o.time);
                         return o;
                     });
                 }
@@ -351,12 +338,10 @@
                     allDrivers.forEach(d => { drvHtml += `<option value="${d.code}">${d.name} - ${d.carInfo}</option>`; });
                     document.getElementById('driverSelect').innerHTML = drvHtml;
                 }
-                if (selectedDateForDetail) renderOrders();
-                else renderCalendar();
+                currentViewKey = "";
+                if (selectedDateForDetail) renderOrders(); else renderCalendar();
                 Swal.close();
-            } catch(err) {
-                Swal.fire('錯誤', '資料抓取失敗', 'error');
-            }
+            } catch(err) { Swal.fire('錯誤', '資料抓取失敗', 'error'); }
         }
 
         function renderCalendar() {
@@ -384,7 +369,7 @@
                     }
                 }
             });
-            document.getElementById('calendarMonthStats').innerHTML = `本月總計：${totalMonth} 趟 ｜ 已派：${assignedMonth} ｜ 待派：${unassignedMonth}`;
+            document.getElementById('calendarMonthStats').innerHTML = `本月：${totalMonth} 趟 ｜ 已派：${assignedMonth} ｜ 待派：${unassignedMonth}`;
             const grid = document.getElementById('calendarGrid');
             grid.innerHTML = '';
             for(let i = 0; i < firstDayOfWeek; i++) grid.innerHTML += `<div class="bg-gray-100/50 border border-gray-50 rounded-xl h-[120px] calendar-cell opacity-40"></div>`;
@@ -395,17 +380,14 @@
                 let bgClass = "bg-white border-gray-200 hover:border-[#553f62]", alertHtml = "";
                 if (data.total > 0) {
                     bgClass = (data.unassigned > 0) ? "bg-red-50 border-red-200 shadow-sm ring-1 ring-red-100" : "bg-emerald-50 border-emerald-100";
-                    alertHtml = `<div class="mt-1 md:mt-2 text-[10px] md:text-[11px] font-bold space-y-1 flex-1 flex flex-col justify-end">
-                        ${data.unassigned > 0 ? `<div class="text-red-600 bg-white rounded-md px-1 py-0.5 md:py-1 shadow-sm border border-red-50 w-full calendar-info-text text-center">🔴 ${data.unassigned}</div>` : ''}
-                        ${data.assigned > 0 ? `<div class="text-emerald-700 bg-white rounded-md px-1 py-0.5 md:py-1 shadow-sm border border-emerald-50 w-full calendar-info-text text-center">🟢 ${data.assigned}</div>` : ''}
+                    alertHtml = `<div class="mt-1 text-[10px] font-bold space-y-1 flex-1 flex flex-col justify-end">
+                        ${data.unassigned > 0 ? `<div class="text-red-600 bg-white rounded-md px-1 py-0.5 shadow-sm border border-red-50 text-center">🔴 ${data.unassigned}</div>` : ''}
+                        ${data.assigned > 0 ? `<div class="text-emerald-700 bg-white rounded-md px-1 py-0.5 shadow-sm border border-emerald-50 text-center">🟢 ${data.assigned}</div>` : ''}
                     </div>`;
-                } else {
-                    bgClass = "bg-white border-gray-100 opacity-60";
-                    alertHtml = `<div class="mt-2 text-[10px] text-gray-300 flex-1 flex items-end hidden md:flex">無任務</div>`;
-                }
+                } else { bgClass = "bg-white border-gray-100 opacity-60"; }
                 const isToday = (dateStr === todayStr);
-                const dayCircleClass = isToday ? "bg-[#553f62] text-white w-6 h-6 md:w-7 md:h-7 rounded-full flex items-center justify-center text-xs md:text-sm font-bold shadow" : "text-gray-700 font-bold text-xs md:text-sm w-6 h-6 md:w-7 md:h-7 flex items-center justify-center";
-                grid.innerHTML += `<div class="border rounded-xl h-[120px] calendar-cell p-1.5 md:p-2 flex flex-col cursor-pointer transition ${bgClass}" onclick="openDayDetail('${dateStr}')"><div class="flex justify-between items-start"><span class="${dayCircleClass}">${i}</span></div>${alertHtml}</div>`;
+                const dayCircleClass = isToday ? "bg-[#553f62] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shadow" : "text-gray-700 font-bold text-xs w-6 h-6 flex items-center justify-center";
+                grid.innerHTML += `<div class="border rounded-xl h-[120px] calendar-cell p-1.5 flex flex-col cursor-pointer transition ${bgClass}" onclick="openDayDetail('${dateStr}')"><div class="flex justify-between items-start"><span class="${dayCircleClass}">${i}</span></div>${alertHtml}</div>`;
             }
         }
 
@@ -417,9 +399,9 @@
             sortConfig = { key: 'time', dir: 'asc' };
             Object.keys(filterConfigs).forEach(k => filterConfigs[k] = (k === 'type' || k === 'car') ? 'all' : '');
             document.getElementById('calendarView').classList.add('hidden');
-            document.getElementById('detailView').classList.remove('hidden');
-            document.getElementById('detailView').classList.add('flex');
+            document.getElementById('detailView').classList.remove('hidden').classList.add('flex');
             document.getElementById('detailDateTitle').innerHTML = `<i class="far fa-calendar-check mr-2 text-[#f07cad]"></i>${dateStr}`;
+            currentViewKey = "";
             document.querySelector('[data-target="unassigned"]').click();
         };
 
@@ -430,16 +412,15 @@
             sortConfig = { key: 'date', dir: 'asc' };
             Object.keys(filterConfigs).forEach(k => filterConfigs[k] = (k === 'type' || k === 'car') ? 'all' : '');
             document.getElementById('calendarView').classList.add('hidden');
-            document.getElementById('detailView').classList.remove('hidden');
-            document.getElementById('detailView').classList.add('flex');
+            document.getElementById('detailView').classList.remove('hidden').classList.add('flex');
             document.getElementById('detailDateTitle').innerHTML = `<i class="fas fa-list-ul mr-2 text-[#f07cad]"></i>${year}年 ${month}月 全月清單`;
+            currentViewKey = "";
             document.querySelector('[data-target="unassigned"]').click();
         };
 
         document.getElementById('backToCalendarBtn').addEventListener('click', () => {
             selectedDateForDetail = null;
             document.getElementById('detailView').classList.add('hidden');
-            document.getElementById('detailView').classList.remove('flex');
             document.getElementById('calendarView').classList.remove('hidden');
             renderCalendar();
         });
@@ -447,17 +428,87 @@
         window.handleSort = (key) => {
             if (sortConfig.key === key) { sortConfig.dir = sortConfig.dir === 'asc' ? 'desc' : 'asc'; }
             else { sortConfig.key = key; sortConfig.dir = 'asc'; }
+            currentViewKey = ""; 
             renderOrders();
         };
 
         window.handleFilter = (field, value) => {
             filterConfigs[field] = value;
-            renderOrders();
+            renderOrderRowsOnly();
         };
 
         function renderOrders() {
             const container = document.getElementById('ordersContainer');
-            container.innerHTML = '';
+            const viewId = `${selectedDateForDetail}_${currentTab}`;
+            if (currentViewKey === viewId && document.getElementById('ordersTable')) {
+                renderOrderRowsOnly();
+                return;
+            }
+            currentViewKey = viewId;
+
+            const currentDayCarTypes = [...new Set(allOrders.filter(o => String(o.date).startsWith(selectedDateForDetail)).map(o => o.car))];
+            const getSortIcon = (key) => {
+                if (sortConfig.key !== key) return '<i class="fas fa-sort sort-icon"></i>';
+                return sortConfig.dir === 'asc' ? '<i class="fas fa-sort-up sort-icon active-sort"></i>' : '<i class="fas fa-sort-down sort-icon active-sort"></i>';
+            };
+
+            // 極致壓縮欄位寬度邏輯
+            container.innerHTML = `
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden min-w-custom">
+                    <table id="ordersTable" class="w-full text-xs text-left table-fixed">
+                        <thead class="bg-[#553f62] text-white font-bold border-b-4 border-[#f07cad]">
+                            <tr>
+                                <th style="width: 40px;" class="px-1 py-3 text-center">序</th>
+                                <th style="width: 95px;" class="px-2 py-3 sortable">
+                                    <div onclick="handleSort('date')">日期 ${getSortIcon('date')}</div>
+                                    <input type="text" class="filter-input" placeholder="搜尋..." value="${filterConfigs.date}" oninput="handleFilter('date', this.value)" onclick="event.stopPropagation()">
+                                </th>
+                                <th style="width: 65px;" class="px-1 py-3 sortable">
+                                    <div onclick="handleSort('time')">時間 ${getSortIcon('time')}</div>
+                                    <input type="text" class="filter-input" placeholder="..." value="${filterConfigs.time}" oninput="handleFilter('time', this.value)" onclick="event.stopPropagation()">
+                                </th>
+                                <th style="width: 70px;" class="px-1 py-3 sortable">
+                                    <div onclick="handleSort('type')">類別 ${getSortIcon('type')}</div>
+                                    <select class="filter-select" onchange="handleFilter('type', this.value)" onclick="event.stopPropagation()">
+                                        <option value="all">全部</option><option value="送機" ${filterConfigs.type === '送機' ? 'selected' : ''}>送機</option><option value="接機" ${filterConfigs.type === '接機' ? 'selected' : ''}>接機</option>
+                                    </select>
+                                </th>
+                                <th style="width: 85px;" class="px-1 py-3 sortable">
+                                    <div onclick="handleSort('car')">車型 ${getSortIcon('car')}</div>
+                                    <select class="filter-select" onchange="handleFilter('car', this.value)" onclick="event.stopPropagation()">
+                                        <option value="all">全部</option>${currentDayCarTypes.map(t => `<option value="${t}" ${filterConfigs.car === t ? 'selected' : ''}>${t}</option>`).join('')}
+                                    </select>
+                                </th>
+                                <th class="px-2 py-3 sortable" style="width: auto;">
+                                    <div onclick="handleSort('route')">行程 ${getSortIcon('route')}</div>
+                                    <input type="text" class="filter-input" placeholder="地區關鍵字..." value="${filterConfigs.route}" oninput="handleFilter('route', this.value)" onclick="event.stopPropagation()">
+                                </th>
+                                <th style="width: 65px;" class="px-1 py-3 sortable">
+                                    <div onclick="handleSort('paxLug')">人數 ${getSortIcon('paxLug')}</div>
+                                    <input type="text" class="filter-input" placeholder="..." value="${filterConfigs.pax}" oninput="handleFilter('pax', this.value)" onclick="event.stopPropagation()">
+                                </th>
+                                <th style="width: 65px;" class="px-1 py-3 sortable">
+                                    <div onclick="handleSort('paxLug')">行李 ${getSortIcon('paxLug')}</div>
+                                    <input type="text" class="filter-input" placeholder="..." value="${filterConfigs.lug}" oninput="handleFilter('lug', this.value)" onclick="event.stopPropagation()">
+                                </th>
+                                <th style="width: 180px;" class="px-2 py-3 sortable">
+                                    <div onclick="handleSort('remarks')">備註細項 ${getSortIcon('remarks')}</div>
+                                    <input type="text" class="filter-input" placeholder="搜尋..." value="${filterConfigs.remarks}" oninput="handleFilter('remarks', this.value)" onclick="event.stopPropagation()">
+                                </th>
+                                <th style="width: 100px;" class="px-1 py-3 text-center">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersTableBody" class="divide-y divide-gray-200"></tbody>
+                    </table>
+                </div>
+            `;
+            renderOrderRowsOnly();
+        }
+
+        function renderOrderRowsOnly() {
+            const tbody = document.getElementById('ordersTableBody');
+            if (!tbody) return;
+
             let filtered = allOrders.filter(o => {
                 const isFullMonth = selectedDateForDetail.length === 7;
                 const dateMatch = isFullMonth ? String(o.date).startsWith(selectedDateForDetail) : String(o.date) === selectedDateForDetail;
@@ -466,7 +517,6 @@
                 return currentTab === 'unassigned' ? !isAssigned : isAssigned;
             });
 
-            // 增強型篩選邏輯：支援總和搜尋
             filtered = filtered.filter(o => {
                 const s = (val) => String(val || "").toLowerCase();
                 const matchDate = s(o.date).includes(s(filterConfigs.date));
@@ -474,142 +524,69 @@
                 const matchType = filterConfigs.type === 'all' || o.type === filterConfigs.type;
                 const matchCar = filterConfigs.car === 'all' || o.car === filterConfigs.car;
                 const matchRoute = s(o.route).includes(s(filterConfigs.route));
-                
-                // 人數篩選邏輯 (文字比對 OR 數字總和)
                 let matchPax = s(o.paxLug).includes(s(filterConfigs.pax));
-                const pVal = s(filterConfigs.pax);
-                if (pVal !== "" && !isNaN(pVal)) {
+                if (s(filterConfigs.pax) !== "" && !isNaN(s(filterConfigs.pax))) {
                     const matches = o.paxLug.match(/大(\d+)\s+中(\d+)\s+小(\d+)/);
-                    if (matches) {
-                        const total = parseInt(matches[1]) + parseInt(matches[2]) + parseInt(matches[3]);
-                        if (total === parseInt(pVal)) matchPax = true;
-                    }
+                    if (matches && (parseInt(matches[1]) + parseInt(matches[2]) + parseInt(matches[3])) === parseInt(s(filterConfigs.pax))) matchPax = true;
                 }
-
-                // 行李篩選邏輯 (文字比對 OR 數字總和)
                 let matchLug = s(o.paxLug).includes(s(filterConfigs.lug));
-                const lVal = s(filterConfigs.lug);
-                if (lVal !== "" && !isNaN(lVal)) {
+                if (s(filterConfigs.lug) !== "" && !isNaN(s(filterConfigs.lug))) {
                     const matches = o.paxLug.match(/登機(\d+)\s+托運(\d+)/);
-                    if (matches) {
-                        const total = parseInt(matches[1]) + parseInt(matches[2]);
-                        if (total === parseInt(lVal)) matchLug = true;
-                    }
+                    if (matches && (parseInt(matches[1]) + parseInt(matches[2])) === parseInt(s(filterConfigs.lug))) matchLug = true;
                 }
-
                 const combinedRemarks = s(o.remarks) + s(o.sport) + s(o.seat);
                 const matchRemarks = combinedRemarks.includes(s(filterConfigs.remarks));
                 return matchDate && matchTime && matchType && matchCar && matchRoute && matchPax && matchLug && matchRemarks;
             });
 
             filtered.sort((a, b) => {
-                let valA = a[sortConfig.key] || "";
-                let valB = b[sortConfig.key] || "";
+                let valA = a[sortConfig.key] || ""; let valB = b[sortConfig.key] || "";
                 let res = String(valA).localeCompare(String(valB), 'zh-Hant', { numeric: true });
                 return sortConfig.dir === 'asc' ? res : -res;
             });
 
             if(filtered.length === 0) {
-                container.innerHTML = `<div class="w-full text-center py-16 bg-white rounded-xl shadow-sm border border-gray-200"><i class="far fa-folder-open text-4xl text-gray-300 mb-3 block"></i><p class="text-gray-500 font-bold">沒有符合條件的訂單</p></div>`;
+                tbody.innerHTML = `<tr><td colspan="10" class="py-10 text-center text-gray-400 font-bold">沒有符合條件的訂單</td></tr>`;
                 return;
             }
 
-            const currentDayCarTypes = [...new Set(allOrders.filter(o => String(o.date).startsWith(selectedDateForDetail)).map(o => o.car))];
-            const getSortIcon = (key) => {
-                if (sortConfig.key !== key) return '<i class="fas fa-sort sort-icon"></i>';
-                return sortConfig.dir === 'asc' ? '<i class="fas fa-sort-up sort-icon active-sort"></i>' : '<i class="fas fa-sort-down sort-icon active-sort"></i>';
-            };
-
-            let tableHtml = `
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden min-w-[1300px]">
-                    <table class="w-full text-sm text-left table-fixed">
-                        <thead class="bg-[#553f62] text-white font-bold border-b-4 border-[#f07cad]">
-                            <tr>
-                                <th class="px-2 py-4 text-center w-10 text-xs">序</th>
-                                <th class="px-2 py-4 w-28 sortable">
-                                    <div onclick="handleSort('date')">日期 ${getSortIcon('date')}</div>
-                                    <input type="text" class="filter-input" placeholder="搜尋..." value="${filterConfigs.date}" oninput="handleFilter('date', this.value)" onclick="event.stopPropagation()">
-                                </th>
-                                <th class="px-2 py-4 w-22 sortable">
-                                    <div onclick="handleSort('time')">時間 ${getSortIcon('time')}</div>
-                                    <input type="text" class="filter-input" placeholder="..." value="${filterConfigs.time}" oninput="handleFilter('time', this.value)" onclick="event.stopPropagation()">
-                                </th>
-                                <th class="px-2 py-4 w-22 sortable">
-                                    <div onclick="handleSort('type')">類別 ${getSortIcon('type')}</div>
-                                    <select class="filter-select" onchange="handleFilter('type', this.value)" onclick="event.stopPropagation()">
-                                        <option value="all">全部</option><option value="送機" ${filterConfigs.type === '送機' ? 'selected' : ''}>送機</option><option value="接機" ${filterConfigs.type === '接機' ? 'selected' : ''}>接機</option>
-                                    </select>
-                                </th>
-                                <th class="px-2 py-4 w-26 sortable">
-                                    <div onclick="handleSort('car')">車型 ${getSortIcon('car')}</div>
-                                    <select class="filter-select" onchange="handleFilter('car', this.value)" onclick="event.stopPropagation()">
-                                        <option value="all">全部</option>${currentDayCarTypes.map(t => `<option value="${t}" ${filterConfigs.car === t ? 'selected' : ''}>${t}</option>`).join('')}
-                                    </select>
-                                </th>
-                                <th class="px-3 py-4 w-auto sortable">
-                                    <div onclick="handleSort('route')">行程 ${getSortIcon('route')}</div>
-                                    <input type="text" class="filter-input" placeholder="地區/關鍵字..." value="${filterConfigs.route}" oninput="handleFilter('route', this.value)" onclick="event.stopPropagation()">
-                                </th>
-                                <th class="px-2 py-4 w-16 sortable">
-                                    <div onclick="handleSort('paxLug')">人數 ${getSortIcon('paxLug')}</div>
-                                    <input type="text" class="filter-input" placeholder="..." value="${filterConfigs.pax}" oninput="handleFilter('pax', this.value)" onclick="event.stopPropagation()">
-                                </th>
-                                <th class="px-2 py-4 w-16 sortable">
-                                    <div onclick="handleSort('paxLug')">行李 ${getSortIcon('paxLug')}</div>
-                                    <input type="text" class="filter-input" placeholder="..." value="${filterConfigs.lug}" oninput="handleFilter('lug', this.value)" onclick="event.stopPropagation()">
-                                </th>
-                                <th class="px-3 py-4 w-44 sortable">
-                                    <div onclick="handleSort('remarks')">備註細項 ${getSortIcon('remarks')}</div>
-                                    <input type="text" class="filter-input" placeholder="搜尋..." value="${filterConfigs.remarks}" oninput="handleFilter('remarks', this.value)" onclick="event.stopPropagation()">
-                                </th>
-                                <th class="px-3 py-4 text-center w-32">操作</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200">
-            `;
-
+            let rowsHtml = "";
             filtered.forEach((o, index) => {
                 let paxStr = o.paxLug || "", lugStr = "";
-                const matches = o.paxLug.match(/(大\d+\s+中\d+\s+小\d+)\s+(登機\d+\s+托運\d+)/);
-                if (matches) {
-                    paxStr = matches[1];
-                    lugStr = matches[2];
-                }
-                
+                const m = o.paxLug.match(/(大\d+\s+中\d+\s+小\d+)\s+(登機\d+\s+托運\d+)/);
+                if (m) { paxStr = m[1]; lugStr = m[2]; }
                 let actionBtn = (currentUser.permissions.disp && currentTab === 'unassigned') 
-                    ? `<button onclick="openAssignModal(${o.rowIndex}, '${o.orderId}')" class="bg-[#f07cad] text-white font-bold px-4 py-2 rounded-lg shadow-sm hover:bg-[#e06b9b] transition text-xs whitespace-nowrap">指派司機</button>`
-                    : `<div class="bg-gray-100 text-gray-700 text-xs font-bold px-3 py-2 rounded-lg text-center border border-gray-200">${o.driverCode || '已派車'}</div>`;
-                let sport = o.sport && o.sport !== "無" && o.sport !== "undefined" ? `<div class="text-[#f07cad] mb-1">胖胖箱: ${o.sport}</div>` : "";
-                let seat = o.seat && o.seat !== "無" && o.seat !== "undefined" ? `<div class="text-[#f07cad] mb-1">座椅: ${o.seat}</div>` : "";
+                    ? `<button onclick="openAssignModal(${o.rowIndex}, '${o.orderId}')" class="bg-[#f07cad] text-white font-bold px-2 py-1.5 rounded-lg shadow-sm hover:bg-[#e06b9b] transition text-[10px] w-full">指派司機</button>`
+                    : `<div class="bg-gray-100 text-gray-700 text-[10px] font-bold px-1 py-1 rounded text-center border border-gray-200">${o.driverCode || '已派'}</div>`;
+                let sport = o.sport && o.sport !== "無" && o.sport !== "undefined" ? `<div class="text-[#f07cad] mb-0.5">胖胖箱: ${o.sport}</div>` : "";
+                let seat = o.seat && o.seat !== "無" && o.seat !== "undefined" ? `<div class="text-[#f07cad] mb-0.5">座椅: ${o.seat}</div>` : "";
                 let remark = o.remarks && o.remarks !== "無" && o.remarks !== "undefined" ? `<div class="text-red-600 font-bold">備註: ${o.remarks}</div>` : "";
-                let remarksHtml = (!sport && !seat && !remark) ? '<span class="text-gray-400">-</span>' : `<div class="bg-red-50/50 p-2 rounded text-[11px] leading-tight font-medium">${sport}${seat}${remark}</div>`;
+                let remarksHtml = (!sport && !seat && !remark) ? '<span class="text-gray-400">-</span>' : `<div class="bg-red-50/50 p-1.5 rounded text-[10px] leading-tight font-medium">${sport}${seat}${remark}</div>`;
                 
-                tableHtml += `
+                rowsHtml += `
                     <tr class="hover:bg-purple-50 transition">
-                        <td class="px-2 py-4 text-center font-bold text-gray-400 text-xs">${index + 1}</td>
-                        <td class="px-2 py-4 whitespace-nowrap font-medium text-gray-600 text-xs">${o.date}</td>
-                        <td class="px-2 py-4 whitespace-nowrap font-black text-[#553f62] text-sm">${o.time}</td>
-                        <td class="px-2 py-4 whitespace-nowrap"><span class="px-2 py-1 rounded text-[10px] font-bold border ${o.type === '送機' ? 'bg-blue-100 text-blue-800 border-blue-200' : 'bg-emerald-100 text-emerald-800 border-emerald-200'}">${o.type}</span></td>
-                        <td class="px-2 py-4 whitespace-nowrap font-bold text-gray-700 text-xs">${o.car}</td>
-                        <td class="px-3 py-4 text-gray-800 font-bold leading-snug text-xs">${o.route}</td>
-                        <td class="px-2 py-4 whitespace-nowrap text-gray-600 text-[11px] leading-tight">${paxStr.replace(/ /g, '<br>')}</td>
-                        <td class="px-2 py-4 whitespace-nowrap text-gray-600 text-[11px] leading-tight">${lugStr.replace(/ /g, '<br>')}</td>
-                        <td class="px-3 py-4">${remarksHtml}</td>
-                        <td class="px-3 py-4 text-center">${actionBtn}<div class="text-[9px] text-gray-400 mt-2 font-mono">${o.orderId}</div></td>
+                        <td class="px-1 py-3 text-center font-bold text-gray-400 text-[10px]">${index + 1}</td>
+                        <td class="px-2 py-3 whitespace-nowrap font-medium text-gray-600 text-[11px]">${o.date}</td>
+                        <td class="px-1 py-3 whitespace-nowrap font-black text-[#553f62] text-[13px]">${o.time}</td>
+                        <td class="px-1 py-3 whitespace-nowrap"><span class="px-1.5 py-0.5 rounded text-[10px] font-bold border ${o.type === '送機' ? 'bg-blue-100 text-blue-800 border-blue-200' : 'bg-emerald-100 text-emerald-800 border-emerald-200'}">${o.type}</span></td>
+                        <td class="px-1 py-3 whitespace-nowrap font-bold text-gray-700 text-[11px]">${o.car}</td>
+                        <td class="px-2 py-3 text-gray-800 font-bold leading-snug text-[11px]">${o.route}</td>
+                        <td class="px-1 py-3 whitespace-nowrap text-gray-600 text-[10px] leading-tight">${paxStr.replace(/ /g, '<br>')}</td>
+                        <td class="px-1 py-3 whitespace-nowrap text-gray-600 text-[10px] leading-tight">${lugStr.replace(/ /g, '<br>')}</td>
+                        <td class="px-2 py-3">${remarksHtml}</td>
+                        <td class="px-1 py-3 text-center">${actionBtn}<div class="text-[8px] text-gray-400 mt-1 font-mono">${o.orderId.slice(-6)}</div></td>
                     </tr>
                 `;
             });
-            tableHtml += `</tbody></table></div>`;
-            container.innerHTML = tableHtml;
+            tbody.innerHTML = rowsHtml;
         }
 
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('shadow', 'bg-white', 'text-[#553f62]'); b.classList.add('text-gray-500'); });
-                const target = e.currentTarget;
-                target.classList.add('shadow', 'bg-white', 'text-[#553f62]');
-                target.classList.remove('text-gray-500');
-                currentTab = target.getAttribute('data-target');
+                e.currentTarget.classList.add('shadow', 'bg-white', 'text-[#553f62]');
+                e.currentTarget.classList.remove('text-gray-500');
+                currentTab = e.currentTarget.getAttribute('data-target');
                 renderOrders();
             });
         });
@@ -626,7 +603,7 @@
         document.getElementById('cancelAssignBtn').addEventListener('click', closeModal);
         document.getElementById('confirmAssignBtn').addEventListener('click', async () => {
             const drvCode = document.getElementById('driverSelect').value;
-            if(!drvCode) return Swal.fire('請選擇', '請先選擇一名司機', 'warning');
+            if(!drvCode) return Swal.fire('請選擇', '請選擇一名司機', 'warning');
             const btn = document.getElementById('confirmAssignBtn');
             btn.disabled = true; btn.innerHTML = '派送中...';
             try {
@@ -634,7 +611,7 @@
                 const result = await res.json();
                 if(result.success) { Swal.fire({ title: '派車成功！', icon: 'success', timer: 1500, showConfirmButton: false }); closeModal(); loadDashboardData(); }
                 else { Swal.fire('派車失敗', result.error, 'error'); }
-            } catch (err) { Swal.fire('連線錯誤', '派送時發生錯誤', 'error'); } 
+            } catch (err) { Swal.fire('連線錯誤', '派送失敗', 'error'); } 
             finally { btn.disabled = false; btn.innerHTML = '確認派車'; }
         });
 
