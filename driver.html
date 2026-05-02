@@ -43,7 +43,7 @@
             </button>
         </form>
         
-        <!-- 恢復提示文字區塊 -->
+        <!-- 提示文字區塊 -->
         <div class="text-[11px] text-gray-400 mt-6 text-center leading-relaxed">
             <p>※ 綁定後，系統派單將會直接發送到您的個人 LINE。</p>
             <p>※ 資料必須與管理員試算表中的記載完全相符。</p>
@@ -61,17 +61,26 @@
         const LIFF_ID = "2009922945-KmKUgqbg"; 
         const GAS_URL = "https://script.google.com/macros/s/AKfycby_K2QLtt0nm09WsyAQkOsm51mEO6tR0UprTA-tGGlxzZBqssvDEdRlex5JIz8djNpS/exec";
 
-        // 更聰明的關閉函式：確保執行完畢即關閉
+        // 更聰明的關閉函式：確保能順利關閉視窗
         function autoClose() {
-            if (liff.isInClient()) {
-                liff.closeWindow();
-            } else {
-                Swal.fire({
-                    title: '操作已結束',
-                    text: '由於目前非 LINE 環境，請手動關閉分頁。',
-                    confirmButtonColor: '#553f62'
-                });
+            // 優先嘗試使用 LIFF SDK 關閉視窗
+            try {
+                if (liff.isInClient()) {
+                    liff.closeWindow();
+                    return;
+                }
+            } catch (e) {
+                console.error("LIFF close error", e);
             }
+
+            // 如果不在 LINE 環境或是關閉失敗，提示司機手動點擊右上角 X
+            Swal.fire({
+                title: '綁定流程結束',
+                text: '若視窗未自動關閉，請點擊手機右上角的「X」或「完成」離開此頁面。',
+                icon: 'info',
+                confirmButtonColor: '#553f62',
+                confirmButtonText: '我知道了'
+            });
         }
 
         async function init() {
@@ -95,7 +104,7 @@
                 console.error(err);
                 Swal.fire({
                     title: '系統錯誤',
-                    text: 'LINE 系統連線失敗，請聯絡管理員',
+                    text: 'LINE 連結失敗，請檢查網路或聯絡管理員',
                     icon: 'error',
                     confirmButtonColor: '#553f62'
                 }).then(autoClose);
@@ -132,24 +141,30 @@
                 if (result.success) {
                     Swal.fire({
                         title: '綁定成功！',
-                        text: `${result.name} 司機您好，您的 LINE 帳號已成功連結系統。`,
+                        text: `${result.name} 司機您好，您的 LINE 帳號已成功連結安興租車系統。`,
                         icon: 'success',
                         confirmButtonColor: '#553f62',
+                        confirmButtonText: '返回 LINE',
                         allowOutsideClick: false
                     }).then(autoClose);
                 } else {
                     Swal.fire({
                         title: '綁定失敗',
-                        text: result.error,
+                        text: result.error + '，請確認輸入資訊或聯絡客服',
                         icon: 'error',
                         confirmButtonColor: '#553f62',
+                        confirmButtonText: '重新輸入',
                         allowOutsideClick: false
-                    }).then(autoClose);
+                    }).then(() => {
+                        // 失敗時不強制關閉，讓司機有機會修正資料
+                        btn.disabled = false;
+                        btn.innerText = '確認綁定';
+                    });
                 }
             } catch (err) {
                 Swal.fire({
                     title: '連線錯誤',
-                    text: '無法傳送資料，請聯絡客服協助',
+                    text: '目前無法傳送資料，請聯絡客服協助',
                     icon: 'error',
                     confirmButtonColor: '#553f62',
                     allowOutsideClick: false
