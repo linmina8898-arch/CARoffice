@@ -518,7 +518,7 @@
                                         <option value="all">全部</option><option value="送機" ${filterConfigs.type === '送機' ? 'selected' : ''}>送機</option><option value="接機" ${filterConfigs.type === '接機' ? 'selected' : ''}>接機</option>
                                     </select>
                                 </th>
-                                <th class="px-3 py-4 w-40 sortable">
+                                <th class="px-3 py-4 w-32 sortable">
                                     <div onclick="handleSort('car')">車型 ${getSortIcon('car')}</div>
                                     <select class="filter-select" onchange="handleFilter('car', this.value)" onclick="event.stopPropagation()">
                                         <option value="all">全部</option>${currentDayCarTypes.map(t => `<option value="${t}" ${filterConfigs.car === t ? 'selected' : ''}>${t}</option>`).join('')}
