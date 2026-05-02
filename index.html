@@ -466,6 +466,7 @@
                 return currentTab === 'unassigned' ? !isAssigned : isAssigned;
             });
 
+            // 增強型篩選邏輯：支援總和搜尋
             filtered = filtered.filter(o => {
                 const s = (val) => String(val || "").toLowerCase();
                 const matchDate = s(o.date).includes(s(filterConfigs.date));
@@ -473,8 +474,29 @@
                 const matchType = filterConfigs.type === 'all' || o.type === filterConfigs.type;
                 const matchCar = filterConfigs.car === 'all' || o.car === filterConfigs.car;
                 const matchRoute = s(o.route).includes(s(filterConfigs.route));
-                const matchPax = s(o.paxLug).includes(s(filterConfigs.pax));
-                const matchLug = s(o.paxLug).includes(s(filterConfigs.lug));
+                
+                // 人數篩選邏輯 (文字比對 OR 數字總和)
+                let matchPax = s(o.paxLug).includes(s(filterConfigs.pax));
+                const pVal = s(filterConfigs.pax);
+                if (pVal !== "" && !isNaN(pVal)) {
+                    const matches = o.paxLug.match(/大(\d+)\s+中(\d+)\s+小(\d+)/);
+                    if (matches) {
+                        const total = parseInt(matches[1]) + parseInt(matches[2]) + parseInt(matches[3]);
+                        if (total === parseInt(pVal)) matchPax = true;
+                    }
+                }
+
+                // 行李篩選邏輯 (文字比對 OR 數字總和)
+                let matchLug = s(o.paxLug).includes(s(filterConfigs.lug));
+                const lVal = s(filterConfigs.lug);
+                if (lVal !== "" && !isNaN(lVal)) {
+                    const matches = o.paxLug.match(/登機(\d+)\s+托運(\d+)/);
+                    if (matches) {
+                        const total = parseInt(matches[1]) + parseInt(matches[2]);
+                        if (total === parseInt(lVal)) matchLug = true;
+                    }
+                }
+
                 const combinedRemarks = s(o.remarks) + s(o.sport) + s(o.seat);
                 const matchRemarks = combinedRemarks.includes(s(filterConfigs.remarks));
                 return matchDate && matchTime && matchType && matchCar && matchRoute && matchPax && matchLug && matchRemarks;
@@ -548,7 +570,12 @@
 
             filtered.forEach((o, index) => {
                 let paxStr = o.paxLug || "", lugStr = "";
-                if (paxStr.includes("登機")) { let parts = paxStr.split(" 登機"); paxStr = parts[0]; lugStr = "登機" + parts[1]; }
+                const matches = o.paxLug.match(/(大\d+\s+中\d+\s+小\d+)\s+(登機\d+\s+托運\d+)/);
+                if (matches) {
+                    paxStr = matches[1];
+                    lugStr = matches[2];
+                }
+                
                 let actionBtn = (currentUser.permissions.disp && currentTab === 'unassigned') 
                     ? `<button onclick="openAssignModal(${o.rowIndex}, '${o.orderId}')" class="bg-[#f07cad] text-white font-bold px-4 py-2 rounded-lg shadow-sm hover:bg-[#e06b9b] transition text-xs whitespace-nowrap">指派司機</button>`
                     : `<div class="bg-gray-100 text-gray-700 text-xs font-bold px-3 py-2 rounded-lg text-center border border-gray-200">${o.driverCode || '已派車'}</div>`;
