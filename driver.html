@@ -45,6 +45,10 @@
                     </div>
                 </div>
             </div>
+            <!-- 版本號顯示 (個人中心) -->
+            <div class="text-center text-[10px] text-gray-400 mt-6 font-mono">
+                System Version: <span class="version-display"></span>
+            </div>
         </div>
     </main>
 
@@ -62,7 +66,7 @@
     </nav>
 
     <!-- 綁定/登入遮罩 -->
-    <div id="authScreen" class="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center p-6">
+    <div id="authScreen" class="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center p-6 transition-opacity duration-300">
         <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-[#553f62] mb-4" id="authSpinner"></div>
         <p id="authMsg" class="text-[#553f62] font-bold">LINE 授權登入中...</p>
         
@@ -70,10 +74,10 @@
             <h2 class="text-xl font-black text-center text-[#553f62] mb-2">司機帳號綁定</h2>
             <p class="text-xs text-gray-500 text-center mb-4">首次登入需驗證身分，後續將以當前 LINE 自動登入</p>
             
-            <!-- 顯示當前 LINE 帳號防呆 -->
-            <div class="bg-[#e6f4ea] border border-[#34a853] rounded-xl p-3 flex items-center justify-center mb-2 shadow-sm">
+            <!-- 顯示當前 LINE 帳號防呆 (改為專屬紫色系) -->
+            <div class="bg-[#f8f6fa] border border-[#553f62] rounded-xl p-3 flex items-center justify-center mb-2 shadow-sm">
                 <span class="text-xs text-gray-600 font-bold mr-2">綁定 LINE 帳號：</span>
-                <span id="bindLineName" class="text-sm font-black text-[#34a853]"></span>
+                <span id="bindLineName" class="text-sm font-black text-[#553f62]"></span>
             </div>
 
             <input type="text" id="bindName" placeholder="司機真實姓名" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-[#553f62] outline-none font-bold" required>
@@ -83,6 +87,11 @@
             
             <button type="submit" class="w-full bg-[#f07cad] text-white py-3.5 rounded-xl font-black shadow-md mt-2">立即綁定</button>
         </form>
+
+        <!-- 版本號顯示 (登入畫面) -->
+        <div class="absolute bottom-4 text-center text-[10px] text-gray-400 font-mono">
+            System Version: <span class="version-display"></span>
+        </div>
     </div>
 
     <!-- 簽名板 Modal -->
@@ -106,7 +115,10 @@
         // 您的最新 GAS 網址
         const GAS_URL = "https://script.google.com/macros/s/AKfycby-7ElLB9SY0ATsQ_bP2q5_a9ZGMJ6ZP5IFy3mnFMWFFXrHyLwhK1wYxkmQ7-SehXRm/exec"; 
 
-        const DRIVER_VERSION = "v1.8.4";
+        const DRIVER_VERSION = "v1.8.7";
+        
+        // 將版本號注入所有對應的標籤
+        document.querySelectorAll('.version-display').forEach(el => el.innerText = DRIVER_VERSION);
 
         let driverData = null;
         let tasks = [];
@@ -224,19 +236,60 @@
             initCanvas();
         }
 
+        // --- 處理綁定邏輯 (修正為自動關閉驗證畫面) ---
         async function handleBind(e, lineId) {
             e.preventDefault();
-            const btn = e.target.querySelector('button'); btn.disabled = true; btn.innerText = "驗證中...";
+            const btn = e.target.querySelector('button'); 
+            btn.disabled = true; 
+            btn.innerText = "驗證中...";
+            
+            const bindName = document.getElementById('bindName').value.trim();
+            const bindPhone = document.getElementById('bindPhone').value.trim(); // 保持畫面輸入的格式(可能有連字號)
+
             try {
+                // 送出請求比對
                 const res = await apiCall('driverBindAuth', { 
                     lineId: lineId, 
-                    name: document.getElementById('bindName').value.trim(),
-                    phone: document.getElementById('bindPhone').value.replace(/-/g, '').trim() // 傳送前移除連字號，確保與後端純數字比對相符
+                    name: bindName,
+                    phone: bindPhone
                 });
-                Swal.fire('綁定成功', '歡迎加入 AS-派車系統！', 'success').then(() => window.location.reload());
+                
+                Swal.fire({
+                    title: '綁定成功',
+                    text: '歡迎加入 AS-派車系統！',
+                    icon: 'success',
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => {
+                    // 自動隱藏登入遮罩，顯示主畫面
+                    const authScreen = document.getElementById('authScreen');
+                    authScreen.classList.add('opacity-0');
+                    setTimeout(() => authScreen.classList.add('hidden'), 300);
+
+                    document.getElementById('mainContent').classList.remove('hidden');
+                    document.getElementById('bottomNav').classList.remove('hidden');
+                    
+                    // 更新個人資料
+                    driverData = { name: bindName, phone: bindPhone, lineId: lineId };
+                    document.getElementById('profName').innerText = driverData.name;
+                    document.getElementById('profPhone').innerText = driverData.phone;
+                    
+                    // 自動載入任務
+                    loadTasks();
+                });
             } catch (err) {
-                Swal.fire('綁定失敗', err.message, 'error');
-                btn.disabled = false; btn.innerText = "立即綁定";
+                // 防呆提示：提醒確認試算表格式
+                Swal.fire({
+                    title: '綁定失敗',
+                    html: `<div style="text-align: left;">
+                             <p class="text-red-500 font-bold mb-2">${err.message}</p>
+                             <hr class="my-2">
+                             <p class="text-xs text-gray-500">💡 提示：請管理員檢查「司機名單」的 C 欄 (電話) 是否包含 <b>連字號(-)</b>。前端格式為 ${bindPhone}。</p>
+                           </div>`,
+                    icon: 'error'
+                });
+                btn.disabled = false; 
+                btn.innerText = "立即綁定";
             }
         }
 
