@@ -68,10 +68,20 @@
         
         <form id="bindForm" class="w-full max-w-sm mt-8 hidden space-y-4">
             <h2 class="text-xl font-black text-center text-[#553f62] mb-2">司機帳號綁定</h2>
-            <p class="text-xs text-gray-500 text-center mb-6">首次登入需驗證身分，後續將自動登入</p>
+            <p class="text-xs text-gray-500 text-center mb-4">首次登入需驗證身分，後續將以當前 LINE 自動登入</p>
+            
+            <!-- 顯示當前 LINE 帳號防呆 -->
+            <div class="bg-[#e6f4ea] border border-[#34a853] rounded-xl p-3 flex items-center justify-center mb-2 shadow-sm">
+                <span class="text-xs text-gray-600 font-bold mr-2">綁定 LINE 帳號：</span>
+                <span id="bindLineName" class="text-sm font-black text-[#34a853]"></span>
+            </div>
+
             <input type="text" id="bindName" placeholder="司機真實姓名" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-[#553f62] outline-none font-bold" required>
             <input type="tel" id="bindPhone" placeholder="司機手機號碼" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-[#553f62] outline-none font-bold" required>
-            <button type="submit" class="w-full bg-[#f07cad] text-white py-3.5 rounded-xl font-black shadow-md">立即綁定</button>
+            
+            <p class="text-[10px] text-red-500 font-bold text-center tracking-wide">※ 綁定後僅限此 LINE 帳號可登入接單，請確認無誤</p>
+            
+            <button type="submit" class="w-full bg-[#f07cad] text-white py-3.5 rounded-xl font-black shadow-md mt-2">立即綁定</button>
         </form>
     </div>
 
@@ -96,7 +106,7 @@
         // 您的最新 GAS 網址
         const GAS_URL = "https://script.google.com/macros/s/AKfycby-7ElLB9SY0ATsQ_bP2q5_a9ZGMJ6ZP5IFy3mnFMWFFXrHyLwhK1wYxkmQ7-SehXRm/exec"; 
 
-        const DRIVER_VERSION = "v1.8.2";
+        const DRIVER_VERSION = "v1.8.3";
 
         let driverData = null;
         let tasks = [];
@@ -168,6 +178,7 @@
                     // 在瀏覽器預覽時測試用 (或未設定 LIFF ID 時)
                     document.getElementById('authMsg').innerText = "預覽模式：請輸入司機資料";
                     document.getElementById('authSpinner').classList.add('hidden');
+                    document.getElementById('bindLineName').innerText = "預覽測試帳號";
                     document.getElementById('bindForm').classList.remove('hidden');
                     document.getElementById('bindForm').onsubmit = (e) => handleBind(e, "TEST_LINE_ID_" + Math.floor(Math.random()*1000));
                     return;
@@ -189,6 +200,10 @@
                 } else {
                     document.getElementById('authMsg').innerText = "請驗證您的司機身分";
                     document.getElementById('authSpinner').classList.add('hidden');
+                    
+                    // 顯示司機當下的 LINE 名稱，防呆機制
+                    document.getElementById('bindLineName').innerText = profile.displayName;
+                    
                     document.getElementById('bindForm').classList.remove('hidden');
                     document.getElementById('bindForm').onsubmit = (e) => handleBind(e, profile.userId);
                 }
