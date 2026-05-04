@@ -22,7 +22,7 @@
     <!-- 頂部導航 -->
     <header class="bg-white border-b border-gray-200 z-10 px-4 py-3 flex justify-between items-center">
         <div class="font-bold text-lg text-[#553f62] tracking-wider">安興租車 Driver</div>
-        <button onclick="window.location.href='tel:0955311306'" class="text-sm font-bold text-[#553f62] border border-[#553f62] px-3 py-1 bg-gray-50 rounded">聯絡客服</button>
+        <button onclick="window.location.href='tel:0909150588'" class="text-sm font-bold text-[#553f62] border border-[#553f62] px-3 py-1 bg-gray-50 rounded">聯絡客服</button>
     </header>
 
     <!-- 主視圖區 -->
@@ -74,6 +74,17 @@
                         <p class="text-xs text-gray-500 mb-1">本月趟次</p>
                         <p id="profCountThis" class="text-xl font-bold text-[#553f62]">0</p>
                     </div>
+                </div>
+
+                <!-- 新增：個人詳細資料區塊 -->
+                <div class="mt-6 pt-4 border-t border-gray-100 text-left text-sm space-y-3 text-gray-600">
+                    <div class="flex justify-between"><span>姓名</span><span class="font-bold text-gray-800" id="profNameDetail">-</span></div>
+                    <div class="flex justify-between"><span>車號</span><span class="font-bold text-gray-800" id="profCarNo">-</span></div>
+                    <div class="flex justify-between"><span>車型</span><span class="font-bold text-gray-800" id="profCarType">-</span></div>
+                    <div class="flex justify-between"><span>車色</span><span class="font-bold text-gray-800" id="profCarColor">-</span></div>
+                    <div class="flex justify-between"><span>銀行代碼</span><span class="font-bold text-gray-800" id="profBankCode">-</span></div>
+                    <div class="flex justify-between"><span>銀行帳號</span><span class="font-bold text-gray-800" id="profBankAcc">-</span></div>
+                    <div class="flex justify-between"><span>保單到期日</span><span class="font-bold text-gray-800" id="profInsurance">-</span></div>
                 </div>
             </div>
             <div class="text-center text-[10px] text-gray-400 mt-6 font-mono">System Version: <span class="version-display"></span></div>
@@ -128,8 +139,8 @@
 
     <script>
         const LIFF_ID = "2009971109-pdmG3XEe"; 
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbxqnlPudH1bAQtPqPqqNx6-HOAfPdQKjOxvt6vYt7oPQ3wz3FgmgkdMAALToiTjsdoy/exec"; 
-        const DRIVER_VERSION = "v1.8.9";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbwVVkn82zci3l81eZuXmQAZsMQ9F-MWucHJmHtoiaMNumqNLY4pHaKUrFR47RjLvBBi/exec"; 
+        const DRIVER_VERSION = "v1.9.0";
         
         document.querySelectorAll('.version-display').forEach(el => el.innerText = DRIVER_VERSION);
 
@@ -225,8 +236,8 @@
             const bindPhone = document.getElementById('bindPhone').value.trim(); 
             const bindLineName = document.getElementById('bindLineName').innerText; 
             try {
-                await apiCall('driverBindAuth', { lineId: lineId, lineName: bindLineName, name: bindName, phone: bindPhone });
-                driverData = { name: bindName, phone: bindPhone, lineId: lineId };
+                const res = await apiCall('driverBindAuth', { lineId: lineId, lineName: bindLineName, name: bindName, phone: bindPhone });
+                driverData = res.driver; 
                 showMainApp();
             } catch (err) {
                 Swal.fire({ title: '綁定失敗', text: err.message, icon: 'error' });
@@ -241,6 +252,16 @@
             document.getElementById('bottomNav').classList.remove('hidden');
             document.getElementById('profName').innerText = driverData.name;
             document.getElementById('profPhone').innerText = driverData.phone;
+            
+            // 綁定詳細資料
+            document.getElementById('profNameDetail').innerText = driverData.name || '-';
+            document.getElementById('profCarNo').innerText = driverData.carNo || '-';
+            document.getElementById('profCarType').innerText = driverData.carType || '-';
+            document.getElementById('profCarColor').innerText = driverData.carColor || '-';
+            document.getElementById('profBankCode').innerText = driverData.bankCode || '-';
+            document.getElementById('profBankAcc').innerText = driverData.bankAcc || '-';
+            document.getElementById('profInsurance').innerText = driverData.insurance || '-';
+
             loadTasks();
         }
 
@@ -305,8 +326,9 @@
                         let statusText = t.driverStatus || "未出發";
                         let statusColor = statusText === "未出發" ? "text-gray-400" : "text-[#553f62]";
                         
-                        let area = t.address.substring(0, 6) || "無地址"; // 簡略地址
-                        let routeStr = t.type === '接機' ? `機場 → ${area}` : `${area} → 機場`;
+                        let areaDisplay = t.address.length > 15 ? t.address.substring(0, 15) + '...' : t.address;
+                        let airportDisplay = t.airport || "機場";
+                        let routeStr = t.type === '接機' ? `${airportDisplay} → ${areaDisplay}` : `${areaDisplay} → ${airportDisplay}`;
                         
                         html += `
                         <div onclick="openTaskDetail('${t.orderId}')" class="card p-3 flex justify-between items-center cursor-pointer active:bg-gray-50">
@@ -466,7 +488,9 @@
                         orderId: orderId, type: formValues.type, note: formValues.note, driverName: driverData ? driverData.name : "測試司機"
                     });
                     Swal.fire('已通報', '已通知調度人員', 'success');
-                } catch(e) { Swal.fire('失敗', '請直撥客服', 'error'); }
+                } catch(e) { 
+                    Swal.fire('通報失敗', '請直撥客服\n(系統訊息: ' + e.message + ')', 'error'); 
+                }
             }
         }
 
@@ -481,7 +505,7 @@
                 container.innerHTML = res.history.map(t => `
                     <div class="card p-3 border-b border-gray-200 mb-2">
                         <div class="text-sm font-bold text-gray-800">${t.date} ${t.time} ${t.type}</div>
-                        <div class="text-xs text-gray-400 mt-1">***</div>
+                        <div class="text-xs font-bold text-gray-600 mt-1">${t.addressMasked} <> ${t.airport} &nbsp;&nbsp; ${t.custNameMasked}</div>
                     </div>
                 `).join('');
                 Swal.close();
