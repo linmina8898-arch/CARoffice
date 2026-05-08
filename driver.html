@@ -111,7 +111,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.4.0";
+        const APP_VERSION = "v1.5.0";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -205,8 +205,8 @@
                         bankCode: '822', bankAcc: '1234567890', license: '2030-01-01', insurance: '2025-12-31', lineId: 'preview' 
                     };
                     tasks = [
-                        { orderId: 'AS-20260508', date: getFormattedDate(0), time: '14:30', type: '接機', airport: '桃園機場', address: '台北市信義區忠孝東路五段', custName: '李先生', custPhone: '0912-345-678', remarks: '舉牌：李大同\n需幫忙拿行李', extraStop: '新北市板橋區', seats: '1個前向', luggage: '2', sportLuggage: '無', flightNo: 'BR123', driverStatus: '未出發', driverNote: '客人脾氣較急，請準時抵達' },
-                        { orderId: 'AS-20260509', date: getFormattedDate(1), time: '09:00', type: '送機', airport: '松山機場', address: '台北市大安區新生南路', custName: '陳小姐', custPhone: '0987-654-321', remarks: '無', extraStop: '無', seats: '無', luggage: '1', sportLuggage: '無', flightNo: 'CI456', driverStatus: '客上' }
+                        { orderId: 'AS-20260508', date: getFormattedDate(0), time: '14:30', type: '接機', airport: '桃園機場', address: '台北市信義區忠孝東路五段', custName: '李先生', custPhone: '0912345678', remarks: '舉牌：李大同\n需幫忙拿行李', extraStop: '新北市板橋區', seats: '1個前向', luggage: '2', sportLuggage: '無', flightNo: 'BR123', driverStatus: '未出發', driverNote: '客人脾氣較急，請準時抵達', paymentMethod: '付現', grandTotal: '1500', paxCount: '大2 小1', car: '進口商務車' },
+                        { orderId: 'AS-20260509', date: getFormattedDate(1), time: '09:00', type: '送機', airport: '松山機場', address: '台北市大安區新生南路', custName: '陳小姐', custPhone: '0987654321', remarks: '無', extraStop: '無', seats: '無', luggage: '1', sportLuggage: '無', flightNo: 'CI456', driverStatus: '客上', paymentMethod: '簽單', grandTotal: '1000', paxCount: '大1', car: '小車' }
                     ];
                     return;
                 }
@@ -299,7 +299,6 @@
             try {
                 const res = await apiCall('driverGetTasks', { lineId: driverData.lineId });
                 tasks = res.tasks;
-                // 注意：若沒有後端回傳趟次，可以隱藏該區塊，先保留預設0
                 if(res.monthCount !== undefined) {
                     document.getElementById('profCount').innerText = res.monthCount;
                 }
@@ -323,7 +322,7 @@
             const detailEl = document.getElementById(id);
             if (detailEl.classList.contains('hidden')) {
                 detailEl.classList.remove('hidden');
-                btn.innerText = '隱藏明細 ▲';
+                btn.innerText = '收合明細 ▲';
             } else {
                 detailEl.classList.add('hidden');
                 btn.innerText = '展開明細 ▼';
@@ -352,53 +351,51 @@
             container.innerHTML = filteredTasks.map(t => {
                 let currentStep = t.driverStatus || "未出發";
                 
-                // 動態按鈕產生邏輯 (無綠色，以藍色/深色為主)
+                // 動態按鈕產生邏輯
                 let actionBtn = '';
                 if(currentStep === "未出發" || !currentStep) {
-                    actionBtn = `<button onclick="updateStatus('${t.orderId}', '已出發')" class="flex-1 bg-[#553f62] text-white py-3.5 rounded-xl font-bold shadow-md text-base">點我出發</button>`;
+                    actionBtn = `<button onclick="updateStatus('${t.orderId}', '已出發')" class="w-full bg-[#553f62] text-white py-3.5 rounded-xl font-bold shadow-md text-base">點我出發</button>`;
                 } else if(currentStep === "已出發") {
-                    actionBtn = `<button onclick="updateStatus('${t.orderId}', '已抵達')" class="flex-1 bg-[#f07cad] text-white py-3.5 rounded-xl font-bold shadow-md text-base">已抵達上車點</button>`;
+                    actionBtn = `<button onclick="updateStatus('${t.orderId}', '已抵達')" class="w-full bg-[#f07cad] text-white py-3.5 rounded-xl font-bold shadow-md text-base">已抵達上車點</button>`;
                 } else if(currentStep === "已抵達") {
-                    actionBtn = `<button onclick="updateStatus('${t.orderId}', '客上')" class="flex-1 bg-blue-600 text-white py-3.5 rounded-xl font-bold shadow-md text-base">客戶已上車</button>`;
+                    actionBtn = `<button onclick="updateStatus('${t.orderId}', '客上')" class="w-full bg-blue-600 text-white py-3.5 rounded-xl font-bold shadow-md text-base">客戶已上車</button>`;
                 } else if(currentStep === "客上") {
-                    actionBtn = `<button onclick="openSigModal('${t.orderId}')" class="flex-1 bg-gray-800 text-white py-3.5 rounded-xl font-bold shadow-md text-base">客下 (準備結案)</button>`;
+                    actionBtn = `<button onclick="handleCheckout('${t.orderId}', '${t.paymentMethod || ''}')" class="w-full bg-gray-800 text-white py-3.5 rounded-xl font-bold shadow-md text-base">客下 (完成行程)</button>`;
                 }
 
-                // 🔥 建立動態標籤 (Tags) - 單純的配色不雜亂
+                // 🔥 動態標籤 (Tags)
                 let tags = [];
-                // 主標籤
-                tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#553f62] text-white">${t.type}</span>`);
+                let mmdd = t.date.substring(5).replace('-', '/'); // 05-08 -> 05/08
+                tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-500 text-white">📅 ${mmdd}</span>`);
+                tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded ${t.type === '接機' ? 'bg-[#f07cad]' : 'bg-[#553f62]'} text-white">${t.type}</span>`);
                 if (t.extraStop && t.extraStop !== '無') {
                     tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded border border-gray-400 text-gray-600">加點</span>`);
                 }
                 if (t.seats && t.seats !== '無') {
                     tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded border border-gray-400 text-gray-600">安全座椅</span>`);
                 }
-                if (t.remarks && (t.remarks.includes('舉牌') || t.remarks.includes('看板'))) {
+                // 判斷舉牌 (從備註或是獨立欄位)
+                let signContent = (t.signboard && t.signboard !== '無' && t.signboard !== 'undefined') ? t.signboard : (t.remarks && t.remarks.includes('舉牌') ? '詳見客戶備註' : '無');
+                if (signContent !== '無') {
                     tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded border border-[#f07cad] text-[#f07cad]">舉牌</span>`);
                 }
                 let tagsHtml = tags.join('');
 
-                // 路線摘要 (截短地址顯示)
+                // 路線摘要
                 let shortAddress = t.address.length > 6 ? t.address.substring(0, 6) + '...' : t.address;
                 let summaryRoute = t.type === '送機' ? `${shortAddress} ➜ ${t.airport}` : `${t.airport} ➜ ${shortAddress}`;
 
-                // 完整路線顯示
-                let routeHtml = `<div class="text-sm font-bold text-gray-800 mt-2 mb-2"><div class="flex items-start"><span class="mr-2">A.</span><span>${t.type === '送機'? t.address : t.airport}</span></div><div class="flex items-start mt-1"><span class="mr-2">B.</span><span>${t.type === '接機'? t.address : t.airport}</span></div>`;
-                if(t.extraStop && t.extraStop !== '無') routeHtml += `<div class="flex items-start mt-1 text-[#f07cad]"><span class="mr-2">📍</span><span>加點: ${t.extraStop}</span></div>`;
-                routeHtml += `</div>`;
-
-                // 調度備註
-                let driverNoteHtml = '';
-                if (t.driverNote && t.driverNote.trim() !== '') {
-                    driverNoteHtml = `
-                    <div class="mt-3 bg-yellow-50 border-l-4 border-yellow-400 p-2.5 rounded shadow-sm">
-                        <p class="text-[11px] font-black text-yellow-700 mb-0.5">調度派車交代：</p>
-                        <p class="text-xs text-yellow-800 whitespace-pre-wrap font-bold leading-relaxed">${t.driverNote}</p>
-                    </div>`;
+                // --- 展開明細內容生成 ---
+                let callBtn = `<a href="tel:${t.custPhone}" class="ml-3 bg-red-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-sm inline-flex items-center">📞 致電客戶</a>`;
+                
+                // 收現判定邏輯
+                let cashHtml = '';
+                if (t.paymentMethod && (t.paymentMethod.includes('現') || t.paymentMethod.includes('車上'))) {
+                    cashHtml = `<div class="flex justify-between items-center py-2 border-b border-gray-100"><span class="text-gray-500 font-bold">收現金額</span><span class="text-red-600 font-black text-lg">$${t.grandTotal || '0'}</span></div>`;
                 }
 
-                let remarksHtml = t.remarks ? t.remarks.replace(/\n/g, '<br>') : '無';
+                let dNote = (t.driverNote && t.driverNote.trim() !== '') ? t.driverNote.replace(/\n/g, '<br>') : '無';
+                let cNote = (t.remarks && t.remarks.trim() !== '' && t.remarks !== '無') ? t.remarks.replace(/\n/g, '<br>') : '無';
 
                 return `
                 <div class="glass-card p-4 rounded-xl border border-gray-200 shadow-sm relative overflow-hidden">
@@ -416,29 +413,32 @@
                         </div>
                     </div>
                     
-                    <button onclick="toggleDetails('detail-${t.orderId}', this)" class="w-full text-center text-xs font-bold text-gray-400 py-2 border-t border-gray-100 mt-2 hover:bg-gray-50 transition rounded-b-xl">展開明細 ▼</button>
+                    <button onclick="toggleDetails('detail-${t.orderId}', this)" class="w-full text-center text-xs font-bold text-gray-400 py-2 border-t border-gray-100 mt-2 hover:bg-gray-50 transition rounded-b-xl bg-gray-50/50">展開明細 ▼</button>
 
                     <!-- 【詳細資訊區塊 (預設隱藏)】 -->
-                    <div id="detail-${t.orderId}" class="hidden mt-1 pt-3 border-t border-gray-200 pl-2">
-                        <div class="flex justify-between items-center bg-gray-50 p-2 rounded-lg mb-2">
-                            <div>
-                                <p class="font-bold text-gray-800">${t.custName}</p>
-                                <p class="text-xs font-bold text-blue-600 mt-0.5"><a href="tel:${t.custPhone}" class="underline">${t.custPhone}</a></p>
+                    <div id="detail-${t.orderId}" class="hidden mt-1 pl-2">
+                        <div class="space-y-1 text-sm mt-3 bg-white p-3 rounded-lg border border-gray-200 shadow-inner">
+                            <div class="flex justify-between items-center py-1.5 border-b border-gray-100"><span class="text-gray-500 font-bold">接送機場</span><span class="font-bold text-gray-800">${t.airport}</span></div>
+                            <div class="flex justify-between items-center py-1.5 border-b border-gray-100"><span class="text-gray-500 font-bold">航班編號</span><span class="font-bold text-[#f07cad]">${t.flightNo || '無'}</span></div>
+                            <div class="flex justify-between items-center py-1.5 border-b border-gray-100">
+                                <span class="text-gray-500 font-bold">客戶姓名</span>
+                                <div class="flex items-center"><span class="font-bold text-gray-800">${t.custName}</span>${callBtn}</div>
                             </div>
-                            <button onclick="reportAnomaly('${t.orderId}')" class="text-xs text-red-500 border border-red-200 bg-white px-2 py-1 rounded shadow-sm font-bold">異常回報</button>
-                        </div>
-                        
-                        ${routeHtml}
-                        ${driverNoteHtml}
-                        
-                        <div class="text-[11px] text-gray-500 mt-2 font-medium bg-gray-50 p-2 rounded leading-relaxed">
-                            行李: ${t.luggage} ︱ 胖箱: ${t.sportLuggage} ︱ 座椅: ${t.seats}<br>
-                            航班: <span class="font-bold text-[#f07cad]">${t.flightNo}</span><br>
-                            備註: <span class="text-red-500 font-bold">${remarksHtml}</span>
+                            <div class="flex flex-col py-1.5 border-b border-gray-100"><span class="text-gray-500 font-bold mb-1">接送地址</span><span class="font-bold text-gray-800">${t.address}</span></div>
+                            <div class="flex flex-col py-1.5 border-b border-gray-100"><span class="text-gray-500 font-bold mb-1">加點地址</span><span class="font-bold text-gray-800">${t.extraStop || '無'}</span></div>
+                            <div class="flex justify-between items-center py-1.5 border-b border-gray-100"><span class="text-gray-500 font-bold">乘車人數</span><span class="font-bold text-gray-800">${t.paxCount || '-'}</span></div>
+                            <div class="flex justify-between items-center py-1.5 border-b border-gray-100"><span class="text-gray-500 font-bold">行李件數</span><span class="font-bold text-gray-800">${t.luggage || '0'} (胖箱: ${t.sportLuggage || '無'})</span></div>
+                            <div class="flex justify-between items-center py-1.5 border-b border-gray-100"><span class="text-gray-500 font-bold">預約車型</span><span class="font-bold text-gray-800">${t.car || '-'}</span></div>
+                            <div class="flex justify-between items-center py-1.5 border-b border-gray-100"><span class="text-gray-500 font-bold">兒童座椅</span><span class="font-bold text-gray-800">${t.seats || '無'}</span></div>
+                            <div class="flex justify-between items-center py-1.5 border-b border-gray-100"><span class="text-gray-500 font-bold">舉牌內容</span><span class="font-bold text-gray-800">${signContent}</span></div>
+                            <div class="flex flex-col py-1.5 border-b border-gray-100"><span class="text-gray-500 font-bold mb-1">客戶備註</span><span class="font-bold text-red-500">${cNote}</span></div>
+                            <div class="flex flex-col py-1.5 border-b border-gray-100"><span class="text-gray-500 font-bold mb-1">車商備註</span><span class="font-bold text-yellow-800 bg-yellow-50 p-1.5 rounded">${dNote}</span></div>
+                            ${cashHtml}
                         </div>
 
-                        <div class="flex gap-2 mt-4">
+                        <div class="flex flex-col gap-3 mt-4">
                             ${actionBtn}
+                            <button onclick="reportAnomaly('${t.orderId}')" class="w-full border-2 border-red-200 text-red-500 py-2.5 rounded-xl font-bold text-sm bg-white hover:bg-red-50 transition">⚠️ 異常狀況回報</button>
                         </div>
                     </div>
                 </div>`;
@@ -479,6 +479,27 @@
                 loadTasks();
             } catch(e) {
                 if(e !== 'No Geolocation') Swal.fire('錯誤', e.message, 'error');
+            }
+        }
+
+        // --- 智能結案判定 (簽單 vs 免簽名) ---
+        function handleCheckout(orderId, paymentMethod) {
+            if (paymentMethod && (paymentMethod.includes('簽') || paymentMethod.includes('月結'))) {
+                openSigModal(orderId);
+            } else {
+                Swal.fire({
+                    title: '確認完成行程？',
+                    text: '此訂單付款方式為「轉帳/刷卡/付現」，不需簽單。',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#553f62',
+                    confirmButtonText: '確認結案',
+                    cancelButtonText: '取消'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        updateStatus(orderId, '已結案');
+                    }
+                });
             }
         }
 
