@@ -129,7 +129,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.9.0";
+        const APP_VERSION = "v1.9.1";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -377,7 +377,7 @@
                 let mmdd = t.date.substring(5).replace('-', '/');
                 tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-500 text-white">${mmdd}</span>`);
                 tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded ${t.type === '接機' ? 'bg-[#f07cad]' : 'bg-[#553f62]'} text-white">${t.type}</span>`);
-                if (cleanVal(t.extraStop)) tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded border border-gray-400 text-gray-600">加點</span>`);
+                if (cleanVal(t.extraStop)) tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-600 text-white">加點</span>`);
                 if (cleanVal(t.seats)) tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded border border-gray-400 text-gray-600">安全座椅</span>`);
                 if (hasSign) tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded border border-[#f07cad] text-[#f07cad]">舉牌</span>`);
                 let tagsHtml = tags.join('');
