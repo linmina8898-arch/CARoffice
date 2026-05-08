@@ -63,7 +63,7 @@
         </div>
     </main>
 
-    <!-- 【修改】任務明細獨立頁面 (原生滾動，解決無法往下滑問題) -->
+    <!-- 任務明細獨立頁面 (原生滾動，解決無法往下滑問題) -->
     <div id="view-task-detail" class="fixed inset-0 bg-[#f3f4f6] z-[40] hidden overflow-y-auto">
         <header class="bg-[#553f62] shadow-md px-4 py-3 flex items-center justify-between sticky top-0 z-50">
             <button onclick="closeTaskDetail()" class="text-white font-bold text-xl px-2 py-1 active:bg-white/20 rounded">⬅</button>
@@ -95,10 +95,17 @@
         
         <form id="bindForm" class="w-full max-w-sm mt-8 hidden space-y-4">
             <h2 class="text-xl font-black text-center text-[#553f62] mb-2">司機帳號綁定</h2>
-            <p class="text-xs text-gray-500 text-center mb-6">首次登入需驗證身分，後續將自動登入</p>
+            <p class="text-xs text-gray-500 text-center mb-4">首次登入需驗證身分，後續將自動登入</p>
+            
+            <!-- 顯示當下 LINE 帳號名稱 -->
+            <div class="bg-gray-50 p-3 rounded-xl border border-gray-200 text-center mb-2 shadow-inner">
+                <span class="text-xs text-gray-500">當前綁定 LINE 帳號：</span><br>
+                <span id="lineNameDisplay" class="font-black text-[#553f62] text-sm">讀取中...</span>
+            </div>
+
             <input type="text" id="bindName" placeholder="司機真實姓名" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-[#553f62] outline-none font-bold" required>
             <input type="tel" id="bindPhone" placeholder="司機手機號碼 (0900-000-000)" maxlength="12" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-[#553f62] outline-none font-bold" required>
-            <button type="submit" class="w-full bg-[#f07cad] text-white py-3.5 rounded-xl font-black shadow-md">立即綁定</button>
+            <button type="submit" class="w-full bg-[#f07cad] text-white py-3.5 rounded-xl font-black shadow-md hover:opacity-90">立即綁定</button>
         </form>
         
         <!-- 登入頁版本號顯示 -->
@@ -122,7 +129,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.8.0";
+        const APP_VERSION = "v1.9.0";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -163,7 +170,7 @@
             e.target.value = val;
         });
 
-        // --- 核心：強制 GPS 定位 ---
+        // --- 核心：GPS 定位 (大幅加快讀取速度) ---
         function requireGPS() {
             return new Promise((resolve, reject) => {
                 if (!navigator.geolocation) {
@@ -180,8 +187,8 @@
                     (err) => {
                         Swal.close();
                         Swal.fire({
-                            title: '定位遭拒絕',
-                            html: '<p class="text-left text-sm text-gray-600">系統必須取得 GPS 定位才能執行回報。<br><br>請至手機設定開啟「位置資訊」權限，或聯絡調度。</p>',
+                            title: '定位失敗',
+                            html: '<p class="text-left text-sm text-gray-600">系統必須取得定位才能執行回報。<br><br>請至手機設定開啟「位置資訊」權限，或聯絡調度。</p>',
                             icon: 'warning',
                             showCancelButton: true,
                             confirmButtonText: '聯絡調度',
@@ -189,7 +196,8 @@
                         }).then((r) => { if(r.isConfirmed) window.location.href='tel:0955311306'; });
                         reject(err);
                     },
-                    { enableHighAccuracy: true, timeout: 8000 }
+                    // 優化定位參數：關閉高精度強制要求，改用基地台/WiFi快取快速定位
+                    { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 }
                 );
             });
         }
@@ -210,6 +218,7 @@
                     // 預覽模式假資料
                     document.getElementById('authMsg').innerText = "預覽模式：請輸入司機資料";
                     document.getElementById('authSpinner').classList.add('hidden');
+                    document.getElementById('lineNameDisplay').innerText = '測試預覽帳號'; // 預覽模式 LINE 帳號顯示
                     document.getElementById('bindForm').classList.remove('hidden');
                     
                     driverData = { 
@@ -218,7 +227,7 @@
                     };
                     tasks = [
                         { orderId: 'AS-20260508', date: getFormattedDate(0), time: '14:30', type: '接機', airport: '桃園機場', address: '台北市信義區忠孝東路五段', custName: '李先生', custPhone: '0912345678', remarks: '舉牌：李大同\n需幫忙拿行李', extraStop: '無', seats: '無', luggage: '2', sportLuggage: '無', flightNo: 'BR123', driverStatus: '未出發', driverNote: '客人脾氣較急，請準時抵達', paymentMethod: '付現', tripAmt: '800', grandTotal: '1500', paxCount: '大2 小1', car: '進口商務車' },
-                        { orderId: 'AS-20260509', date: getFormattedDate(0), time: '19:00', type: '送機', airport: '松山機場', address: '台北市大安區新生南路', custName: '陳小姐', custPhone: '0987654321', remarks: '無', extraStop: '新北市板橋區', seats: '1個前向', luggage: '0', sportLuggage: '無', flightNo: '無', driverStatus: '已抵達', paymentMethod: '簽單', tripAmt: '1000', grandTotal: '1000', paxCount: '大1', car: '小車' }
+                        { orderId: 'AS-20260509', date: getFormattedDate(0), time: '19:00', type: '送機', airport: '松山機場', address: '台北市大安區新生南路非常長的一段地址測試換行狀況', custName: '陳小姐', custPhone: '0987654321', remarks: '無', extraStop: '新北市板橋區', seats: '1個前向', luggage: '0', sportLuggage: '無', flightNo: '無', driverStatus: '已收單', paymentMethod: '簽單', tripAmt: '1000', grandTotal: '1000', paxCount: '大1', car: '小車' }
                     ];
                     return;
                 }
@@ -234,6 +243,7 @@
                 } else {
                     document.getElementById('authMsg').innerText = "請驗證您的司機身分";
                     document.getElementById('authSpinner').classList.add('hidden');
+                    document.getElementById('lineNameDisplay').innerText = profile.displayName; // 顯示真實 LINE 帳號
                     document.getElementById('bindForm').classList.remove('hidden');
                     document.getElementById('bindForm').onsubmit = (e) => handleBind(e, profile.userId);
                 }
@@ -266,8 +276,10 @@
             e.preventDefault();
             const btn = e.target.querySelector('button'); btn.disabled = true; btn.innerText = "驗證中...";
             try {
+                const lineName = document.getElementById('lineNameDisplay').innerText;
                 const res = await apiCall('driverBindAuth', { 
                     lineId: lineId, 
+                    lineName: lineName,
                     name: document.getElementById('bindName').value.trim(),
                     phone: document.getElementById('bindPhone').value.trim()
                 });
@@ -336,7 +348,7 @@
         // Helper 函式：過濾掉空值或 "無" 的字串
         const cleanVal = (v) => (!v || v === '無' || v === '-' || v === 'undefined') ? '' : String(v).trim();
 
-        // --- 渲染【主畫面清單 (僅摘要)】 ---
+        // --- 渲染【主畫面清單 (加入「確認收單」按鈕)】 ---
         function renderTasks() {
             const container = document.getElementById('task-list');
             const todayStr = getFormattedDate(0);
@@ -356,28 +368,37 @@
             }
             
             container.innerHTML = filteredTasks.map(t => {
+                let currentStep = t.driverStatus || "未出發";
                 let signContent = cleanVal(t.signboard) ? t.signboard : (t.remarks && t.remarks.includes('舉牌') ? '詳見客戶備註' : '');
                 let hasSign = signContent !== '';
 
-                // 🔥 動態標籤 (Tags) - 純文字色塊，無圖示
+                // 🔥 動態標籤 (Tags)
                 let tags = [];
-                let mmdd = t.date.substring(5).replace('-', '/'); // 05-08 -> 05/08
+                let mmdd = t.date.substring(5).replace('-', '/');
                 tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-500 text-white">${mmdd}</span>`);
                 tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded ${t.type === '接機' ? 'bg-[#f07cad]' : 'bg-[#553f62]'} text-white">${t.type}</span>`);
-                if (cleanVal(t.extraStop)) {
-                    tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded border border-gray-400 text-gray-600">加點</span>`);
-                }
-                if (cleanVal(t.seats)) {
-                    tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded border border-gray-400 text-gray-600">安全座椅</span>`);
-                }
-                if (hasSign) {
-                    tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded border border-[#f07cad] text-[#f07cad]">舉牌</span>`);
-                }
+                if (cleanVal(t.extraStop)) tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded border border-gray-400 text-gray-600">加點</span>`);
+                if (cleanVal(t.seats)) tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded border border-gray-400 text-gray-600">安全座椅</span>`);
+                if (hasSign) tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded border border-[#f07cad] text-[#f07cad]">舉牌</span>`);
                 let tagsHtml = tags.join('');
 
-                // 路線摘要
                 let shortAddress = t.address.length > 6 ? t.address.substring(0, 6) + '...' : t.address;
                 let summaryRoute = t.type === '送機' ? `${shortAddress} ➜ ${t.airport}` : `${t.airport} ➜ ${shortAddress}`;
+
+                // 判斷是否顯示「確認收單」按鈕在主畫面上
+                let actionArea = '';
+                if(currentStep === "未出發" || !currentStep) {
+                    actionArea = `
+                    <div class="mt-3 pt-3 border-t border-gray-100">
+                        <button onclick="event.stopPropagation(); updateStatus('${t.orderId}', '已收單')" class="w-full bg-[#f07cad] text-white py-2.5 rounded-xl font-bold shadow-md text-sm transition active:bg-pink-600">確認收單</button>
+                    </div>`;
+                } else {
+                    actionArea = `
+                    <div class="mt-3 pt-2 border-t border-gray-100 flex justify-between items-center">
+                        <span class="text-xs font-bold text-gray-400">當前進度</span>
+                        <span class="text-xs font-bold px-2 py-1 rounded bg-blue-50 text-blue-600 border border-blue-100">${currentStep}</span>
+                    </div>`;
+                }
 
                 return `
                 <div onclick="openTaskDetail('${t.orderId}')" class="glass-card p-4 rounded-xl border border-gray-200 shadow-sm relative overflow-hidden mb-4 cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition">
@@ -391,6 +412,7 @@
                             <span class="text-xl font-black text-[#553f62] mr-3">${t.time}</span>
                             <span class="text-sm font-bold text-gray-700">${summaryRoute}</span>
                         </div>
+                        ${actionArea}
                     </div>
                 </div>`;
             }).join('');
@@ -404,9 +426,11 @@
 
             let currentStep = t.driverStatus || "未出發";
             
-            // 動態按鈕產生邏輯 (統一深色系)
+            // 動態按鈕產生邏輯
             let actionBtn = '';
             if(currentStep === "未出發" || !currentStep) {
+                actionBtn = `<button onclick="updateStatus('${t.orderId}', '已收單')" class="w-full bg-[#f07cad] text-white py-3.5 rounded-xl font-bold shadow-md text-base transition">確認收單</button>`;
+            } else if(currentStep === "已收單") {
                 actionBtn = `<button onclick="updateStatus('${t.orderId}', '已出發')" class="w-full bg-[#553f62] text-white py-3.5 rounded-xl font-bold shadow-md text-base transition">點我出發</button>`;
             } else if(currentStep === "已出發") {
                 actionBtn = `<button onclick="updateStatus('${t.orderId}', '已抵達')" class="w-full bg-blue-600 text-white py-3.5 rounded-xl font-bold shadow-md text-base transition">已抵達上車點</button>`;
@@ -416,19 +440,16 @@
                 actionBtn = `<button onclick="handleCheckout('${t.orderId}', '${t.paymentMethod || ''}')" class="w-full bg-gray-800 text-white py-3.5 rounded-xl font-bold shadow-md text-base transition">客下 (完成行程)</button>`;
             }
 
-            // 舉牌與按鈕判定
             let signContent = cleanVal(t.signboard) ? t.signboard : (t.remarks && t.remarks.includes('舉牌') ? '詳見客戶備註' : '');
             let hasSign = signContent !== '';
             let callBtn = hasSign ? '' : `<a href="tel:${t.custPhone}" class="ml-2 bg-red-600 text-white px-2 py-0.5 rounded-full text-[11px] font-bold shadow-sm inline-block tracking-wide">致電客戶</a>`;
 
-            // 收現判定邏輯 (優先抓單程 tripAmt)
             let cashHtml = '';
             if (t.paymentMethod && (t.paymentMethod.includes('現') || t.paymentMethod.includes('車上'))) {
                 let amtToCollect = cleanVal(t.tripAmt) || cleanVal(t.grandTotal) || '0';
                 cashHtml = `<div class="flex justify-between items-center py-3 border-t-2 border-red-100 mt-2"><span class="text-gray-500 font-bold mr-2">收現金額</span><span class="text-red-600 font-black text-2xl text-right">$${amtToCollect}</span></div>`;
             }
 
-            // 備註與行李處理 (無則留白)
             let cNote = cleanVal(t.remarks) ? cleanVal(t.remarks).replace(/\n/g, '<br>') : '';
             let dNote = cleanVal(t.driverNote) ? cleanVal(t.driverNote).replace(/\n/g, '<br>') : '';
             
@@ -440,11 +461,9 @@
                 if(sport) luggageText += (lug ? ' ' : '') + '(胖箱: ' + sport + ')';
             }
 
-            // 網址超連結轉換 (地址點擊開 Google Map)
             let addressHtml = cleanVal(t.address) ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cleanVal(t.address))}" target="_blank" class="text-blue-600 underline">${cleanVal(t.address)}</a>` : '';
             let extraStopHtml = cleanVal(t.extraStop) ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cleanVal(t.extraStop))}" target="_blank" class="text-blue-600 underline">${cleanVal(t.extraStop)}</a>` : '';
 
-            // 產生 HTML
             let html = `
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
                     <div class="flex justify-between items-baseline mb-2 border-b border-gray-100 pb-2">
@@ -507,11 +526,17 @@
             `).join('');
         }
 
-        // --- 狀態更新邏輯 ---
+        // --- 狀態更新邏輯 (針對「收單」加速，不讀取 GPS) ---
         async function updateStatus(orderId, newStatus) {
             try {
-                const coords = await requireGPS(); 
-                Swal.fire({ title: '回報中', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                let coords = { lat: '', lng: '' };
+                
+                // 只有「收單」不需要等待定位，讓操作秒速完成
+                if (newStatus !== '已收單') {
+                    coords = await requireGPS(); 
+                }
+
+                Swal.fire({ title: '回報中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
                 
                 await apiCall('driverUpdateStatus', {
                     orderId: orderId,
@@ -521,7 +546,7 @@
                     lineId: driverData.lineId
                 });
                 
-                Swal.fire({ title: '回報成功', text: `已更新狀態為：${newStatus}`, icon: 'success', timer: 1000, showConfirmButton: false });
+                Swal.fire({ title: '成功', text: `狀態更新為：${newStatus}`, icon: 'success', timer: 1000, showConfirmButton: false });
                 loadTasks();
             } catch(e) {
                 if(e !== 'No Geolocation') Swal.fire('錯誤', e.message, 'error');
