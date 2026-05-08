@@ -22,7 +22,7 @@
     <header class="bg-white shadow-sm z-10 px-4 py-3 flex justify-between items-center">
         <div class="font-black text-xl text-[#553f62] tracking-widest">AS派車 <span class="text-sm font-bold text-[#f07cad]">Driver</span></div>
         <button onclick="window.location.href='tel:0955311306'" class="bg-red-50 text-red-600 px-3 py-1.5 rounded-full text-xs font-bold border border-red-200 shadow-sm flex items-center gap-1">
-            📞 聯絡客服
+            聯絡客服
         </button>
     </header>
 
@@ -45,15 +45,19 @@
         
         <!-- 個人中心 -->
         <div id="view-profile" class="hidden">
-            <div class="bg-white p-6 rounded-2xl shadow-sm text-center border border-gray-100">
-                <div class="w-20 h-20 bg-gray-200 rounded-full mx-auto mb-3 flex items-center justify-center text-3xl">🧑‍✈️</div>
-                <h2 id="profName" class="text-xl font-black text-[#553f62]">讀取中...</h2>
-                <p id="profPhone" class="text-gray-500 text-sm mt-1"></p>
-                <div class="mt-6 pt-6 border-t border-gray-100 flex justify-around">
-                    <div>
-                        <p class="text-[10px] text-gray-400 font-bold">本月趟次</p>
-                        <p id="profCount" class="text-2xl font-black text-[#f07cad]">0</p>
-                    </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <h2 id="profName" class="text-2xl font-black text-[#553f62] text-center mb-6 border-b border-gray-100 pb-4">讀取中...</h2>
+                <div class="space-y-4 text-sm">
+                    <div class="flex justify-between items-center"><span class="text-gray-500 font-bold">聯絡電話</span><span id="profPhone" class="font-bold text-gray-800"></span></div>
+                    <div class="flex justify-between items-center"><span class="text-gray-500 font-bold">服務車號</span><span id="profCarNo" class="font-bold text-gray-800"></span></div>
+                    <div class="flex justify-between items-center"><span class="text-gray-500 font-bold">車輛顏色</span><span id="profCarColor" class="font-bold text-gray-800"></span></div>
+                    <div class="flex justify-between items-center"><span class="text-gray-500 font-bold">車型款式</span><span id="profCarType" class="font-bold text-gray-800"></span></div>
+                    <div class="h-px bg-gray-100 my-2"></div>
+                    <div class="flex justify-between items-center"><span class="text-gray-500 font-bold">銀行代碼</span><span id="profBankCode" class="font-bold text-gray-800"></span></div>
+                    <div class="flex justify-between items-center"><span class="text-gray-500 font-bold">銀行帳號</span><span id="profBankAcc" class="font-bold text-gray-800"></span></div>
+                    <div class="h-px bg-gray-100 my-2"></div>
+                    <div class="flex justify-between items-center"><span class="text-gray-500 font-bold">駕照到期日</span><span id="profLicense" class="font-bold text-gray-800"></span></div>
+                    <div class="flex justify-between items-center"><span class="text-gray-500 font-bold">保險到期日</span><span id="profInsurance" class="font-bold text-gray-800"></span></div>
                 </div>
             </div>
         </div>
@@ -62,13 +66,13 @@
     <!-- 底部導航列 -->
     <nav id="bottomNav" class="bg-white border-t border-gray-200 flex justify-around items-center h-16 fixed bottom-0 w-full z-20 hidden shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
         <button onclick="switchTab('tasks', this)" class="nav-btn nav-active flex-1 h-full flex flex-col items-center justify-center text-gray-400 transition">
-            <span class="text-xl mb-0.5">📋</span><span class="text-[10px]">服務案件</span>
+            <span class="text-sm font-bold mb-0.5">服務案件</span>
         </button>
         <button onclick="switchTab('history', this)" class="nav-btn flex-1 h-full flex flex-col items-center justify-center text-gray-400 transition">
-            <span class="text-xl mb-0.5">🕰️</span><span class="text-[10px]">歷史案件</span>
+            <span class="text-sm font-bold mb-0.5">歷史案件</span>
         </button>
         <button onclick="switchTab('profile', this)" class="nav-btn flex-1 h-full flex flex-col items-center justify-center text-gray-400 transition">
-            <span class="text-xl mb-0.5">👤</span><span class="text-[10px]">個人中心</span>
+            <span class="text-sm font-bold mb-0.5">個人中心</span>
         </button>
     </nav>
 
@@ -107,17 +111,17 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.3.1";
+        const APP_VERSION = "v1.4.0";
 
-        // ⚠️ 請填入專屬的司機端 LIFF ID (建議在 LINE Developers 創建一個獨立的 LIFF)
+        // ⚠️ 請填入專屬的司機端 LIFF ID
         const LIFF_ID = "2009971109-pdmG3XEe"; 
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbyHkLho-EhceBtJCSd0Vz5e1NtSDILWH08nD_8jJoJzd4c7unaXiI6q_A0ETgpuYG5x/exec"; // 更新為最新的 GAS 網址
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbyHkLho-EhceBtJCSd0Vz5e1NtSDILWH08nD_8jJoJzd4c7unaXiI6q_A0ETgpuYG5x/exec"; // 最新的 GAS 網址
 
         let driverData = null;
         let tasks = [];
         let historyData = [];
         let currentSigOrderId = null;
-        let currentTaskTab = 'today'; // 預設顯示今天
+        let currentTaskTab = 'today'; 
         
         // 簽名板邏輯
         const canvas = document.getElementById('signaturePad');
@@ -140,9 +144,8 @@
 
         // --- 自動格式化手機號碼 (0900-000-000) ---
         document.getElementById('bindPhone').addEventListener('input', function(e) {
-            let val = e.target.value.replace(/\D/g, ''); // 先剔除所有非數字
+            let val = e.target.value.replace(/\D/g, ''); 
             if(val.length > 4) {
-                // 自動補上 dash (-)
                 val = val.replace(/(\d{4})(\d{3})?(\d{0,3})?/, (m, p1, p2, p3) => p1 + (p2 ? '-' + p2 : '') + (p3 ? '-' + p3 : ''));
             }
             e.target.value = val;
@@ -169,7 +172,7 @@
                             html: '<p class="text-left text-sm text-gray-600">系統必須取得 GPS 定位才能執行回報。<br><br>👉 請至手機設定開啟「位置資訊」權限，或聯絡調度。</p>',
                             icon: 'warning',
                             showCancelButton: true,
-                            confirmButtonText: '📞 聯絡調度',
+                            confirmButtonText: '聯絡調度',
                             cancelButtonText: '取消'
                         }).then((r) => { if(r.isConfirmed) window.location.href='tel:0955311306'; });
                         reject(err);
@@ -188,22 +191,22 @@
 
         // --- 初始化與登入 ---
         async function init() {
-            // 顯示所有版本號
             document.querySelectorAll('.app-version-display').forEach(el => el.innerText = APP_VERSION);
 
             try {
                 if(window !== window.parent) { 
-                    // 在瀏覽器預覽時測試用
+                    // 預覽模式假資料
                     document.getElementById('authMsg').innerText = "預覽模式：請輸入司機資料";
                     document.getElementById('authSpinner').classList.add('hidden');
                     document.getElementById('bindForm').classList.remove('hidden');
                     
-                    // 為了方便預覽，直接給定測試資料
-                    driverData = { name: '測試司機', phone: '0900-000-000', lineId: 'preview_mode' };
-                    // 模擬載入假任務
+                    driverData = { 
+                        name: '王小明', phone: '0900-123-456', carNo: 'ABC-1234', carColor: '黑色', carType: '大車', 
+                        bankCode: '822', bankAcc: '1234567890', license: '2030-01-01', insurance: '2025-12-31', lineId: 'preview' 
+                    };
                     tasks = [
-                        { orderId: 'AS-20260508', date: getFormattedDate(0), time: '14:30', type: '接機', airport: '桃園機場', address: '台北市信義區', custName: '王先生', custPhone: '0912345678', remarks: '舉牌：王大明\n客人會晚到', extraStop: '新北市板橋區', seats: '1個增高墊', luggage: '2', sportLuggage: '無', flightNo: 'BR123' },
-                        { orderId: 'AS-20260509', date: getFormattedDate(1), time: '09:00', type: '送機', airport: '松山機場', address: '台北市大安區', custName: '李小姐', custPhone: '0987654321', remarks: '無', extraStop: '無', seats: '無', luggage: '1', sportLuggage: '無', flightNo: 'CI456' }
+                        { orderId: 'AS-20260508', date: getFormattedDate(0), time: '14:30', type: '接機', airport: '桃園機場', address: '台北市信義區忠孝東路五段', custName: '李先生', custPhone: '0912-345-678', remarks: '舉牌：李大同\n需幫忙拿行李', extraStop: '新北市板橋區', seats: '1個前向', luggage: '2', sportLuggage: '無', flightNo: 'BR123', driverStatus: '未出發', driverNote: '客人脾氣較急，請準時抵達' },
+                        { orderId: 'AS-20260509', date: getFormattedDate(1), time: '09:00', type: '送機', airport: '松山機場', address: '台北市大安區新生南路', custName: '陳小姐', custPhone: '0987-654-321', remarks: '無', extraStop: '無', seats: '無', luggage: '1', sportLuggage: '無', flightNo: 'CI456', driverStatus: '客上' }
                     ];
                     return;
                 }
@@ -212,16 +215,10 @@
                 if (!liff.isLoggedIn()) { liff.login(); return; }
                 const profile = await liff.getProfile();
                 
-                // 檢查是否已綁定
                 const checkRes = await apiCall('driverCheckAuth', { lineId: profile.userId });
                 if(checkRes.isBound) {
                     driverData = checkRes.driver;
-                    document.getElementById('authScreen').classList.add('hidden');
-                    document.getElementById('mainContent').classList.remove('hidden');
-                    document.getElementById('bottomNav').classList.remove('hidden');
-                    document.getElementById('profName').innerText = driverData.name;
-                    document.getElementById('profPhone').innerText = driverData.phone;
-                    loadTasks();
+                    loginSuccess();
                 } else {
                     document.getElementById('authMsg').innerText = "請驗證您的司機身分";
                     document.getElementById('authSpinner').classList.add('hidden');
@@ -232,6 +229,25 @@
                 Swal.fire('系統錯誤', 'LIFF 初始化失敗，請確認已在 LINE 中開啟', 'error');
             }
             initCanvas();
+        }
+
+        function loginSuccess() {
+            document.getElementById('authScreen').classList.add('hidden');
+            document.getElementById('mainContent').classList.remove('hidden');
+            document.getElementById('bottomNav').classList.remove('hidden');
+            
+            // 寫入個人中心資料
+            document.getElementById('profName').innerText = driverData.name || '-';
+            document.getElementById('profPhone').innerText = driverData.phone || '-';
+            document.getElementById('profCarNo').innerText = driverData.carNo || '-';
+            document.getElementById('profCarColor').innerText = driverData.carColor || '-';
+            document.getElementById('profCarType').innerText = driverData.carType || '-';
+            document.getElementById('profBankCode').innerText = driverData.bankCode || '-';
+            document.getElementById('profBankAcc').innerText = driverData.bankAcc || '-';
+            document.getElementById('profLicense').innerText = driverData.license || '-';
+            document.getElementById('profInsurance').innerText = driverData.insurance || '-';
+            
+            loadTasks();
         }
 
         async function handleBind(e, lineId) {
@@ -256,7 +272,7 @@
             el.classList.add('nav-active');
             ['tasks', 'history', 'profile'].forEach(t => document.getElementById(`view-${t}`).classList.add('hidden'));
             document.getElementById(`view-${tab}`).classList.remove('hidden');
-            if(tab === 'tasks') renderTasks(); // 重新渲染當前分頁任務
+            if(tab === 'tasks') renderTasks(); 
             if(tab === 'history') loadHistory();
         }
 
@@ -283,7 +299,10 @@
             try {
                 const res = await apiCall('driverGetTasks', { lineId: driverData.lineId });
                 tasks = res.tasks;
-                document.getElementById('profCount').innerText = res.monthCount;
+                // 注意：若沒有後端回傳趟次，可以隱藏該區塊，先保留預設0
+                if(res.monthCount !== undefined) {
+                    document.getElementById('profCount').innerText = res.monthCount;
+                }
                 renderTasks();
                 Swal.close();
             } catch(e) { Swal.fire('錯誤', '無法載入任務', 'error'); }
@@ -299,17 +318,26 @@
             } catch(e) { Swal.fire('錯誤', '無法載入歷史', 'error'); }
         }
 
+        // --- 展開/收合明細 ---
+        window.toggleDetails = function(id, btn) {
+            const detailEl = document.getElementById(id);
+            if (detailEl.classList.contains('hidden')) {
+                detailEl.classList.remove('hidden');
+                btn.innerText = '隱藏明細 ▲';
+            } else {
+                detailEl.classList.add('hidden');
+                btn.innerText = '展開明細 ▼';
+            }
+        };
+
         // --- 渲染畫面 ---
         function renderTasks() {
             const container = document.getElementById('task-list');
-            
             const todayStr = getFormattedDate(0);
             const tomorrowStr = getFormattedDate(1);
 
-            // 過濾掉過去的任務 (只保留日期大於等於今天的)
             let filteredTasks = tasks.filter(t => t.date >= todayStr);
 
-            // 根據選擇的分頁過濾
             if (currentTaskTab === 'today') {
                 filteredTasks = filteredTasks.filter(t => t.date === todayStr);
             } else if (currentTaskTab === 'tomorrow') {
@@ -317,89 +345,101 @@
             }
 
             if(filteredTasks.length === 0) { 
-                container.innerHTML = `<div class="text-center text-gray-400 mt-20 font-bold flex flex-col items-center"><span class="text-4xl mb-2">📭</span>此區間沒有待執行的任務</div>`; 
+                container.innerHTML = `<div class="text-center text-gray-400 mt-20 font-bold flex flex-col items-center">此區間沒有待執行的任務</div>`; 
                 return; 
             }
             
             container.innerHTML = filteredTasks.map(t => {
                 let currentStep = t.driverStatus || "未出發";
                 
-                // 動態按鈕產生邏輯
+                // 動態按鈕產生邏輯 (無綠色，以藍色/深色為主)
                 let actionBtn = '';
                 if(currentStep === "未出發" || !currentStep) {
-                    actionBtn = `<button onclick="updateStatus('${t.orderId}', '已出發')" class="flex-1 bg-[#553f62] text-white py-3 rounded-xl font-bold shadow-md">🚗 點我出發</button>`;
+                    actionBtn = `<button onclick="updateStatus('${t.orderId}', '已出發')" class="flex-1 bg-[#553f62] text-white py-3.5 rounded-xl font-bold shadow-md text-base">點我出發</button>`;
                 } else if(currentStep === "已出發") {
-                    actionBtn = `<button onclick="updateStatus('${t.orderId}', '已抵達')" class="flex-1 bg-[#f07cad] text-white py-3 rounded-xl font-bold shadow-md">📍 已抵達上車點</button>`;
+                    actionBtn = `<button onclick="updateStatus('${t.orderId}', '已抵達')" class="flex-1 bg-[#f07cad] text-white py-3.5 rounded-xl font-bold shadow-md text-base">已抵達上車點</button>`;
                 } else if(currentStep === "已抵達") {
-                    actionBtn = `<button onclick="updateStatus('${t.orderId}', '客上')" class="flex-1 bg-emerald-500 text-white py-3 rounded-xl font-bold shadow-md">✅ 客戶已上車</button>`;
+                    actionBtn = `<button onclick="updateStatus('${t.orderId}', '客上')" class="flex-1 bg-blue-600 text-white py-3.5 rounded-xl font-bold shadow-md text-base">客戶已上車</button>`;
                 } else if(currentStep === "客上") {
-                    actionBtn = `<button onclick="openSigModal('${t.orderId}')" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold shadow-md">🏁 客下 (準備結案)</button>`;
+                    actionBtn = `<button onclick="openSigModal('${t.orderId}')" class="flex-1 bg-gray-800 text-white py-3.5 rounded-xl font-bold shadow-md text-base">客下 (準備結案)</button>`;
                 }
 
-                // 行程地址顯示
-                let routeHtml = `<div class="text-sm font-bold text-gray-800 mt-2"><div class="flex items-start"><span class="mr-2">A.</span><span>${t.type === '送機'? t.address : t.airport}</span></div><div class="flex items-start mt-1"><span class="mr-2">B.</span><span>${t.type === '接機'? t.address : t.airport}</span></div>`;
-                if(t.extraStop && t.extraStop !== '無') routeHtml += `<div class="flex items-start mt-1 text-pink-500"><span class="mr-2">📍</span><span>加點: ${t.extraStop}</span></div>`;
+                // 🔥 建立動態標籤 (Tags) - 單純的配色不雜亂
+                let tags = [];
+                // 主標籤
+                tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#553f62] text-white">${t.type}</span>`);
+                if (t.extraStop && t.extraStop !== '無') {
+                    tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded border border-gray-400 text-gray-600">加點</span>`);
+                }
+                if (t.seats && t.seats !== '無') {
+                    tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded border border-gray-400 text-gray-600">安全座椅</span>`);
+                }
+                if (t.remarks && (t.remarks.includes('舉牌') || t.remarks.includes('看板'))) {
+                    tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded border border-[#f07cad] text-[#f07cad]">舉牌</span>`);
+                }
+                let tagsHtml = tags.join('');
+
+                // 路線摘要 (截短地址顯示)
+                let shortAddress = t.address.length > 6 ? t.address.substring(0, 6) + '...' : t.address;
+                let summaryRoute = t.type === '送機' ? `${shortAddress} ➜ ${t.airport}` : `${t.airport} ➜ ${shortAddress}`;
+
+                // 完整路線顯示
+                let routeHtml = `<div class="text-sm font-bold text-gray-800 mt-2 mb-2"><div class="flex items-start"><span class="mr-2">A.</span><span>${t.type === '送機'? t.address : t.airport}</span></div><div class="flex items-start mt-1"><span class="mr-2">B.</span><span>${t.type === '接機'? t.address : t.airport}</span></div>`;
+                if(t.extraStop && t.extraStop !== '無') routeHtml += `<div class="flex items-start mt-1 text-[#f07cad]"><span class="mr-2">📍</span><span>加點: ${t.extraStop}</span></div>`;
                 routeHtml += `</div>`;
 
-                // 👑 專屬：司機派車備註提示框
+                // 調度備註
                 let driverNoteHtml = '';
                 if (t.driverNote && t.driverNote.trim() !== '') {
                     driverNoteHtml = `
                     <div class="mt-3 bg-yellow-50 border-l-4 border-yellow-400 p-2.5 rounded shadow-sm">
-                        <p class="text-[11px] font-black text-yellow-700 mb-0.5">⚠️ 調度派車交代：</p>
+                        <p class="text-[11px] font-black text-yellow-700 mb-0.5">調度派車交代：</p>
                         <p class="text-xs text-yellow-800 whitespace-pre-wrap font-bold leading-relaxed">${t.driverNote}</p>
                     </div>`;
                 }
 
-                // 將客人的原始備註換行符號取代為 <br>
                 let remarksHtml = t.remarks ? t.remarks.replace(/\n/g, '<br>') : '無';
 
-                // 🔥 建立動態標籤 (Tags)
-                let tagsHtml = `<span class="text-[10px] font-bold px-2 py-1 rounded ${t.type === '接機' ? 'bg-[#f07cad]' : 'bg-[#553f62]'} text-white mr-1">${t.type}</span>`;
-                if (t.extraStop && t.extraStop !== '無') {
-                    tagsHtml += `<span class="text-[10px] font-bold px-2 py-1 rounded bg-pink-100 text-pink-600 mr-1 shadow-sm border border-pink-200">📍加點</span>`;
-                }
-                if (t.seats && t.seats !== '無') {
-                    tagsHtml += `<span class="text-[10px] font-bold px-2 py-1 rounded bg-blue-100 text-blue-600 mr-1 shadow-sm border border-blue-200">💺安全座椅</span>`;
-                }
-                if (t.remarks && t.remarks.includes('舉牌')) {
-                    tagsHtml += `<span class="text-[10px] font-bold px-2 py-1 rounded bg-yellow-100 text-yellow-700 mr-1 shadow-sm border border-yellow-200">🪧舉牌</span>`;
-                }
-
                 return `
-                <div class="glass-card p-5 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-2 h-full bg-[#553f62]"></div>
-                    <div class="flex justify-between items-start mb-2 pl-2">
-                        <div class="flex flex-col items-start gap-1.5">
-                            <!-- 顯示動態彩色標籤 -->
+                <div class="glass-card p-4 rounded-xl border border-gray-200 shadow-sm relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1.5 h-full bg-[#553f62]"></div>
+                    
+                    <!-- 【重點摘要區塊】 -->
+                    <div class="pl-2">
+                        <div class="flex justify-between items-start mb-2">
                             <div class="flex flex-wrap gap-1">${tagsHtml}</div>
-                            <span class="text-[11px] font-mono text-gray-400 mt-1">${t.orderId}</span>
+                            <span class="text-[10px] font-mono text-gray-400">${t.orderId}</span>
                         </div>
-                        <div class="text-right whitespace-nowrap ml-2">
-                            <p class="text-[11px] font-bold text-gray-500">${t.date}</p>
-                            <p class="text-xl font-black text-[#553f62]">${t.time}</p>
+                        <div class="flex items-baseline mb-1">
+                            <span class="text-xl font-black text-[#553f62] mr-3">${t.time}</span>
+                            <span class="text-sm font-bold text-gray-700">${summaryRoute}</span>
                         </div>
                     </div>
                     
-                    <div class="pl-2 border-b border-gray-100 pb-3 mb-3">
-                        <div class="flex justify-between items-center bg-gray-50 p-2 rounded-lg">
+                    <button onclick="toggleDetails('detail-${t.orderId}', this)" class="w-full text-center text-xs font-bold text-gray-400 py-2 border-t border-gray-100 mt-2 hover:bg-gray-50 transition rounded-b-xl">展開明細 ▼</button>
+
+                    <!-- 【詳細資訊區塊 (預設隱藏)】 -->
+                    <div id="detail-${t.orderId}" class="hidden mt-1 pt-3 border-t border-gray-200 pl-2">
+                        <div class="flex justify-between items-center bg-gray-50 p-2 rounded-lg mb-2">
                             <div>
                                 <p class="font-bold text-gray-800">${t.custName}</p>
-                                <p class="text-xs font-bold text-blue-500 mt-0.5">📞 <a href="tel:${t.custPhone}" class="underline">${t.custPhone}</a></p>
+                                <p class="text-xs font-bold text-blue-600 mt-0.5"><a href="tel:${t.custPhone}" class="underline">${t.custPhone}</a></p>
                             </div>
-                            <button onclick="reportAnomaly('${t.orderId}')" class="text-xs text-red-500 border border-red-200 bg-white px-2 py-1 rounded shadow-sm font-bold">⚠️ 異常回報</button>
+                            <button onclick="reportAnomaly('${t.orderId}')" class="text-xs text-red-500 border border-red-200 bg-white px-2 py-1 rounded shadow-sm font-bold">異常回報</button>
                         </div>
+                        
                         ${routeHtml}
                         ${driverNoteHtml}
+                        
                         <div class="text-[11px] text-gray-500 mt-2 font-medium bg-gray-50 p-2 rounded leading-relaxed">
                             行李: ${t.luggage} ︱ 胖箱: ${t.sportLuggage} ︱ 座椅: ${t.seats}<br>
                             航班: <span class="font-bold text-[#f07cad]">${t.flightNo}</span><br>
                             備註: <span class="text-red-500 font-bold">${remarksHtml}</span>
                         </div>
-                    </div>
 
-                    <div class="flex gap-2 pl-2">
-                        ${actionBtn}
+                        <div class="flex gap-2 mt-4">
+                            ${actionBtn}
+                        </div>
                     </div>
                 </div>`;
             }).join('');
@@ -413,7 +453,7 @@
                 <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
                     <div class="flex justify-between mb-1">
                         <span class="text-xs font-bold text-gray-500">${t.date} ${t.time}</span>
-                        <span class="text-xs font-bold text-emerald-600">已結案</span>
+                        <span class="text-xs font-bold text-blue-600">已結案</span>
                     </div>
                     <div class="text-sm font-bold text-gray-400 line-through">${t.routeDisplay}</div>
                     <div class="text-xs text-gray-400 mt-1">${t.custNameMasked}</div>
@@ -424,7 +464,6 @@
         // --- 狀態更新邏輯 ---
         async function updateStatus(orderId, newStatus) {
             try {
-                // 強制要求 GPS 定位
                 const coords = await requireGPS(); 
                 Swal.fire({ title: '回報中', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
                 
@@ -460,7 +499,7 @@
                 focusConfirm: false,
                 showCancelButton: true,
                 confirmButtonColor: '#e3342f',
-                confirmButtonText: '🚨 立即通報調度',
+                confirmButtonText: '立即通報調度',
                 cancelButtonText: '取消',
                 preConfirm: () => {
                     return { type: document.getElementById('anoType').value, note: document.getElementById('anoNote').value }
@@ -489,7 +528,6 @@
         }
 
         async function submitSig() {
-            // 目前先以純狀態更新為主，實務上可將 canvas.toDataURL() 存回後端
             document.getElementById('sigModal').classList.add('hidden');
             await updateStatus(currentSigOrderId, '已結案');
         }
