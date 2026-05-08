@@ -63,14 +63,14 @@
         </div>
     </main>
 
-    <!-- 【新增】任務明細獨立頁面 (滿版覆蓋) -->
-    <div id="view-task-detail" class="fixed inset-0 bg-[#f3f4f6] z-[40] hidden flex-col">
-        <header class="bg-[#553f62] shadow-md px-4 py-3 flex items-center justify-between">
+    <!-- 【修改】任務明細獨立頁面 (原生滾動，解決無法往下滑問題) -->
+    <div id="view-task-detail" class="fixed inset-0 bg-[#f3f4f6] z-[40] hidden overflow-y-auto">
+        <header class="bg-[#553f62] shadow-md px-4 py-3 flex items-center justify-between sticky top-0 z-50">
             <button onclick="closeTaskDetail()" class="text-white font-bold text-xl px-2 py-1 active:bg-white/20 rounded">⬅</button>
             <h1 class="text-lg font-black text-white tracking-widest">任務明細</h1>
             <div class="w-8"></div> <!-- 佔位對齊用 -->
         </header>
-        <div id="task-detail-content" class="flex-1 overflow-y-auto p-4 pb-8">
+        <div id="task-detail-content" class="p-4 pb-24">
             <!-- 明細內容由 JS 動態生成 -->
         </div>
     </div>
@@ -122,7 +122,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.7.0";
+        const APP_VERSION = "v1.8.0";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -440,6 +440,10 @@
                 if(sport) luggageText += (lug ? ' ' : '') + '(胖箱: ' + sport + ')';
             }
 
+            // 網址超連結轉換 (地址點擊開 Google Map)
+            let addressHtml = cleanVal(t.address) ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cleanVal(t.address))}" target="_blank" class="text-blue-600 underline">${cleanVal(t.address)}</a>` : '';
+            let extraStopHtml = cleanVal(t.extraStop) ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cleanVal(t.extraStop))}" target="_blank" class="text-blue-600 underline">${cleanVal(t.extraStop)}</a>` : '';
+
             // 產生 HTML
             let html = `
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
@@ -459,8 +463,8 @@
                             <span class="text-gray-500 font-bold whitespace-nowrap mr-2">客戶姓名</span>
                             <div class="flex items-center justify-end"><span class="font-bold text-gray-800">${cleanVal(t.custName)}</span>${callBtn}</div>
                         </div>
-                        <div class="flex justify-between items-start py-2 border-b border-gray-200/50"><span class="text-gray-500 font-bold min-w-[70px] mr-2">接送地址</span><span class="font-bold text-gray-800 text-right break-words">${cleanVal(t.address)}</span></div>
-                        <div class="flex justify-between items-start py-2 border-b border-gray-200/50"><span class="text-gray-500 font-bold min-w-[70px] mr-2">加點地址</span><span class="font-bold text-gray-800 text-right break-words">${cleanVal(t.extraStop)}</span></div>
+                        <div class="flex justify-between items-start py-2 border-b border-gray-200/50"><span class="text-gray-500 font-bold min-w-[70px] mr-2">接送地址</span><span class="font-bold text-gray-800 text-right break-words">${addressHtml}</span></div>
+                        <div class="flex justify-between items-start py-2 border-b border-gray-200/50"><span class="text-gray-500 font-bold min-w-[70px] mr-2">加點地址</span><span class="font-bold text-gray-800 text-right break-words">${extraStopHtml}</span></div>
                         <div class="flex justify-between items-start py-2 border-b border-gray-200/50"><span class="text-gray-500 font-bold whitespace-nowrap mr-2">乘車人數</span><span class="font-bold text-gray-800 text-right break-words">${cleanVal(t.paxCount)}</span></div>
                         <div class="flex justify-between items-start py-2 border-b border-gray-200/50"><span class="text-gray-500 font-bold whitespace-nowrap mr-2">行李件數</span><span class="font-bold text-gray-800 text-right break-words">${luggageText}</span></div>
                         <div class="flex justify-between items-start py-2 border-b border-gray-200/50"><span class="text-gray-500 font-bold whitespace-nowrap mr-2">預約車型</span><span class="font-bold text-gray-800 text-right break-words">${cleanVal(t.car)}</span></div>
