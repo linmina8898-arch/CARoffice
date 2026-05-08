@@ -129,10 +129,11 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.9.1";
+        const APP_VERSION = "v1.10.0";
 
-        // ⚠️ 請填入專屬的司機端 LIFF ID
+        // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
+        const LINE_OA_LINK = "https://line.me/R/ti/p/@ansing"; // 官方帳號加入連結
         const GAS_URL = "https://script.google.com/macros/s/AKfycbyHkLho-EhceBtJCSd0Vz5e1NtSDILWH08nD_8jJoJzd4c7unaXiI6q_A0ETgpuYG5x/exec"; // 最新的 GAS 網址
 
         let driverData = null;
@@ -196,7 +197,6 @@
                         }).then((r) => { if(r.isConfirmed) window.location.href='tel:0955311306'; });
                         reject(err);
                     },
-                    // 優化定位參數：關閉高精度強制要求，改用基地台/WiFi快取快速定位
                     { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 }
                 );
             });
@@ -209,7 +209,7 @@
             return res;
         }
 
-        // --- 初始化與登入 ---
+        // --- 初始化與登入 (包含強迫加好友) ---
         async function init() {
             document.querySelectorAll('.app-version-display').forEach(el => el.innerText = APP_VERSION);
 
@@ -218,7 +218,7 @@
                     // 預覽模式假資料
                     document.getElementById('authMsg').innerText = "預覽模式：請輸入司機資料";
                     document.getElementById('authSpinner').classList.add('hidden');
-                    document.getElementById('lineNameDisplay').innerText = '測試預覽帳號'; // 預覽模式 LINE 帳號顯示
+                    document.getElementById('lineNameDisplay').innerText = '測試預覽帳號'; 
                     document.getElementById('bindForm').classList.remove('hidden');
                     
                     driverData = { 
@@ -234,19 +234,71 @@
 
                 await liff.init({ liffId: LIFF_ID });
                 if (!liff.isLoggedIn()) { liff.login(); return; }
-                const profile = await liff.getProfile();
-                
-                const checkRes = await apiCall('driverCheckAuth', { lineId: profile.userId });
-                if(checkRes.isBound) {
-                    driverData = checkRes.driver;
-                    loginSuccess();
-                } else {
-                    document.getElementById('authMsg').innerText = "請驗證您的司機身分";
-                    document.getElementById('authSpinner').classList.add('hidden');
-                    document.getElementById('lineNameDisplay').innerText = profile.displayName; // 顯示真實 LINE 帳號
-                    document.getElementById('bindForm').classList.remove('hidden');
-                    document.getElementById('bindForm').onsubmit = (e) => handleBind(e, profile.userId);
-                }
+
+                // 檢查是否加入好友
+                const checkFriendshipAndProceed = async () => {
+                    try {
+                        const friendStatus = await liff.getFriendship();
+                        if (!friendStatus.friendFlag) {
+                            Swal.fire({
+                                title: '請先加入官方帳號',
+                                html: `<div style="text-align: left; line-height: 1.6; font-size: 14px;">
+                                        <p>為了接收「派車通知」與「系統自動提醒」，請務必先加入 AS派車 官方帳號好友。</p>
+                                        <p style="color: #f07cad; font-weight: bold; margin-top: 10px;">加完好友後，請手持「關閉」好友畫面，回到此畫面並點擊下方按鈕進入系統。</p>
+                                        <div style="text-align: center; margin-top: 20px;">
+                                            <a href="${LINE_OA_LINK}" target="_blank" style="background-color: #f07cad; color: white; padding: 10px 25px; border-radius: 25px; text-decoration: none; font-weight: bold; display: inline-block;">點我前往加好友</a>
+                                        </div>
+                                    </div>`,
+                                confirmButtonText: '我已加完好友，進入系統',
+                                confirmButtonColor: '#553f62',
+                                allowOutsideClick: false
+                            }).then(async (result) => {
+                                if (result.isConfirmed) {
+                                    try {
+                                        const recheckStatus = await liff.getFriendship();
+                                        if (recheckStatus.friendFlag) {
+                                            proceedLogin();
+                                        } else {
+                                            Swal.fire({
+                                                title: '尚未偵測到好友狀態',
+                                                text: '系統目前仍未偵測到您的好友狀態。若您已成功加入，可能是連線延遲，請直接點擊下方進入。',
+                                                confirmButtonText: '進入系統',
+                                                confirmButtonColor: '#553f62',
+                                                allowOutsideClick: false
+                                            }).then(() => {
+                                                proceedLogin();
+                                            });
+                                        }
+                                    } catch(e) { proceedLogin(); }
+                                }
+                            });
+                            return;
+                        }
+                        proceedLogin();
+                    } catch (err) {
+                        console.error("Friendship check failed", err);
+                        proceedLogin(); // fallback
+                    }
+                };
+
+                const proceedLogin = async () => {
+                    const profile = await liff.getProfile();
+                    const checkRes = await apiCall('driverCheckAuth', { lineId: profile.userId });
+                    if(checkRes.isBound) {
+                        driverData = checkRes.driver;
+                        loginSuccess();
+                    } else {
+                        document.getElementById('authMsg').innerText = "請驗證您的司機身分";
+                        document.getElementById('authSpinner').classList.add('hidden');
+                        document.getElementById('lineNameDisplay').innerText = profile.displayName;
+                        document.getElementById('bindForm').classList.remove('hidden');
+                        document.getElementById('bindForm').onsubmit = (e) => handleBind(e, profile.userId);
+                    }
+                };
+
+                // 開始執行流程
+                checkFriendshipAndProceed();
+
             } catch (err) {
                 Swal.fire('系統錯誤', 'LIFF 初始化失敗，請確認已在 LINE 中開啟', 'error');
             }
