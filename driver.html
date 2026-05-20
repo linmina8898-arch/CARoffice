@@ -6,15 +6,16 @@
     <title>AS派車 - 司機端</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* 強制全局字體大小與粗細，避免斷行 */
-        * { font-size: 10px !important; font-weight: 400 !important; white-space: nowrap !important; }
+        /* 僅縮小字體與移除粗體，不破壞版面結構 */
+        * { font-size: 10px !important; font-weight: 400 !important; }
         body { background: #f3f4f6; }
         .nav-active { color: #553f62; border-top: 2px solid #553f62; }
     </style>
 </head>
 <body class="flex flex-col h-screen overflow-hidden text-gray-700">
-    <header class="bg-white px-2 py-1 flex justify-between items-center shadow-sm whitespace-nowrap">
+    <header class="bg-white px-2 py-1 flex justify-between items-center shadow-sm">
         <span class="text-[#553f62]">AS派車 Driver</span>
+        <span class="text-gray-400">v1.3.1</span>
     </header>
 
     <main id="mainContent" class="flex-1 overflow-y-auto p-1 pb-12">
@@ -26,6 +27,11 @@
         <button onclick="switchTab('profile', this)" class="flex-1">設定</button>
     </nav>
 
+    <!-- 登入頁版本顯示 -->
+    <div id="authScreen" class="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center p-6">
+        <p>系統版本: v1.3.1</p>
+    </div>
+
     <script>
         const GAS_URL = "https://script.google.com/macros/s/AKfycbzMLYBvdbo4mkkEUVFcjST44oh7VUXhx7gZjWejm2R8XX549ITaReot0pRAN3mbwA8n/exec";
         let tasks = [];
@@ -33,7 +39,7 @@
         function renderTasks() {
             const container = document.getElementById('task-list');
             container.innerHTML = tasks.map(t => `
-                <div class="bg-white p-2 rounded border border-gray-100 whitespace-nowrap overflow-hidden text-[10px]">
+                <div class="bg-white p-2 rounded border border-gray-100 overflow-hidden">
                     <div class="flex justify-between mb-1">
                         <span>${t.time}</span>
                         <span class="text-[#f07cad]">${t.type}</span>
@@ -61,6 +67,7 @@
         async function init() {
             tasks = [{ orderId: 'T1', time: '14:30', type: '接機', address: '台北市信義區', airport: '桃園機場' }];
             renderTasks();
+            document.getElementById('authScreen').classList.add('hidden');
         }
         window.onload = init;
     </script>
