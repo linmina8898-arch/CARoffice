@@ -5,123 +5,62 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AS派車 - 司機端</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
-        :root { --primary: #553f62; --accent: #f07cad; --bg: #f3f4f6; }
-        body { font-family: sans-serif; background-color: var(--bg); -webkit-tap-highlight-color: transparent; font-size: 13px; }
-        /* 移除所有粗體設定，全域字體調細 */
-        * { font-weight: 400; }
-        .nav-active { color: var(--primary); border-top: 2px solid var(--primary); background: #f9fafb; }
-        .glass-card { background: #fff; }
-        #signaturePad { border: 1px solid #cbd5e1; width: 100%; height: 180px; touch-action: none; background: #fff; }
+        * { font-size: 10px !important; font-weight: 400 !important; }
+        body { background: #f3f4f6; }
+        .nav-active { color: #553f62; border-top: 2px solid #553f62; }
     </style>
 </head>
 <body class="flex flex-col h-screen overflow-hidden text-gray-700">
-
-    <header class="bg-white shadow-sm z-10 px-3 py-2 flex justify-between items-center">
-        <div class="text-[#553f62]">AS派車 <span class="text-xs text-[#f07cad]">Driver</span></div>
-        <button onclick="window.location.href='tel:0955311306'" class="bg-gray-50 text-gray-500 px-2 py-1 rounded text-xs border border-gray-200">客服</button>
+    <header class="bg-white px-2 py-1 flex justify-between items-center shadow-sm whitespace-nowrap">
+        <span class="text-[#553f62]">AS派車 Driver</span>
     </header>
 
-    <main id="mainContent" class="flex-1 overflow-y-auto p-2 pb-16 hidden">
-        <div id="view-tasks">
-            <div class="flex space-x-1 mb-3 bg-gray-100 p-0.5 rounded shadow-inner justify-center max-w-sm mx-auto">
-                <button id="tab-today" class="task-tab-btn px-4 py-1 rounded text-xs bg-white text-[#553f62] shadow-sm flex-1" onclick="setTaskTab('today')">今天</button>
-                <button id="tab-tomorrow" class="task-tab-btn px-4 py-1 rounded text-xs text-gray-500 flex-1" onclick="setTaskTab('tomorrow')">明天</button>
-            </div>
-            <div id="task-list" class="space-y-2"></div>
-        </div>
-        <div id="view-history" class="hidden"></div>
-        <div id="view-profile" class="hidden text-center p-4">
-            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                <div class="text-3xl mb-2">🧑‍✈️</div>
-                <div id="profName" class="text-base text-[#553f62]">讀取中...</div>
-                <div id="profPhone" class="text-gray-400 text-xs mt-1"></div>
-            </div>
-        </div>
+    <main id="mainContent" class="flex-1 overflow-y-auto p-1 pb-12">
+        <div id="task-list" class="space-y-1"></div>
     </main>
 
-    <nav id="bottomNav" class="bg-white border-t border-gray-200 flex justify-around items-center h-12 fixed bottom-0 w-full z-20 hidden">
-        <button onclick="switchTab('tasks', this)" class="nav-btn nav-active flex-1 flex flex-col items-center justify-center text-gray-400 text-[10px]">
-            <span>案件</span>
-        </button>
-        <button onclick="switchTab('history', this)" class="nav-btn flex-1 flex flex-col items-center justify-center text-gray-400 text-[10px]">
-            <span>歷史</span>
-        </button>
-        <button onclick="switchTab('profile', this)" class="nav-btn flex-1 flex flex-col items-center justify-center text-gray-400 text-[10px]">
-            <span>設定</span>
-        </button>
+    <nav id="bottomNav" class="bg-white border-t flex justify-around items-center h-10 fixed bottom-0 w-full z-20">
+        <button onclick="switchTab('tasks', this)" class="nav-active flex-1">案件</button>
+        <button onclick="switchTab('profile', this)" class="flex-1">設定</button>
     </nav>
 
     <script>
-        const APP_VERSION = "v1.3.3";
-        const LIFF_ID = "2009971109-pdmG3XEe"; 
         const GAS_URL = "https://script.google.com/macros/s/AKfycbzMLYBvdbo4mkkEUVFcjST44oh7VUXhx7gZjWejm2R8XX549ITaReot0pRAN3mbwA8n/exec";
-
         let tasks = [];
-        let driverData = { lineId: 'test', name: '測試司機' };
-
-        // 樂觀更新狀態邏輯
-        async function updateStatus(orderId, newStatus) {
-            // 1. 立即更新 UI (樂觀更新)
-            const originalTasks = JSON.parse(JSON.stringify(tasks));
-            tasks = tasks.map(t => t.orderId === orderId ? {...t, driverStatus: newStatus} : t);
-            renderTasks();
-
-            try {
-                // 2. 背景請求 (不阻斷 UI)
-                const res = await fetch(GAS_URL, { 
-                    method: 'POST', 
-                    body: JSON.stringify({ action: 'driverUpdateStatus', data: { orderId, status: newStatus, lineId: driverData.lineId }}) 
-                }).then(r => r.json());
-                
-                if(!res.success) throw new Error();
-            } catch(e) {
-                // 3. 失敗則回滾
-                tasks = originalTasks;
-                renderTasks();
-                Swal.fire({ text: '回報失敗，請確認網路', icon: 'error', toast: true, position: 'top', showConfirmButton: false, timer: 2000 });
-            }
-        }
 
         function renderTasks() {
             const container = document.getElementById('task-list');
             container.innerHTML = tasks.map(t => `
-                <div class="glass-card p-3 rounded border border-gray-100 shadow-sm text-xs">
-                    <div class="flex justify-between items-center mb-1 text-gray-500">
-                        <span class="truncate">${t.time}</span>
+                <div class="bg-white p-2 rounded border border-gray-100 whitespace-nowrap overflow-hidden text-[10px]">
+                    <div class="flex justify-between mb-1">
+                        <span>${t.time}</span>
                         <span class="text-[#f07cad]">${t.type}</span>
                     </div>
-                    <div class="text-gray-700 space-y-0.5">
-                        <div class="truncate">A: ${t.address}</div>
-                        <div class="truncate">B: ${t.airport}</div>
-                    </div>
-                    <div class="mt-2 flex gap-1">
-                        <button onclick="updateStatus('${t.orderId}', '已出發')" class="flex-1 bg-gray-50 py-1.5 rounded border border-gray-200">🚗 出發</button>
-                        <button onclick="updateStatus('${t.orderId}', '已抵達')" class="flex-1 bg-gray-50 py-1.5 rounded border border-gray-200">📍 抵達</button>
-                        <button onclick="updateStatus('${t.orderId}', '客上')" class="flex-1 bg-gray-50 py-1.5 rounded border border-gray-200">✅ 客上</button>
-                        <button onclick="updateStatus('${t.orderId}', '已結案')" class="flex-1 bg-[#553f62] text-white py-1.5 rounded">🏁 結案</button>
+                    <div class="truncate">A: ${t.address}</div>
+                    <div class="truncate">B: ${t.airport}</div>
+                    <div class="mt-1 flex gap-1">
+                        <button onclick="updateStatus('${t.orderId}', '已出發')" class="flex-1 bg-gray-100 py-1 rounded">出發</button>
+                        <button onclick="updateStatus('${t.orderId}', '已抵達')" class="flex-1 bg-gray-100 py-1 rounded">抵達</button>
+                        <button onclick="updateStatus('${t.orderId}', '客上')" class="flex-1 bg-gray-100 py-1 rounded">客上</button>
+                        <button onclick="updateStatus('${t.orderId}', '已結案')" class="flex-1 bg-[#553f62] text-white py-1 rounded">結案</button>
                     </div>
                 </div>
             `).join('');
         }
 
-        function switchTab(tab, el) {
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('nav-active'));
-            el.classList.add('nav-active');
-            ['tasks', 'history', 'profile'].forEach(t => document.getElementById(`view-${t}`).classList.add('hidden'));
-            document.getElementById(`view-${tab}`).classList.remove('hidden');
+        async function updateStatus(orderId, newStatus) {
+            tasks = tasks.map(t => t.orderId === orderId ? {...t, driverStatus: newStatus} : t);
+            renderTasks();
+            try {
+                await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'driverUpdateStatus', data: { orderId, status: newStatus }}) });
+            } catch(e) { location.reload(); }
         }
 
         async function init() {
-            // 模擬初始資料
-            tasks = [{ orderId: 'T1', date: '2026-05-20', time: '14:30', type: '接機', address: '台北市...', airport: '桃園機場', driverStatus: '未出發' }];
+            tasks = [{ orderId: 'T1', time: '14:30', type: '接機', address: '台北市信義區', airport: '桃園機場' }];
             renderTasks();
-            document.getElementById('mainContent').classList.remove('hidden');
-            document.getElementById('bottomNav').classList.remove('hidden');
         }
-
         window.onload = init;
     </script>
 </body>
