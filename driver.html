@@ -135,7 +135,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.12.2";
+        const APP_VERSION = "v1.12.3";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -249,6 +249,8 @@
 
                 // 檢查是否加入好友
                 const checkFriendshipAndProceed = async () => {
+                    proceedLogin();
+                    return;
                     try {
                         const friendStatus = await Promise.race([
                             liff.getFriendship(),
