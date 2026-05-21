@@ -9,9 +9,15 @@
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
         :root { --primary: #553f62; --accent: #f07cad; --bg: #f3f4f6; }
-        body { font-family: sans-serif; background-color: var(--bg); -webkit-tap-highlight-color: transparent; }
-        .nav-active { color: var(--primary); font-weight: 800; border-bottom: 3px solid var(--primary); }
+        body { font-family: sans-serif; background-color: var(--bg); -webkit-tap-highlight-color: transparent; font-size: 14px; }
+        .nav-active { color: var(--primary); font-weight: 700; border-bottom: 3px solid var(--primary); }
         .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .font-bold { font-weight: 600 !important; }
+        .font-black { font-weight: 700 !important; }
+        .task-route { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .driver-field { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 8px; align-items: start; padding: 8px 0; border-bottom: 1px solid rgba(229,231,235,.8); }
+        .driver-field-label { color: #6b7280; font-weight: 600; white-space: nowrap; }
+        .driver-field-value { color: #1f2937; font-weight: 500; text-align: right; overflow-wrap: anywhere; }
         /* 簽名板 */
         #signaturePad { border: 2px dashed #cbd5e1; border-radius: 8px; width: 100%; height: 200px; touch-action: none; background: #fff; }
     </style>
@@ -129,7 +135,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.10.0";
+        const APP_VERSION = "v1.11.0";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -238,7 +244,10 @@
                 // 檢查是否加入好友
                 const checkFriendshipAndProceed = async () => {
                     try {
-                        const friendStatus = await liff.getFriendship();
+                        const friendStatus = await Promise.race([
+                            liff.getFriendship(),
+                            new Promise(resolve => setTimeout(() => resolve({ friendFlag: true, timeout: true }), 1200))
+                        ]);
                         if (!friendStatus.friendFlag) {
                             Swal.fire({
                                 title: '請先加入官方帳號',
@@ -460,9 +469,9 @@
                             <div class="flex flex-wrap gap-1">${tagsHtml}</div>
                             <span class="text-[10px] font-mono text-gray-400 flex items-center gap-1">${t.orderId} <span class="text-gray-300">❯</span></span>
                         </div>
-                        <div class="flex items-baseline">
+                        <div class="flex items-baseline min-w-0">
                             <span class="text-xl font-black text-[#553f62] mr-3">${t.time}</span>
-                            <span class="text-sm font-bold text-gray-700">${summaryRoute}</span>
+                            <span class="text-sm font-bold text-gray-700 task-route">${summaryRoute}</span>
                         </div>
                         ${actionArea}
                     </div>
@@ -527,22 +536,22 @@
                         <span class="text-2xl font-black text-[#553f62]">${t.time}</span>
                     </div>
                     
-                    <div class="space-y-1 text-sm bg-gray-50 p-3 rounded-lg border border-gray-100">
-                        <div class="flex justify-between items-start py-2 border-b border-gray-200/50"><span class="text-gray-500 font-bold whitespace-nowrap mr-2">接送機場</span><span class="font-bold text-gray-800 text-right break-words">${cleanVal(t.airport)}</span></div>
-                        <div class="flex justify-between items-start py-2 border-b border-gray-200/50"><span class="text-gray-500 font-bold whitespace-nowrap mr-2">航班編號</span><span class="font-bold text-[#f07cad] text-right break-words">${cleanVal(t.flightNo)}</span></div>
-                        <div class="flex justify-between items-center py-2 border-b border-gray-200/50">
-                            <span class="text-gray-500 font-bold whitespace-nowrap mr-2">客戶姓名</span>
-                            <div class="flex items-center justify-end"><span class="font-bold text-gray-800">${cleanVal(t.custName)}</span>${callBtn}</div>
+                    <div class="space-y-0 text-sm bg-gray-50 p-3 rounded-lg border border-gray-100">
+                        <div class="driver-field"><span class="driver-field-label">接送機場</span><span class="driver-field-value">${cleanVal(t.airport)}</span></div>
+                        <div class="driver-field"><span class="driver-field-label">航班編號</span><span class="driver-field-value text-[#f07cad]">${cleanVal(t.flightNo)}</span></div>
+                        <div class="driver-field">
+                            <span class="driver-field-label">客戶姓名</span>
+                            <div class="driver-field-value flex items-center justify-end"><span>${cleanVal(t.custName)}</span>${callBtn}</div>
                         </div>
-                        <div class="flex justify-between items-start py-2 border-b border-gray-200/50"><span class="text-gray-500 font-bold min-w-[70px] mr-2">接送地址</span><span class="font-bold text-gray-800 text-right break-words">${addressHtml}</span></div>
-                        <div class="flex justify-between items-start py-2 border-b border-gray-200/50"><span class="text-gray-500 font-bold min-w-[70px] mr-2">加點地址</span><span class="font-bold text-gray-800 text-right break-words">${extraStopHtml}</span></div>
-                        <div class="flex justify-between items-start py-2 border-b border-gray-200/50"><span class="text-gray-500 font-bold whitespace-nowrap mr-2">乘車人數</span><span class="font-bold text-gray-800 text-right break-words">${cleanVal(t.paxCount)}</span></div>
-                        <div class="flex justify-between items-start py-2 border-b border-gray-200/50"><span class="text-gray-500 font-bold whitespace-nowrap mr-2">行李件數</span><span class="font-bold text-gray-800 text-right break-words">${luggageText}</span></div>
-                        <div class="flex justify-between items-start py-2 border-b border-gray-200/50"><span class="text-gray-500 font-bold whitespace-nowrap mr-2">預約車型</span><span class="font-bold text-gray-800 text-right break-words">${cleanVal(t.car)}</span></div>
-                        <div class="flex justify-between items-start py-2 border-b border-gray-200/50"><span class="text-gray-500 font-bold whitespace-nowrap mr-2">兒童座椅</span><span class="font-bold text-gray-800 text-right break-words">${cleanVal(t.seats)}</span></div>
-                        <div class="flex justify-between items-start py-2 border-b border-gray-200/50"><span class="text-gray-500 font-bold whitespace-nowrap mr-2">舉牌內容</span><span class="font-bold text-gray-800 text-right break-words">${signContent}</span></div>
-                        <div class="flex justify-between items-start py-2 border-b border-gray-200/50"><span class="text-gray-500 font-bold min-w-[70px] mr-2">客戶備註</span><span class="font-bold text-red-500 text-right break-words">${cNote}</span></div>
-                        <div class="flex justify-between items-start py-2"><span class="text-gray-500 font-bold min-w-[70px] mr-2">車商備註</span><span class="font-bold text-yellow-800 text-right break-words">${dNote}</span></div>
+                        <div class="driver-field"><span class="driver-field-label">接送地址</span><span class="driver-field-value">${addressHtml}</span></div>
+                        <div class="driver-field"><span class="driver-field-label">加點地址</span><span class="driver-field-value">${extraStopHtml}</span></div>
+                        <div class="driver-field"><span class="driver-field-label">乘車人數</span><span class="driver-field-value">${cleanVal(t.paxCount)}</span></div>
+                        <div class="driver-field"><span class="driver-field-label">行李件數</span><span class="driver-field-value">${luggageText}</span></div>
+                        <div class="driver-field"><span class="driver-field-label">預約車型</span><span class="driver-field-value">${cleanVal(t.car)}</span></div>
+                        <div class="driver-field"><span class="driver-field-label">兒童座椅</span><span class="driver-field-value">${cleanVal(t.seats)}</span></div>
+                        <div class="driver-field"><span class="driver-field-label">舉牌內容</span><span class="driver-field-value">${signContent}</span></div>
+                        <div class="driver-field"><span class="driver-field-label">客戶備註</span><span class="driver-field-value text-red-500">${cNote}</span></div>
+                        <div class="driver-field !border-b-0"><span class="driver-field-label">車商備註</span><span class="driver-field-value text-yellow-800">${dNote}</span></div>
                         ${cashHtml}
                     </div>
                 </div>
