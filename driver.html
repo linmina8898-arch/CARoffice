@@ -19,7 +19,7 @@
         .driver-field-label { color: #6b7280; font-size: 12px; font-weight: 400; white-space: nowrap; }
         .driver-field-value { color: #1f2937; font-weight: 500; text-align: right; overflow-wrap: anywhere; }
         /* 簽名板 */
-        #signaturePad { border: 2px dashed #cbd5e1; border-radius: 8px; width: 100%; height: 200px; touch-action: none; background: #fff; }
+        #signaturePad { border: 2px dashed #cbd5e1; border-radius: 10px; width: 100%; flex: 1; min-height: 58vh; touch-action: none; background: #fff; }
     </style>
 </head>
 <body class="flex flex-col h-screen overflow-hidden text-gray-800">
@@ -122,21 +122,29 @@
     </div>
 
     <!-- 簽名板 Modal -->
-    <div id="sigModal" class="fixed inset-0 bg-black/80 z-[60] flex flex-col hidden">
-        <div class="p-4 bg-white text-center font-bold text-[#553f62] shadow-sm">客戶確認簽名</div>
-        <div class="flex-1 bg-gray-100 p-4 flex flex-col justify-center">
-            <p class="text-xs text-red-500 text-center mb-2 font-bold">※ 請客戶於下方框內簽名，確認行程已安全結束</p>
+    <div id="sigModal" class="fixed inset-0 bg-[#f3f4f6] z-[60] flex flex-col hidden">
+        <div class="px-4 py-3 bg-white shadow-sm border-b border-gray-100">
+            <div class="flex items-center justify-between gap-3">
+                <div class="min-w-0">
+                    <div class="text-base font-bold text-[#553f62]">客戶確認簽名</div>
+                    <div id="sigOrderInfo" class="text-xs text-gray-500 truncate">月結簽單</div>
+                </div>
+                <button onclick="closeSigModal()" class="text-sm text-gray-500 px-3 py-1.5 rounded-lg bg-gray-100">取消</button>
+            </div>
+        </div>
+        <div class="flex-1 p-4 flex flex-col min-h-0">
+            <p class="text-xs text-red-500 text-center mb-2 font-bold">※ 請客戶於下方簽名，確認行程已安全結束</p>
             <canvas id="signaturePad"></canvas>
-            <div class="flex justify-between mt-4">
-                <button onclick="clearSig()" class="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg font-bold">重簽</button>
-                <button onclick="submitSig()" class="px-6 py-2 bg-[#553f62] text-white rounded-lg font-bold">完成結案</button>
+            <div class="grid grid-cols-2 gap-3 mt-4">
+                <button onclick="clearSig()" class="py-3 bg-gray-200 text-gray-700 rounded-xl font-bold">重簽</button>
+                <button onclick="submitSig()" class="py-3 bg-[#553f62] text-white rounded-xl font-bold shadow-md">確認簽名結案</button>
             </div>
         </div>
     </div>
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.12.6";
+        const APP_VERSION = "v1.12.9";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -159,8 +167,8 @@
         let hasSignatureDrawn = false;
 
         function initCanvas() {
-            canvas.width = canvas.parentElement.clientWidth;
-            canvas.height = 200;
+            canvas.width = canvas.clientWidth;
+            canvas.height = canvas.clientHeight;
             ctx.lineWidth = 3;
             ctx.lineCap = 'round';
             ctx.strokeStyle = '#553f62';
@@ -217,10 +225,23 @@
         }
 
         // --- 核心：API 溝通 ---
-        async function apiCall(action, data) {
-            const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: action, data: data }) }).then(r=>r.json());
-            if(!res.success) throw new Error(res.error || 'API 錯誤');
-            return res;
+        async function apiCall(action, data, timeoutMs = 12000) {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), timeoutMs);
+            try {
+                const res = await fetch(GAS_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: action, data: data }),
+                    signal: controller.signal
+                }).then(r=>r.json());
+                if(!res.success) throw new Error(res.error || 'API 錯誤');
+                return res;
+            } catch (err) {
+                if (err.name === 'AbortError') throw new Error('連線逾時，請重新整理或稍後再試');
+                throw err;
+            } finally {
+                clearTimeout(timer);
+            }
         }
 
         function withTimeout(promise, ms, message) {
@@ -246,7 +267,7 @@
                 if (!mainHidden || !bindHidden) return;
                 document.getElementById('authSpinner').classList.add('hidden');
                 document.getElementById('authMsg').innerHTML = '登入逾時，請確認網路後重新整理。<br><button onclick="window.location.reload()" class="mt-3 bg-[#553f62] text-white px-4 py-2 rounded-lg text-sm font-bold">重新登入</button>';
-            }, 15000);
+            }, 12000);
 
             try {
                 if(window !== window.parent) { 
@@ -268,7 +289,7 @@
                     return;
                 }
 
-                await withTimeout(liff.init({ liffId: LIFF_ID }), 10000, 'LIFF 初始化逾時');
+                await withTimeout(liff.init({ liffId: LIFF_ID }), 8000, 'LIFF 初始化逾時');
                 if (!liff.isLoggedIn()) { liff.login(); return; }
 
                 // 檢查是否加入好友
@@ -323,8 +344,8 @@
                 };
 
                 const proceedLogin = async () => {
-                    const profile = await withTimeout(liff.getProfile(), 8000, 'LINE 資料讀取逾時');
-                    const checkRes = await withTimeout(apiCall('driverCheckAuth', { lineId: profile.userId }), 10000, '司機驗證逾時');
+                    const profile = await withTimeout(liff.getProfile(), 5000, 'LINE 資料讀取逾時');
+                    const checkRes = await apiCall('driverCheckAuth', { lineId: profile.userId }, 8000);
                     if(checkRes.isBound) {
                         driverData = checkRes.driver;
                         loginSuccess();
@@ -422,7 +443,7 @@
                 taskContainer.innerHTML = `<div class="text-center text-gray-400 mt-16 text-sm">任務載入中...</div>`;
             }
             try {
-                const res = await apiCall('driverGetTasks', { lineId: driverData.lineId });
+                const res = await apiCall('driverGetTasks', { lineId: driverData.lineId }, 12000);
                 tasks = res.tasks;
                 if(res.monthCount !== undefined) {
                     document.getElementById('profCount').innerText = res.monthCount;
@@ -432,7 +453,12 @@
                 if(currentDetailOrderId) {
                     openTaskDetail(currentDetailOrderId);
                 }
-            } catch(e) { Swal.fire('錯誤', '無法載入任務', 'error'); }
+            } catch(e) {
+                if (taskContainer) {
+                    taskContainer.innerHTML = `<div class="text-center text-gray-500 mt-16 text-sm leading-relaxed">任務載入逾時<br><button onclick="loadTasks()" class="mt-3 bg-[#553f62] text-white px-4 py-2 rounded-lg font-bold">重新載入</button></div>`;
+                }
+                Swal.fire('錯誤', e.message || '無法載入任務', 'error');
+            }
         }
 
         async function loadHistory() {
@@ -523,7 +549,7 @@
                 if(currentStep === "未出發" || !currentStep) {
                     actionArea = `
                     <div class="mt-3 pt-3 border-t border-gray-100">
-                        <button onclick="event.stopPropagation(); updateStatus('${t.orderId}', '已收單')" class="w-full bg-[#f07cad] text-white py-2.5 rounded-xl font-bold shadow-md text-sm transition active:bg-pink-600">確認收單</button>
+                        <button onclick="event.stopPropagation(); updateStatus('${t.orderId}', '已收單')" class="w-full bg-[#553f62] text-white py-2.5 rounded-xl font-bold shadow-md text-sm transition active:bg-[#463252]">確認收單</button>
                     </div>`;
                 } else {
                     actionArea = `
@@ -566,7 +592,7 @@
             // 動態按鈕產生邏輯
             let actionBtn = '';
             if(currentStep === "未出發" || !currentStep) {
-                actionBtn = `<button onclick="updateStatus('${t.orderId}', '已收單')" class="w-full bg-[#f07cad] text-white py-3.5 rounded-xl font-bold shadow-md text-base transition">確認收單</button>`;
+                actionBtn = `<button onclick="updateStatus('${t.orderId}', '已收單')" class="w-full bg-[#553f62] text-white py-3.5 rounded-xl font-bold shadow-md text-base transition active:bg-[#463252]">確認收單</button>`;
             } else if(currentStep === "已收單") {
                 actionBtn = `<button onclick="updateStatus('${t.orderId}', '已出發')" class="w-full bg-[#553f62] text-white py-3.5 rounded-xl font-bold shadow-md text-base transition">點我出發</button>`;
             } else if(currentStep === "已出發") {
@@ -738,7 +764,7 @@
             container.innerHTML = reconHtml + historyHtml;
         }
 
-        async function updateStatus(orderId, newStatus) {
+        async function updateStatus(orderId, newStatus, signatureDataUrl = '') {
             try {
                 let coords = { lat: '', lng: '' };
                 
@@ -754,13 +780,17 @@
                     status: newStatus,
                     lat: coords.lat,
                     lng: coords.lng,
-                    lineId: driverData.lineId
+                    lineId: driverData.lineId,
+                    signatureDataUrl,
+                    driverName: driverData.name
                 });
                 
                 Swal.fire({ title: '成功', text: `狀態更新為：${newStatus}`, icon: 'success', timer: 1000, showConfirmButton: false });
                 loadTasks();
+                return true;
             } catch(e) {
                 if(e !== 'No Geolocation') Swal.fire('錯誤', e.message, 'error');
+                return false;
             }
         }
 
@@ -833,6 +863,10 @@
         function openSigModal(orderId) {
             currentSigOrderId = orderId;
             hasSignatureDrawn = false;
+            const task = tasks.find(x => x.orderId === orderId);
+            const company = cleanVal(task?.companyName) || '月結簽單';
+            const dateTime = task ? `${task.date} ${task.time}` : '';
+            document.getElementById('sigOrderInfo').innerText = `${company}｜${orderId}${dateTime ? '｜' + dateTime : ''}`;
             document.getElementById('sigModal').classList.remove('hidden');
             setTimeout(initCanvas, 100); 
         }
@@ -847,9 +881,12 @@
                 });
                 return;
             }
-            document.getElementById('sigModal').classList.add('hidden');
-            await updateStatus(currentSigOrderId, '已結案');
-            closeTaskDetail(); // 結案後關閉明細頁
+            const signatureDataUrl = canvas.toDataURL('image/png');
+            const ok = await updateStatus(currentSigOrderId, '已結案', signatureDataUrl);
+            if (ok) {
+                document.getElementById('sigModal').classList.add('hidden');
+                closeTaskDetail(); // 結案後關閉明細頁
+            }
         }
 
         window.onload = init;
