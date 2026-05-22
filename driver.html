@@ -15,8 +15,8 @@
         .font-bold { font-weight: 600 !important; }
         .font-black { font-weight: 700 !important; }
         .task-route { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .driver-field { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 8px; align-items: start; padding: 8px 0; border-bottom: 1px solid rgba(229,231,235,.8); }
-        .driver-field-label { color: #6b7280; font-weight: 600; white-space: nowrap; }
+        .driver-field { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 8px; align-items: start; padding: 8px 0; border-bottom: 1px solid rgba(229,231,235,.8); }
+        .driver-field-label { color: #6b7280; font-size: 12px; font-weight: 400; white-space: nowrap; }
         .driver-field-value { color: #1f2937; font-weight: 500; text-align: right; overflow-wrap: anywhere; }
         /* 簽名板 */
         #signaturePad { border: 2px dashed #cbd5e1; border-radius: 8px; width: 100%; height: 200px; touch-action: none; background: #fff; }
@@ -38,10 +38,10 @@
         <div id="view-tasks">
             <!-- 分頁標籤 -->
             <div class="flex space-x-2 mb-4 bg-gray-200 p-1 rounded-lg shadow-inner justify-center max-w-sm mx-auto">
-                <button id="tab-pending" class="task-tab-btn px-3 py-1.5 rounded-md text-sm font-bold bg-white text-[#553f62] shadow-sm flex-1 transition" onclick="setTaskTab('pending')">待收單</button>
-                <button id="tab-today" class="task-tab-btn px-3 py-1.5 rounded-md text-sm text-gray-500 font-bold flex-1 transition" onclick="setTaskTab('today')">今天</button>
+                <button id="tab-today" class="task-tab-btn px-3 py-1.5 rounded-md text-sm font-bold bg-white text-[#553f62] shadow-sm flex-1 transition" onclick="setTaskTab('today')">今天</button>
                 <button id="tab-tomorrow" class="task-tab-btn px-3 py-1.5 rounded-md text-sm text-gray-500 font-bold flex-1 transition" onclick="setTaskTab('tomorrow')">明天</button>
                 <button id="tab-all" class="task-tab-btn px-3 py-1.5 rounded-md text-sm text-gray-500 font-bold flex-1 transition" onclick="setTaskTab('all')">全部</button>
+                <button id="tab-pending" class="task-tab-btn px-3 py-1.5 rounded-md text-sm text-gray-500 font-bold flex-1 transition" onclick="setTaskTab('pending')">待收單</button>
             </div>
             <!-- 任務清單 -->
             <div id="task-list" class="space-y-4"></div>
@@ -136,7 +136,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.12.4";
+        const APP_VERSION = "v1.12.5";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -148,7 +148,8 @@
         let historyData = [];
         let reconciliationData = null;
         let currentSigOrderId = null;
-        let currentTaskTab = 'pending'; 
+        let currentTaskTab = 'today'; 
+        let authTimeoutTimer = null;
         let currentDetailOrderId = null;
         
         // 簽名板邏輯
@@ -222,13 +223,35 @@
             return res;
         }
 
+        function withTimeout(promise, ms, message) {
+            return Promise.race([
+                promise,
+                new Promise((_, reject) => setTimeout(() => reject(new Error(message)), ms))
+            ]);
+        }
+
+        function clearAuthTimeout() {
+            if (authTimeoutTimer) {
+                clearTimeout(authTimeoutTimer);
+                authTimeoutTimer = null;
+            }
+        }
+
         // --- 初始化與登入 (包含強迫加好友) ---
         async function init() {
             document.querySelectorAll('.app-version-display').forEach(el => el.innerText = APP_VERSION);
+            authTimeoutTimer = setTimeout(() => {
+                const mainHidden = document.getElementById('mainContent').classList.contains('hidden');
+                const bindHidden = document.getElementById('bindForm').classList.contains('hidden');
+                if (!mainHidden || !bindHidden) return;
+                document.getElementById('authSpinner').classList.add('hidden');
+                document.getElementById('authMsg').innerHTML = '登入逾時，請確認網路後重新整理。<br><button onclick="window.location.reload()" class="mt-3 bg-[#553f62] text-white px-4 py-2 rounded-lg text-sm font-bold">重新登入</button>';
+            }, 15000);
 
             try {
                 if(window !== window.parent) { 
                     // 預覽模式假資料
+                    clearAuthTimeout();
                     document.getElementById('authMsg').innerText = "預覽模式：請輸入司機資料";
                     document.getElementById('authSpinner').classList.add('hidden');
                     document.getElementById('lineNameDisplay').innerText = '測試預覽帳號'; 
@@ -245,7 +268,7 @@
                     return;
                 }
 
-                await liff.init({ liffId: LIFF_ID });
+                await withTimeout(liff.init({ liffId: LIFF_ID }), 10000, 'LIFF 初始化逾時');
                 if (!liff.isLoggedIn()) { liff.login(); return; }
 
                 // 檢查是否加入好友
@@ -300,12 +323,13 @@
                 };
 
                 const proceedLogin = async () => {
-                    const profile = await liff.getProfile();
-                    const checkRes = await apiCall('driverCheckAuth', { lineId: profile.userId });
+                    const profile = await withTimeout(liff.getProfile(), 8000, 'LINE 資料讀取逾時');
+                    const checkRes = await withTimeout(apiCall('driverCheckAuth', { lineId: profile.userId }), 10000, '司機驗證逾時');
                     if(checkRes.isBound) {
                         driverData = checkRes.driver;
                         loginSuccess();
                     } else {
+                        clearAuthTimeout();
                         document.getElementById('authMsg').innerText = "請驗證您的司機身分";
                         document.getElementById('authSpinner').classList.add('hidden');
                         document.getElementById('lineNameDisplay').innerText = profile.displayName;
@@ -318,12 +342,16 @@
                 checkFriendshipAndProceed();
 
             } catch (err) {
-                Swal.fire('系統錯誤', 'LIFF 初始化失敗，請確認已在 LINE 中開啟', 'error');
+                clearAuthTimeout();
+                document.getElementById('authSpinner').classList.add('hidden');
+                document.getElementById('authMsg').innerText = '登入失敗，請重新整理或聯絡調度。';
+                Swal.fire('系統錯誤', err.message || 'LIFF 初始化失敗，請確認已在 LINE 中開啟', 'error');
             }
             initCanvas();
         }
 
         function loginSuccess() {
+            clearAuthTimeout();
             document.getElementById('authScreen').classList.add('hidden');
             document.getElementById('mainContent').classList.remove('hidden');
             document.getElementById('bottomNav').classList.remove('hidden');
@@ -469,21 +497,25 @@
                 let currentStep = t.driverStatus || "未出發";
                 let signContent = cleanVal(t.signboard) ? t.signboard : (t.remarks && t.remarks.includes('舉牌') ? '詳見客戶備註' : '');
                 let hasSign = signContent !== '';
-                let isMonthlyBilling = (t.paymentMethod && (t.paymentMethod.includes('月結') || t.paymentMethod.includes('簽單'))) || cleanVal(t.companyName);
+                const paymentInfo = getDriverPaymentInfo(t);
 
-                // 🔥 動態標籤 (Tags)
                 let tags = [];
                 let mmdd = t.date.substring(5).replace('-', '/');
-                tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-500 text-white">${mmdd}</span>`);
-                tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded ${t.type === '接機' ? 'bg-[#f07cad]' : 'bg-[#553f62]'} text-white">${t.type}</span>`);
                 if (cleanVal(t.extraStop)) tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-600 text-white">加點</span>`);
-                if (cleanVal(t.seats)) tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded border border-gray-400 text-gray-600">安全座椅</span>`);
+                if (paymentInfo.isBilling) {
+                    tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#553f62] text-white">月結簽單</span>`);
+                } else if (paymentInfo.isCash) {
+                    tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#f07cad] text-white">現金</span>`);
+                } else if (paymentInfo.isTransfer) {
+                    tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded border border-[#553f62] text-[#553f62] bg-white">轉帳</span>`);
+                } else if (cleanVal(t.paymentMethod)) {
+                    tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded border border-gray-300 text-gray-600 bg-white">${cleanVal(t.paymentMethod)}</span>`);
+                }
                 if (hasSign) tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded border border-[#f07cad] text-[#f07cad]">舉牌</span>`);
-                if (isMonthlyBilling) tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#553f62] text-white">月結簽單</span>`);
-                if (isPendingAccept(t)) tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-50 text-red-600 border border-red-100">待收單</span>`);
                 let tagsHtml = tags.join('');
 
-                let shortAddress = t.address.length > 6 ? t.address.substring(0, 6) + '...' : t.address;
+                let addressText = cleanVal(t.address);
+                let shortAddress = addressText.length > 8 ? addressText.substring(0, 8) + '...' : addressText;
                 let summaryRoute = t.type === '送機' ? `${shortAddress} ➜ ${t.airport}` : `${t.airport} ➜ ${shortAddress}`;
 
                 // 判斷是否顯示「確認收單」按鈕在主畫面上
@@ -505,14 +537,18 @@
                 <div onclick="openTaskDetail('${t.orderId}')" class="glass-card p-4 rounded-xl border border-gray-200 shadow-sm relative overflow-hidden mb-4 cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition">
                     <div class="absolute top-0 left-0 w-1.5 h-full bg-[#553f62]"></div>
                     <div class="pl-2">
-                        <div class="flex justify-between items-start mb-2">
-                            <div class="flex flex-wrap gap-1">${tagsHtml}</div>
-                            <span class="text-[10px] font-mono text-gray-400 flex items-center gap-1">${t.orderId} <span class="text-gray-300">❯</span></span>
+                        <div class="flex justify-between items-start gap-3">
+                            <div class="min-w-0">
+                                <div class="text-xl font-black text-[#553f62] leading-tight">${mmdd}</div>
+                                <div class="flex items-baseline gap-2 mt-1 min-w-0">
+                                    <span class="text-xl font-black text-[#553f62] leading-tight">${t.time}</span>
+                                    <span class="text-xl font-black ${t.type === '接機' ? 'text-[#f07cad]' : 'text-[#553f62]'} leading-tight">${t.type}</span>
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap justify-end gap-1 max-w-[54%]">${tagsHtml}</div>
                         </div>
-                        <div class="flex items-baseline min-w-0">
-                            <span class="text-xl font-black text-[#553f62] mr-3">${t.time}</span>
-                            <span class="text-sm font-bold text-gray-700 task-route">${summaryRoute}</span>
-                        </div>
+                        <div class="task-route mt-2 text-xs text-gray-500">${summaryRoute}</div>
+                        <div class="mt-1 text-[10px] font-mono text-gray-400 flex justify-end items-center gap-1">${t.orderId} <span class="text-gray-300">❯</span></div>
                         ${actionArea}
                     </div>
                 </div>`;
