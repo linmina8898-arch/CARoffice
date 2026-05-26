@@ -144,7 +144,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.12.9";
+        const APP_VERSION = "v1.13.0";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -465,13 +465,9 @@
             Swal.showLoading();
             try {
                 const month = document.getElementById('driverReconMonth')?.value || new Date().toISOString().substring(0, 7);
-                const res = await apiCall('driverGetHistory', { lineId: driverData.lineId });
-                historyData = res.history;
-                try {
-                    reconciliationData = await apiCall('driverGetReconciliation', { lineId: driverData.lineId, month });
-                } catch (reconErr) {
-                    reconciliationData = { success: true, month, totalPayout: 0, count: 0, orders: [] };
-                }
+                const res = await apiCall('driverGetHistoryBundle', { lineId: driverData.lineId, month });
+                historyData = res.history || [];
+                reconciliationData = res.reconciliation || { success: true, month, totalPayout: 0, totalCash: 0, netPayable: 0, count: 0, orders: [] };
                 renderHistory();
                 Swal.close();
             } catch(e) { Swal.fire('錯誤', '無法載入歷史', 'error'); }
@@ -489,9 +485,10 @@
             const isCash = method.includes('現') || method.includes('車上') || method.includes('付現');
             const isBilling = method.includes('月結') || method.includes('簽單') || cleanVal(t.companyName);
             const isTransfer = method.includes('轉帳');
-            const cashCollected = isCash ? parseMoney(t.tripAmt) : 0;
+            const manualCash = parseMoney(t.manualCashCollected ?? t.cashCollected);
+            const cashCollected = manualCash > 0 ? manualCash : (isCash ? parseMoney(t.tripAmt) : 0);
             const paymentStatus = isCash ? '司機收現' : (isBilling ? '月結簽單' : (isTransfer ? '轉帳，不簽不收' : (method || '未標示')));
-            return { isCash, isBilling, isTransfer, cashCollected, paymentStatus };
+            return { isCash, isBilling, isTransfer, cashCollected, paymentStatus, hasSeparateCash: manualCash > 0 && !isCash };
         }
 
         // --- 渲染【主畫面清單 (加入「確認收單」按鈕)】 ---
@@ -537,6 +534,7 @@
                 } else if (cleanVal(t.paymentMethod)) {
                     tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded border border-gray-300 text-gray-600 bg-white">${cleanVal(t.paymentMethod)}</span>`);
                 }
+                if (paymentInfo.hasSeparateCash) tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-600 text-white">現收 $${paymentInfo.cashCollected.toLocaleString()}</span>`);
                 if (hasSign) tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded border border-[#f07cad] text-[#f07cad]">舉牌</span>`);
                 let tagsHtml = tags.join('');
 
@@ -618,9 +616,9 @@
                 paymentGuideHtml = `<div class="flex justify-between items-center py-3 border-t-2 border-pink-100 mt-2"><span class="text-gray-500 font-bold mr-2">付款方式</span><span class="text-[#553f62] font-bold text-right">月結簽單，客下請簽名</span></div>`;
             }
             let cashHtml = '';
-            if (isCashPayment) {
+            if (paymentInfo.cashCollected > 0) {
                 let amtToCollect = paymentInfo.cashCollected;
-                cashHtml = `<div class="flex justify-between items-center py-3 border-t-2 border-red-100 mt-2"><span class="text-gray-500 font-bold mr-2">收現金額</span><span class="text-red-600 font-black text-2xl text-right">$${amtToCollect}</span></div>`;
+                cashHtml = `<div class="flex justify-between items-center py-3 border-t-2 border-red-100 mt-2"><span class="text-gray-500 mr-2">現場收現金額</span><div class="text-right"><div class="text-red-600 font-bold text-xl">$${amtToCollect.toLocaleString()}</div>${cleanVal(t.cashCollectionNote) ? `<div class="text-xs text-gray-500">${cleanVal(t.cashCollectionNote)}</div>` : ''}</div></div>`;
             }
 
             let cNote = cleanVal(t.remarks) ? cleanVal(t.remarks).replace(/\n/g, '<br>') : '';
@@ -698,22 +696,6 @@
             document.getElementById('view-task-detail').classList.add('hidden');
         }
 
-        function renderHistory() {
-            const container = document.getElementById('view-history');
-            if(historyData.length === 0) { container.innerHTML = `<div class="text-center text-gray-400 mt-20 font-bold">尚無歷史結案紀錄</div>`; return; }
-            
-            container.innerHTML = historyData.map(t => `
-                <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
-                    <div class="flex justify-between mb-1">
-                        <span class="text-xs font-bold text-gray-500">${t.date} ${t.time}</span>
-                        <span class="text-xs font-bold text-blue-600">已結案</span>
-                    </div>
-                    <div class="text-sm font-bold text-gray-400">${t.routeDisplay}</div>
-                    <div class="text-xs text-gray-400 mt-1">${t.custNameMasked}</div>
-                </div>
-            `).join('');
-        }
-
         // --- 狀態更新邏輯 (針對「收單」加速，不讀取 GPS) ---
         function renderHistory() {
             const container = document.getElementById('view-history');
@@ -721,46 +703,42 @@
             const monthValue = recon.month || new Date().toISOString().substring(0, 7);
             const totalCash = Number(recon.totalCash || 0);
             const netPayable = Number(recon.netPayable || 0);
-            const netLabel = netPayable >= 0 ? '公司應付' : '司機應繳回';
+            const netLabel = netPayable >= 0 ? '司機應收金額' : '司機應繳回公司';
+            const reconByOrderId = Object.fromEntries((recon.orders || []).map(o => [o.orderId, o]));
+            const monthlyHistory = historyData.filter(t => String(t.date || '').startsWith(monthValue));
             const reconHtml = `
                 <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
                     <div class="flex items-center justify-between gap-2 mb-3">
                         <div>
-                            <p class="text-xs text-gray-400 font-bold">本月車資</p>
-                            <p class="text-xl font-black text-[#553f62]">$${Number(recon.totalPayout || 0).toLocaleString()}</p>
+                            <p class="text-xs text-gray-400">對帳月份</p>
+                            <p class="text-sm text-[#553f62]">${monthValue}</p>
                         </div>
-                        <input type="month" id="driverReconMonth" value="${monthValue}" onchange="loadHistory()" class="border rounded-lg px-2 py-1 text-sm font-bold text-[#553f62]">
+                        <input type="month" id="driverReconMonth" value="${monthValue}" onchange="loadHistory()" class="border rounded-lg px-2 py-1 text-sm text-[#553f62]">
                     </div>
-                    <div class="grid grid-cols-2 gap-2 mb-3 text-xs">
-                        <div class="bg-gray-50 rounded-lg p-2"><div class="text-gray-400">司機已收現金</div><div class="text-red-600 font-black">$${totalCash.toLocaleString()}</div></div>
-                        <div class="bg-gray-50 rounded-lg p-2"><div class="text-gray-400">${netLabel}</div><div class="${netPayable >= 0 ? 'text-[#553f62]' : 'text-red-600'} font-black">$${Math.abs(netPayable).toLocaleString()}</div></div>
+                    <div class="grid grid-cols-3 gap-2 mb-3 text-xs">
+                        <div class="bg-gray-50 rounded-lg p-2"><div class="text-gray-500">本月車資金額</div><div class="text-[#553f62] font-bold text-base">$${Number(recon.totalPayout || 0).toLocaleString()}</div></div>
+                        <div class="bg-gray-50 rounded-lg p-2"><div class="text-gray-500">司機已收現金</div><div class="text-red-600 font-bold text-base">$${totalCash.toLocaleString()}</div></div>
+                        <div class="bg-gray-50 rounded-lg p-2"><div class="text-gray-500">${netLabel}</div><div class="${netPayable >= 0 ? 'text-[#553f62]' : 'text-red-600'} font-bold text-base">$${Math.abs(netPayable).toLocaleString()}</div></div>
                     </div>
-                    <div class="text-xs text-gray-500 mb-3">本月 ${recon.count || 0} 趟，車資以公司確認為準；現金會自動從應付車資扣回。</div>
-                    <div class="space-y-2">
-                        ${(recon.orders || []).map(o => `
-                            <div class="bg-[#fff5f8] rounded-lg p-2 border border-pink-100">
-                                <div class="flex justify-between text-sm">
-                                    <span class="font-bold text-gray-700">${o.date} ${o.time}</span>
-                                    <span class="font-black text-[#f07cad]">$${Number(o.payout || 0).toLocaleString()}</span>
-                                </div>
-                                <div class="text-xs text-gray-500 mt-1">${o.type} / ${o.airport} / ${o.car || '-'}</div>
-                                <div class="text-[11px] text-gray-500 mt-1">${o.paymentStatus || o.paymentMethod || '未標示'}${Number(o.cashCollected || 0) > 0 ? `｜已收現 $${Number(o.cashCollected).toLocaleString()}` : ''}</div>
-                                <div class="text-[11px] text-gray-400 mt-1">${o.payoutStatus || '待確認'}${o.payoutNote ? '｜' + o.payoutNote : ''}</div>
-                            </div>
-                        `).join('') || `<div class="text-center text-gray-400 text-sm py-4">本月尚無車資資料</div>`}
-                    </div>
+                    <div class="text-xs text-gray-500">本月 ${recon.count || 0} 趟；本月車資金額 - 司機已收現金 = ${netLabel}。</div>
                 </div>`;
 
-            const historyHtml = historyData.length === 0 ? `<div class="text-center text-gray-400 mt-8 font-bold">尚無歷史車趟</div>` : historyData.map(t => `
+            const historyHtml = monthlyHistory.length === 0 ? `<div class="text-center text-gray-400 mt-8 text-sm">本月尚無已結案車趟</div>` : monthlyHistory.map(t => {
+                const o = reconByOrderId[t.orderId] || {};
+                return `
                 <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
                     <div class="flex justify-between mb-1">
-                        <span class="text-xs font-bold text-gray-500">${t.date} ${t.time}</span>
-                        <span class="text-xs font-bold text-blue-600">已結案</span>
+                        <span class="text-xs text-gray-600">${t.date} ${t.time}</span>
+                        <span class="text-xs text-blue-600">已結案</span>
                     </div>
-                    <div class="text-sm font-bold text-gray-400">${t.routeDisplay}</div>
+                    <div class="text-sm text-gray-600">${t.routeDisplay}</div>
                     <div class="text-xs text-gray-400 mt-1">${t.custNameMasked}</div>
+                    <div class="flex justify-between items-end border-t border-gray-200 mt-3 pt-2">
+                        <div class="text-xs text-gray-500">${o.paymentStatus || o.paymentMethod || '未標示'}${Number(o.cashCollected || 0) > 0 ? `｜已收現 $${Number(o.cashCollected).toLocaleString()}` : ''}<br>${o.payoutStatus || '待確認'}${o.payoutNote ? `｜${o.payoutNote}` : ''}</div>
+                        <div class="text-right"><div class="text-[10px] text-gray-400">車資</div><div class="text-base font-bold text-[#553f62]">$${Number(o.payout || 0).toLocaleString()}</div></div>
+                    </div>
                 </div>
-            `).join('');
+            `; }).join('');
             container.innerHTML = reconHtml + historyHtml;
         }
 
