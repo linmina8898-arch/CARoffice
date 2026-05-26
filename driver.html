@@ -144,7 +144,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.13.0";
+        const APP_VERSION = "v1.13.1";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -706,6 +706,7 @@
             const netLabel = netPayable >= 0 ? '司機應收金額' : '司機應繳回公司';
             const reconByOrderId = Object.fromEntries((recon.orders || []).map(o => [o.orderId, o]));
             const monthlyHistory = historyData.filter(t => String(t.date || '').startsWith(monthValue));
+            const pendingReportCount = Number(recon.pendingReportCount || 0);
             const reconHtml = `
                 <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
                     <div class="flex items-center justify-between gap-2 mb-3">
@@ -720,16 +721,17 @@
                         <div class="bg-gray-50 rounded-lg p-2"><div class="text-gray-500">司機已收現金</div><div class="text-red-600 font-bold text-base">$${totalCash.toLocaleString()}</div></div>
                         <div class="bg-gray-50 rounded-lg p-2"><div class="text-gray-500">${netLabel}</div><div class="${netPayable >= 0 ? 'text-[#553f62]' : 'text-red-600'} font-bold text-base">$${Math.abs(netPayable).toLocaleString()}</div></div>
                     </div>
-                    <div class="text-xs text-gray-500">本月 ${recon.count || 0} 趟；本月車資金額 - 司機已收現金 = ${netLabel}。</div>
+                    <div class="text-xs text-gray-500">本月 ${recon.count || 0} 趟${pendingReportCount ? `，其中 ${pendingReportCount} 趟待補回報` : ''}；本月車資金額 - 司機已收現金 = ${netLabel}。</div>
                 </div>`;
 
-            const historyHtml = monthlyHistory.length === 0 ? `<div class="text-center text-gray-400 mt-8 text-sm">本月尚無已結案車趟</div>` : monthlyHistory.map(t => {
+            const historyHtml = monthlyHistory.length === 0 ? `<div class="text-center text-gray-400 mt-8 text-sm">本月尚無對帳車趟</div>` : monthlyHistory.map(t => {
                 const o = reconByOrderId[t.orderId] || {};
+                const needsReport = Boolean(o.needsReport || t.needsReport);
                 return `
                 <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
                     <div class="flex justify-between mb-1">
                         <span class="text-xs text-gray-600">${t.date} ${t.time}</span>
-                        <span class="text-xs text-blue-600">已結案</span>
+                        <span class="text-xs ${needsReport ? 'text-red-500' : 'text-blue-600'}">${needsReport ? '待補回報' : '已結案'}</span>
                     </div>
                     <div class="text-sm text-gray-600">${t.routeDisplay}</div>
                     <div class="text-xs text-gray-400 mt-1">${t.custNameMasked}</div>
