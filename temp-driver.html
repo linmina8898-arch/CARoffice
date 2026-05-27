@@ -43,7 +43,7 @@
         </div>
     </div>
     <script>
-        const APP_VERSION = "v1.0.0";
+        const APP_VERSION = "v1.0.1";
         const GAS_URL = "https://script.google.com/macros/s/AKfycbyHkLho-EhceBtJCSd0Vz5e1NtSDILWH08nD_8jJoJzd4c7unaXiI6q_A0ETgpuYG5x/exec";
         const token = new URLSearchParams(location.search).get("token") || "";
         let task = null;
@@ -155,9 +155,16 @@
         async function reportAnomaly() {
             const result = await Swal.fire({
                 title:"異常狀況回報",
-                html:`<select id="type" class="w-full border rounded p-3 mb-3"><option>人數/行李不符</option><option>聯絡不上客人</option><option>臨時變更行程</option><option>車輛故障/事故</option><option>其他</option></select><textarea id="note" class="w-full border rounded p-3" rows="3" placeholder="請簡述現場狀況"></textarea>`,
+                html:`<select id="type" class="w-full p-3 border rounded-xl mb-3 outline-none text-sm"><option value="" selected disabled>請選擇異常類型</option><option value="人數/行李不符">現場人數/行李不符</option><option value="聯絡不上客人">聯絡不上客人</option><option value="臨時變更行程">客人臨時變更行程(加點等)</option><option value="車輛故障/事故">車輛故障或事故</option><option value="其他">其他緊急狀況</option></select><textarea id="note" class="w-full border rounded-xl p-3 text-sm" rows="3" placeholder="請簡述現場狀況..."></textarea>`,
                 showCancelButton:true, confirmButtonText:"送出通報", cancelButtonText:"返回", confirmButtonColor:"#dc2626",
-                preConfirm:()=>({ type:document.getElementById("type").value, note:document.getElementById("note").value })
+                preConfirm:()=>{
+                    const type = document.getElementById("type").value;
+                    if (!type) {
+                        Swal.showValidationMessage("請選擇異常類型");
+                        return false;
+                    }
+                    return { type, note:document.getElementById("note").value };
+                }
             });
             if (!result.isConfirmed) return;
             const response = await fetch(GAS_URL, { method:"POST", body:JSON.stringify({ action:"tempDriverReportAnomaly", data:{ token, orderId:task.orderId, type:result.value.type, note:result.value.note } }) });
