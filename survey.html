@@ -45,6 +45,12 @@
             </p>
         </div>
 
+            <div id="loadingScreen" class="p-12 text-center flex flex-col items-center justify-center min-h-[300px]">
+                <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary mb-5"></div>
+                <p class="text-primary font-medium">正在載入您的問卷資料</p>
+                <p class="text-xs text-gray-400 mt-2">請稍候，請勿關閉畫面</p>
+            </div>
+
             <div id="expiredScreen" class="hidden p-12 text-center flex flex-col items-center justify-center min-h-[400px]">
                 <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6">
                     <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -261,6 +267,7 @@
         const tokenParam = urlParams.get('token') || '';
 
         function showClosedScreen(title, message) {
+            document.getElementById('loadingScreen').classList.add('hidden');
             document.getElementById('surveyForm').classList.add('hidden');
             document.getElementById('closedTitle').innerText = title;
             document.getElementById('closedMessage').innerText = message;
@@ -269,11 +276,14 @@
 
         async function loadSurvey() {
             if (!tokenParam) {
-                showClosedScreen('無法開啟問卷', '此問卷連結不完整，請聯絡客服協助處理。');
+                showClosedScreen('請由專屬連結開啟', '問卷需由客服傳送至 LINE 的專屬問卷卡片進入，無法使用固定網址直接填寫。');
                 return;
             }
             try {
-                const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=getSurveyInvitation&token=${encodeURIComponent(tokenParam)}&t=${Date.now()}`);
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 12000);
+                const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=getSurveyInvitation&token=${encodeURIComponent(tokenParam)}&t=${Date.now()}`, { signal: controller.signal });
+                clearTimeout(timeoutId);
                 const result = await res.json();
                 if (!result.success) return showClosedScreen('無法開啟問卷', result.error || '請聯絡客服協助處理。');
                 if (result.submitted) return showClosedScreen('問卷已完成', '此筆行程已完成回饋填寫，謝謝您的支持。');
@@ -281,9 +291,10 @@
                 document.getElementById('bookingId').value = result.bookingId || '';
                 document.getElementById('paxName').value = result.paxName || '';
                 document.getElementById('paxPhone').value = result.paxPhone || '';
+                document.getElementById('loadingScreen').classList.add('hidden');
                 document.getElementById('surveyForm').classList.remove('hidden');
             } catch (error) {
-                showClosedScreen('目前無法載入問卷', '請稍後重新開啟連結，或聯絡客服協助處理。');
+                showClosedScreen('目前無法載入問卷', '系統回應時間較久，請稍後重新開啟 LINE 中的問卷連結，或聯絡客服協助處理。');
             }
         }
 
