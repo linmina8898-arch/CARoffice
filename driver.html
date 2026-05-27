@@ -144,7 +144,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.13.6";
+        const APP_VERSION = "v1.13.8";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -718,10 +718,16 @@
             const container = document.getElementById('view-history');
             const recon = reconciliationData || { month: new Date().toISOString().substring(0, 7), totalPayout: 0, count: 0, orders: [] };
             const monthValue = recon.month || new Date().toISOString().substring(0, 7);
+            const reconOrders = recon.orders || [];
             const totalCash = Number(recon.totalCash || 0);
-            const netPayable = Number(recon.netPayable || 0);
-            const netLabel = netPayable >= 0 ? '司機應收金額' : '司機應繳回公司';
-            const reconByOrderId = Object.fromEntries((recon.orders || []).map(o => [o.orderId, o]));
+            const isSettled = o => ['已結清', '已付款'].includes(cleanVal(o.payoutStatus));
+            const unsettledOrders = reconOrders.filter(o => !isSettled(o));
+            const settledPayout = reconOrders.filter(isSettled).reduce((sum, o) => sum + Number(o.payout || 0), 0);
+            const unsettledPayout = unsettledOrders.reduce((sum, o) => sum + Number(o.payout || 0), 0);
+            const unsettledCash = unsettledOrders.reduce((sum, o) => sum + Number(o.cashCollected || 0), 0);
+            const outstandingNet = unsettledPayout - unsettledCash;
+            const outstandingLabel = outstandingNet >= 0 ? '公司應付司機' : '司機應繳回公司';
+            const reconByOrderId = Object.fromEntries(reconOrders.map(o => [o.orderId, o]));
             const monthlyHistory = historyData.filter(t => String(t.date || '').startsWith(monthValue));
             const pendingReportCount = Number(recon.pendingReportCount || 0);
             const reconHtml = `
@@ -733,10 +739,16 @@
                         </div>
                         <input type="month" id="driverReconMonth" value="${monthValue}" onchange="loadHistory()" class="border rounded-lg px-2 py-1 text-sm text-[#553f62]">
                     </div>
-                    <div class="grid grid-cols-3 gap-2 mb-3 text-xs">
+                    <div class="grid grid-cols-2 gap-2 mb-3 text-xs">
                         <div class="bg-gray-50 rounded-lg p-2"><div class="text-gray-500">本月車資金額</div><div class="text-[#553f62] font-bold text-base">$${Number(recon.totalPayout || 0).toLocaleString()}</div></div>
-                        <div class="bg-gray-50 rounded-lg p-2"><div class="text-gray-500">司機已收現金</div><div class="text-red-600 font-bold text-base">$${totalCash.toLocaleString()}</div></div>
-                        <div class="bg-gray-50 rounded-lg p-2"><div class="text-gray-500">${netLabel}</div><div class="${netPayable >= 0 ? 'text-[#553f62]' : 'text-red-600'} font-bold text-base">$${Math.abs(netPayable).toLocaleString()}</div></div>
+                        <div class="bg-gray-50 rounded-lg p-2"><div class="text-gray-500">司機已收現金</div><div class="text-gray-800 font-bold text-base">$${totalCash.toLocaleString()}</div></div>
+                        <div class="bg-gray-50 rounded-lg p-2"><div class="text-gray-500">已結清車資</div><div class="text-gray-800 font-bold text-base">$${settledPayout.toLocaleString()}</div></div>
+                        <div class="bg-gray-50 rounded-lg p-2"><div class="text-gray-500">未結清車資</div><div class="text-[#553f62] font-bold text-base">$${unsettledPayout.toLocaleString()}</div></div>
+                    </div>
+                    <div class="rounded-lg px-3 py-3 mb-3 ${outstandingNet >= 0 ? 'bg-[#f5f1f7] text-[#553f62]' : 'bg-red-50 text-red-600'}">
+                        <div class="text-xs">${outstandingLabel}</div>
+                        <div class="text-xl font-bold">$${Math.abs(outstandingNet).toLocaleString()}</div>
+                        <div class="text-[11px] opacity-80 mt-1">未結清車資 $${unsettledPayout.toLocaleString()} - 未結清已收現 $${unsettledCash.toLocaleString()}</div>
                     </div>
                     <div class="text-xs text-gray-500">本月共 ${recon.count || 0} 趟。${pendingReportCount ? `其中 ${pendingReportCount} 趟未確實回報。` : ''}</div>
                 </div>`;
@@ -745,10 +757,16 @@
                 const o = reconByOrderId[t.orderId] || {};
                 const needsReport = Boolean(o.needsReport || t.needsReport);
                 const cashCollected = Number(o.cashCollected || 0);
+                const payout = Number(o.payout || 0);
+                const balance = payout - cashCollected;
+                const settled = isSettled(o);
                 const paymentLabel = o.paymentStatus || o.paymentMethod || '未標示';
                 const paymentHtml = cashCollected > 0
                     ? `${paymentLabel !== '司機收現' ? `<span class="mr-1">${paymentLabel}</span>` : ''}<span class="inline-flex px-1.5 py-0.5 rounded bg-gray-400 text-white">司機收現｜已收現 $${cashCollected.toLocaleString()}</span>`
                     : `<span>${paymentLabel}</span>`;
+                const balanceHtml = settled
+                    ? `<span class="inline-flex mt-1 px-1.5 py-0.5 rounded bg-[#553f62] text-white">已結清</span>`
+                    : `<span class="inline-flex mt-1 px-1.5 py-0.5 rounded ${balance >= 0 ? 'bg-[#f5f1f7] text-[#553f62]' : 'bg-red-50 text-red-600'}">${balance >= 0 ? '公司應付' : '應繳回公司'} $${Math.abs(balance).toLocaleString()}</span>`;
                 return `
                 <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
                     <div class="flex justify-between mb-1">
@@ -758,8 +776,8 @@
                     <div class="text-sm text-gray-600">${t.routeDisplay}</div>
                     <div class="text-xs text-gray-400 mt-1">${t.custNameMasked}</div>
                     <div class="flex justify-between items-end border-t border-gray-200 mt-3 pt-2">
-                        <div class="text-xs text-gray-500">${paymentHtml}<br><span class="inline-flex mt-1">${displayPayoutStatus(o.payoutStatus)}</span>${o.payoutNote ? `<span class="inline-flex ml-1 px-1.5 py-0.5 rounded bg-gray-400 text-white">備註：${displayNote(o.payoutNote)}</span>` : ''}</div>
-                        <div class="text-right"><div class="text-[10px] text-gray-400">車資</div><div class="text-base font-bold text-[#553f62]">$${Number(o.payout || 0).toLocaleString()}</div></div>
+                        <div class="text-xs text-gray-500">${paymentHtml}<br>${balanceHtml}${o.payoutNote ? `<span class="inline-flex ml-1 px-1.5 py-0.5 rounded bg-gray-400 text-white">備註：${displayNote(o.payoutNote)}</span>` : ''}</div>
+                        <div class="text-right"><div class="text-[10px] text-gray-400">車資</div><div class="text-base font-bold text-[#553f62]">$${payout.toLocaleString()}</div></div>
                     </div>
                 </div>
             `; }).join('');
@@ -825,6 +843,7 @@
                 title: '異常狀況回報',
                 html: `
                     <select id="anoType" class="w-full p-3 border rounded-xl mb-3 outline-none font-bold text-sm">
+                        <option value="" selected disabled>請選擇異常類型</option>
                         <option value="人數/行李不符">現場人數/行李不符</option>
                         <option value="聯絡不上客人">聯絡不上客人</option>
                         <option value="臨時變更行程">客人臨時變更行程(加點等)</option>
@@ -839,7 +858,12 @@
                 confirmButtonText: '立即通報調度',
                 cancelButtonText: '取消',
                 preConfirm: () => {
-                    return { type: document.getElementById('anoType').value, note: document.getElementById('anoNote').value }
+                    const type = document.getElementById('anoType').value;
+                    if (!type) {
+                        Swal.showValidationMessage('請選擇異常類型');
+                        return false;
+                    }
+                    return { type, note: document.getElementById('anoNote').value }
                 }
             });
 
