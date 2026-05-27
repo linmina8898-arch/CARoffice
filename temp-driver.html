@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AS派車 - 臨時派遣任務</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root { --primary:#553f62; --accent:#f07cad; --bg:#f3f4f6; }
+        body { font-family:sans-serif; background:var(--bg); color:#1f2937; font-size:14px; }
+        .field { display:grid; grid-template-columns:72px minmax(0,1fr); gap:8px; padding:9px 0; border-bottom:1px solid #e5e7eb; align-items:start; }
+        .field-label { color:#6b7280; font-size:12px; }
+        .field-value { text-align:right; font-weight:500; overflow-wrap:anywhere; }
+        #signaturePad { border:2px dashed #cbd5e1; border-radius:10px; width:100%; flex:1; min-height:58vh; touch-action:none; background:#fff; }
+    </style>
+</head>
+<body class="min-h-screen">
+    <header class="bg-white shadow-sm px-4 py-3 flex items-center justify-between sticky top-0 z-20">
+        <div class="text-xl font-semibold text-[#553f62] tracking-wide">AS派車</div>
+        <a href="tel:0955311306" class="border border-[#553f62] text-[#553f62] px-3 py-1.5 rounded-lg text-xs">聯絡調度</a>
+    </header>
+    <main class="p-4 max-w-md mx-auto">
+        <div id="loading" class="text-center text-[#553f62] pt-24">任務資料載入中...</div>
+        <div id="closed" class="hidden bg-white border rounded-xl p-8 text-center mt-8">
+            <h1 id="closedTitle" class="text-lg text-[#553f62] mb-3">無法開啟任務</h1>
+            <p id="closedText" class="text-sm text-gray-500 leading-relaxed"></p>
+        </div>
+        <div id="taskView" class="hidden"></div>
+    </main>
+    <div id="sigModal" class="fixed inset-0 bg-[#f3f4f6] z-40 hidden flex-col">
+        <div class="bg-white px-4 py-3 flex justify-between items-center border-b">
+            <div><div class="text-[#553f62] font-semibold">客戶確認簽名</div><div id="sigInfo" class="text-xs text-gray-500"></div></div>
+            <button onclick="closeSignature()" class="text-sm bg-gray-100 px-3 py-1.5 rounded-lg">取消</button>
+        </div>
+        <div class="flex-1 p-4 flex flex-col min-h-0">
+            <p class="text-xs text-center text-red-500 mb-2">月結簽單需由客戶簽名後完成結案</p>
+            <canvas id="signaturePad"></canvas>
+            <div class="grid grid-cols-2 gap-3 mt-4">
+                <button onclick="clearSignature()" class="py-3 bg-gray-200 rounded-xl">重簽</button>
+                <button onclick="submitSignature()" class="py-3 bg-[#553f62] text-white rounded-xl">確認簽名結案</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        const APP_VERSION = "v1.0.0";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbyHkLho-EhceBtJCSd0Vz5e1NtSDILWH08nD_8jJoJzd4c7unaXiI6q_A0ETgpuYG5x/exec";
+        const token = new URLSearchParams(location.search).get("token") || "";
+        let task = null;
+        let driver = null;
+        let hasSignature = false;
+        const canvas = document.getElementById("signaturePad");
+        const ctx = canvas.getContext("2d");
+        let drawing = false;
+        const esc = value => String(value || "-").replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+        const clean = value => (!value || value === "無") ? "" : String(value);
+
+        async function loadTask() {
+            if (!token) return showClosed("無法開啟任務", "此臨時派遣網址不完整，請向調度重新索取。");
+            try {
+                const response = await fetch(`${GAS_URL}?action=getTempDriverTask&token=${encodeURIComponent(token)}&t=${Date.now()}`);
+                const result = await response.json();
+                if (!result.success) return showClosed("任務連結已失效", result.error || "請聯絡調度。");
+                task = result.task;
+                driver = result.driver;
+                renderTask(result.expiresAt);
+            } catch (error) {
+                showClosed("目前無法載入任務", "請稍後重開連結，或直接聯絡調度。");
+            }
+        }
+        function showClosed(title, text) {
+            document.getElementById("loading").classList.add("hidden");
+            document.getElementById("taskView").classList.add("hidden");
+            document.getElementById("closedTitle").innerText = title;
+            document.getElementById("closedText").innerText = text;
+            document.getElementById("closed").classList.remove("hidden");
+        }
+        function renderTask(expiresAt) {
+            const billing = clean(task.companyName) || String(task.paymentMethod).includes("月結") || String(task.paymentMethod).includes("簽單");
+            const cash = Number(task.cashCollected || 0);
+            const payment = billing ? `月結簽單｜${clean(task.companyName) || "企業客戶"}` : (cash > 0 ? `現場收現 $${cash.toLocaleString()}` : (task.paymentStatus || task.paymentMethod || "-"));
+            const next = { "":"已收單", "未出發":"已收單", "已收單":"已出發", "已出發":"已抵達", "已抵達":"客上", "客上":"已結案" }[task.driverStatus || ""];
+            const label = { "已收單":"確認收單", "已出發":"點我出發", "已抵達":"已抵達上車點", "客上":"客戶已上車", "已結案":"客下完成行程" }[next];
+            const fields = [
+                ["接送機場", task.airport],
+                ["航班編號", task.flightNo],
+                ["客戶姓名", task.custName],
+                ["客戶電話", task.custPhone],
+                ["接送地址", task.address],
+                ["加點地址", task.extraStop],
+                ["乘車人數", task.paxCount],
+                ["行李件數", task.luggage],
+                ["預約車型", task.car],
+                ["兒童座椅", task.seats],
+                ["舉牌內容", task.signboard],
+                ["客戶備註", task.remarks],
+                ["付款方式", payment]
+            ].filter(item => clean(item[1]));
+            document.getElementById("taskView").innerHTML = `
+                <div class="bg-white border rounded-xl p-4 shadow-sm">
+                    <div class="text-[11px] text-gray-400 mb-2">${esc(task.orderId)}｜臨時派遣</div>
+                    <div class="flex items-baseline justify-between mb-4">
+                        <div class="text-xl text-[#553f62]">${esc(task.date.substring(5).replace("-", "/"))}　${esc(task.time)}</div>
+                        <div class="text-xl ${task.type === "接機" ? "text-[#f07cad]" : "text-[#553f62]"}">${esc(task.type)}</div>
+                    </div>
+                    <div class="bg-gray-50 border rounded-lg px-3">${fields.map(f => `<div class="field"><span class="field-label">${esc(f[0])}</span><span class="field-value">${fieldValueHtml(f[0], f[1])}</span></div>`).join("")}</div>
+                    <div class="text-xs text-gray-400 mt-3">連結有效至 ${esc(expiresAt)}，請勿轉傳他人。</div>
+                </div>
+                <div class="mt-4 space-y-3">
+                    ${next ? `<button onclick="handleProgress('${next}', ${billing})" class="w-full bg-[#553f62] text-white py-3.5 rounded-xl text-base">${label}</button>` : ""}
+                    <button onclick="reportAnomaly()" class="w-full bg-white border border-red-200 text-red-500 py-3 rounded-xl">異常狀況回報</button>
+                </div>`;
+            document.getElementById("loading").classList.add("hidden");
+            document.getElementById("closed").classList.add("hidden");
+            document.getElementById("taskView").classList.remove("hidden");
+        }
+        function fieldValueHtml(label, value) {
+            if (label.includes("地址")) return `<a class="text-blue-600 underline" target="_blank" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(value)}">${esc(value)}</a>`;
+            if (label === "客戶電話") return `<a class="text-blue-600 underline" href="tel:${encodeURIComponent(value)}">${esc(value)}</a>`;
+            return esc(value);
+        }
+        function requireGPS() {
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) return reject(new Error("手機不支援定位功能"));
+                navigator.geolocation.getCurrentPosition(
+                    pos => resolve({ lat:pos.coords.latitude, lng:pos.coords.longitude }),
+                    () => reject(new Error("請開啟位置權限後再回報")),
+                    { enableHighAccuracy:false, timeout:6000, maximumAge:60000 }
+                );
+            });
+        }
+        async function handleProgress(status, billing) {
+            if (status === "已結案" && billing) return openSignature();
+            await updateStatus(status, "");
+        }
+        async function updateStatus(status, signatureDataUrl) {
+            try {
+                let gps = { lat:"", lng:"" };
+                if (status !== "已收單") gps = await requireGPS();
+                Swal.fire({ title:"回報中", allowOutsideClick:false, didOpen:()=>Swal.showLoading() });
+                const response = await fetch(GAS_URL, { method:"POST", body:JSON.stringify({ action:"tempDriverUpdateStatus", data:{ token, orderId:task.orderId, status, lat:gps.lat, lng:gps.lng, signatureDataUrl } }) });
+                const result = await response.json();
+                if (!result.success) throw new Error(result.error || "回報失敗");
+                if (status === "已結案") {
+                    closeSignature();
+                    return showClosed("任務已完成", "結案回報已送出，謝謝您的協助。");
+                }
+                task.driverStatus = status;
+                Swal.fire({ title:"回報成功", icon:"success", timer:900, showConfirmButton:false });
+                await loadTask();
+            } catch (error) {
+                Swal.fire("回報失敗", error.message || "請聯絡調度", "error");
+            }
+        }
+        async function reportAnomaly() {
+            const result = await Swal.fire({
+                title:"異常狀況回報",
+                html:`<select id="type" class="w-full border rounded p-3 mb-3"><option>人數/行李不符</option><option>聯絡不上客人</option><option>臨時變更行程</option><option>車輛故障/事故</option><option>其他</option></select><textarea id="note" class="w-full border rounded p-3" rows="3" placeholder="請簡述現場狀況"></textarea>`,
+                showCancelButton:true, confirmButtonText:"送出通報", cancelButtonText:"返回", confirmButtonColor:"#dc2626",
+                preConfirm:()=>({ type:document.getElementById("type").value, note:document.getElementById("note").value })
+            });
+            if (!result.isConfirmed) return;
+            const response = await fetch(GAS_URL, { method:"POST", body:JSON.stringify({ action:"tempDriverReportAnomaly", data:{ token, orderId:task.orderId, type:result.value.type, note:result.value.note } }) });
+            const data = await response.json();
+            data.success ? Swal.fire("已通報", "調度中心已收到異況回報。", "success") : Swal.fire("通報失敗", data.error || "請直接致電調度。", "error");
+        }
+        function initCanvas() {
+            canvas.width = canvas.clientWidth;
+            canvas.height = canvas.clientHeight;
+            ctx.lineWidth = 3; ctx.lineCap = "round"; ctx.strokeStyle = "#553f62";
+        }
+        function openSignature() {
+            hasSignature = false; clearSignature();
+            document.getElementById("sigInfo").innerText = `${task.companyName || "月結簽單"}｜${task.orderId}`;
+            document.getElementById("sigModal").classList.remove("hidden");
+            document.getElementById("sigModal").classList.add("flex");
+            setTimeout(initCanvas, 80);
+        }
+        function closeSignature() { document.getElementById("sigModal").classList.add("hidden"); document.getElementById("sigModal").classList.remove("flex"); }
+        function clearSignature() { ctx.clearRect(0, 0, canvas.width, canvas.height); hasSignature = false; }
+        function submitSignature() {
+            if (!hasSignature) return Swal.fire("請先簽名", "月結簽單需要客戶簽名後才能結案。", "warning");
+            updateStatus("已結案", canvas.toDataURL("image/png"));
+        }
+        function point(event) { const r = canvas.getBoundingClientRect(), p = event.touches ? event.touches[0] : event; return { x:p.clientX-r.left, y:p.clientY-r.top }; }
+        function startDraw(event) { drawing = true; hasSignature = true; const p=point(event); ctx.beginPath(); ctx.moveTo(p.x,p.y); event.preventDefault(); }
+        function draw(event) { if(!drawing) return; const p=point(event); ctx.lineTo(p.x,p.y); ctx.stroke(); event.preventDefault(); }
+        canvas.addEventListener("touchstart", startDraw); canvas.addEventListener("touchmove", draw); canvas.addEventListener("touchend", ()=>drawing=false);
+        canvas.addEventListener("mousedown", startDraw); canvas.addEventListener("mousemove", draw); canvas.addEventListener("mouseup", ()=>drawing=false); canvas.addEventListener("mouseleave", ()=>drawing=false);
+        loadTask();
+    </script>
+</body>
+</html>
