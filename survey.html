@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>安興租車 - 搭乘回饋問卷</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#553f62',
+                        secondary: '#9ca3af',
+                        accent: '#f07cad',
+                        bglight: '#fdfbfb'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #f3f4f6;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .score-radio:checked + div {
+            background-color: #553f62;
+            color: white;
+            border-color: #553f62;
+        }
+    </style>
+</head>
+<body class="py-8 px-4 min-h-screen flex items-center justify-center">
+
+    <div class="max-w-2xl w-full bg-white rounded-2xl shadow-xl overflow-hidden relative">
+        
+        <!-- Header -->
+        <div class="bg-primary px-6 py-8 text-center text-white">
+            <p class="text-sm text-white/80 mb-2">安興租車</p>
+            <h1 class="text-2xl md:text-3xl font-bold mb-2 tracking-wide">搭乘回饋問卷</h1>
+            <p class="text-secondary text-sm md:text-base mt-2">
+                您的回饋，幫助我們把每一趟服務做得更好。<br>
+                <span class="text-white font-normal inline-block mt-3 bg-white/10 px-3 py-2 rounded">完成問卷可獲得 100 元乘車折扣碼<br><span class="text-xs text-secondary">填寫期限：收到問卷後 3 天內｜每筆行程限填寫一次</span></span>
+            </p>
+        </div>
+
+            <div id="expiredScreen" class="hidden p-12 text-center flex flex-col items-center justify-center min-h-[400px]">
+                <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6">
+                    <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <h2 id="closedTitle" class="text-2xl font-bold text-gray-700 mb-4">問卷已截止</h2>
+                <p id="closedMessage" class="text-gray-500 leading-relaxed max-w-sm">
+                    抱歉，此問卷已超過收到問卷後 3 天的填寫期限。<br>
+                    如有服務建議，仍歡迎聯絡客服與我們分享。
+                </p>
+                <button onclick="window.close()" class="mt-8 bg-primary text-white font-bold py-2 px-8 rounded-full shadow hover:bg-[#41304c] transition">關閉頁面</button>
+            </div>
+            <form id="surveyForm" class="hidden p-6 md:p-8 space-y-8 text-gray-700">
+                <!-- Section 1: 搭乘資訊 -->
+                <div class="space-y-4">
+                    <h2 class="text-lg font-bold text-primary border-b-2 border-accent/30 pb-2 flex items-center gap-2">
+                        本次行程
+                    </h2>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">預約編號 <span class="text-xs text-gray-500 font-normal ml-1">(系統自動帶入)</span></label>
+                        <input type="text" id="bookingId" readonly placeholder="系統自動帶入" class="w-full border border-gray-200 rounded-lg px-4 py-2 bg-gray-50 focus:outline-none text-gray-500 font-bold tracking-wider">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">乘車人姓名</label>
+                        <input type="text" id="paxName" readonly class="w-full border border-gray-200 rounded-lg px-4 py-2 bg-gray-50 focus:outline-none text-gray-600">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">乘車人電話</label>
+                        <input type="text" id="paxPhone" readonly class="w-full border border-gray-200 rounded-lg px-4 py-2 bg-gray-50 focus:outline-none text-gray-600">
+                    </div>
+                </div>
+
+                <!-- Section 2: 司機服務 -->
+                <div class="space-y-6">
+                    <h2 class="text-lg font-bold text-primary border-b-2 border-accent/30 pb-2 flex items-center gap-2">
+                        司機服務
+                    </h2>
+                    
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium">1. 準時程度 <span class="text-red-500">*</span></label>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            <label class="cursor-pointer"><input type="radio" name="punctuality" value="提前到達" class="score-radio sr-only" required><div class="border border-gray-200 rounded-lg py-2 text-center text-sm transition hover:border-primary">提前到達</div></label>
+                            <label class="cursor-pointer"><input type="radio" name="punctuality" value="準時到達" class="score-radio sr-only"><div class="border border-gray-200 rounded-lg py-2 text-center text-sm transition hover:border-primary">準時到達</div></label>
+                            <label class="cursor-pointer"><input type="radio" name="punctuality" value="稍微遲到" class="score-radio sr-only"><div class="border border-gray-200 rounded-lg py-2 text-center text-sm transition hover:border-primary">稍微遲到</div></label>
+                            <label class="cursor-pointer"><input type="radio" name="punctuality" value="嚴重遲到" class="score-radio sr-only"><div class="border border-gray-200 rounded-lg py-2 text-center text-sm transition hover:border-primary">嚴重遲到</div></label>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium">2. 服務熱忱 <span class="text-red-500">*</span></label>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-gray-500 w-20 text-right">1 分 不滿意</span>
+                            <div class="flex-1 flex gap-1 sm:gap-2">
+                                <label class="cursor-pointer flex-1"><input type="radio" name="attitude" value="1" class="score-radio sr-only" required><div class="border border-gray-200 rounded py-2 text-center transition hover:border-primary">1</div></label>
+                                <label class="cursor-pointer flex-1"><input type="radio" name="attitude" value="2" class="score-radio sr-only"><div class="border border-gray-200 rounded py-2 text-center transition hover:border-primary">2</div></label>
+                                <label class="cursor-pointer flex-1"><input type="radio" name="attitude" value="3" class="score-radio sr-only"><div class="border border-gray-200 rounded py-2 text-center transition hover:border-primary">3</div></label>
+                                <label class="cursor-pointer flex-1"><input type="radio" name="attitude" value="4" class="score-radio sr-only"><div class="border border-gray-200 rounded py-2 text-center transition hover:border-primary">4</div></label>
+                                <label class="cursor-pointer flex-1"><input type="radio" name="attitude" value="5" class="score-radio sr-only"><div class="border border-gray-200 rounded py-2 text-center transition hover:border-primary">5</div></label>
+                            </div>
+                            <span class="text-xs text-gray-500 w-24 text-left">5 分 非常滿意</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium">3. 服裝儀容 <span class="text-red-500">*</span></label>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-gray-500 w-20 text-right">1 分 不滿意</span>
+                            <div class="flex-1 flex gap-1 sm:gap-2">
+                                <label class="cursor-pointer flex-1"><input type="radio" name="attire" value="1" class="score-radio sr-only" required><div class="border border-gray-200 rounded py-2 text-center transition hover:border-primary">1</div></label>
+                                <label class="cursor-pointer flex-1"><input type="radio" name="attire" value="2" class="score-radio sr-only"><div class="border border-gray-200 rounded py-2 text-center transition hover:border-primary">2</div></label>
+                                <label class="cursor-pointer flex-1"><input type="radio" name="attire" value="3" class="score-radio sr-only"><div class="border border-gray-200 rounded py-2 text-center transition hover:border-primary">3</div></label>
+                                <label class="cursor-pointer flex-1"><input type="radio" name="attire" value="4" class="score-radio sr-only"><div class="border border-gray-200 rounded py-2 text-center transition hover:border-primary">4</div></label>
+                                <label class="cursor-pointer flex-1"><input type="radio" name="attire" value="5" class="score-radio sr-only"><div class="border border-gray-200 rounded py-2 text-center transition hover:border-primary">5</div></label>
+                            </div>
+                            <span class="text-xs text-gray-500 w-24 text-left">5 分 非常滿意</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium">4. 駕駛平穩度 <span class="text-red-500">*</span></label>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-gray-500 w-20 text-right">1 分 不滿意</span>
+                            <div class="flex-1 flex gap-1 sm:gap-2">
+                                <label class="cursor-pointer flex-1"><input type="radio" name="safety" value="1" class="score-radio sr-only" required><div class="border border-gray-200 rounded py-2 text-center transition hover:border-primary">1</div></label>
+                                <label class="cursor-pointer flex-1"><input type="radio" name="safety" value="2" class="score-radio sr-only"><div class="border border-gray-200 rounded py-2 text-center transition hover:border-primary">2</div></label>
+                                <label class="cursor-pointer flex-1"><input type="radio" name="safety" value="3" class="score-radio sr-only"><div class="border border-gray-200 rounded py-2 text-center transition hover:border-primary">3</div></label>
+                                <label class="cursor-pointer flex-1"><input type="radio" name="safety" value="4" class="score-radio sr-only"><div class="border border-gray-200 rounded py-2 text-center transition hover:border-primary">4</div></label>
+                                <label class="cursor-pointer flex-1"><input type="radio" name="safety" value="5" class="score-radio sr-only"><div class="border border-gray-200 rounded py-2 text-center transition hover:border-primary">5</div></label>
+                            </div>
+                            <span class="text-xs text-gray-500 w-24 text-left">5 分 非常滿意</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium">5. 自動駕駛使用 <span class="text-red-500">*</span></label>
+                        <div class="grid grid-cols-2 gap-4">
+                            <label class="cursor-pointer"><input type="radio" name="autopilot" value="有開啟自動駕駛" class="score-radio sr-only" required><div class="border border-gray-200 rounded-lg py-2 text-center text-sm transition hover:border-primary">有，開啟自動駕駛</div></label>
+                            <label class="cursor-pointer"><input type="radio" name="autopilot" value="無開啟" class="score-radio sr-only"><div class="border border-gray-200 rounded-lg py-2 text-center text-sm transition hover:border-primary">未開啟</div></label>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium">6. 私下攬客行為 <span class="text-red-500">*</span></label>
+                        <div class="grid grid-cols-2 gap-4">
+                            <label class="cursor-pointer"><input type="radio" name="solicit" value="有此行為" class="score-radio sr-only" required><div class="border border-gray-200 rounded-lg py-2 text-center text-sm transition hover:border-primary">有此行為</div></label>
+                            <label class="cursor-pointer"><input type="radio" name="solicit" value="無此行為" class="score-radio sr-only"><div class="border border-gray-200 rounded-lg py-2 text-center text-sm transition hover:border-primary">無此行為</div></label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 3: 車輛品質 -->
+                <div class="space-y-6">
+                    <h2 class="text-lg font-bold text-primary border-b-2 border-accent/30 pb-2 flex items-center gap-2">
+                        車輛品質
+                    </h2>
+                    
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium">1. 車內整潔 <span class="text-red-500">*</span></label>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-gray-500 w-20 text-right">1 分 不滿意</span>
+                            <div class="flex-1 flex gap-1 sm:gap-2">
+                                <label class="cursor-pointer flex-1"><input type="radio" name="cleanliness" value="1" class="score-radio sr-only" required><div class="border border-gray-200 rounded py-2 text-center transition hover:border-primary">1</div></label>
+                                <label class="cursor-pointer flex-1"><input type="radio" name="cleanliness" value="2" class="score-radio sr-only"><div class="border border-gray-200 rounded py-2 text-center transition hover:border-primary">2</div></label>
+                                <label class="cursor-pointer flex-1"><input type="radio" name="cleanliness" value="3" class="score-radio sr-only"><div class="border border-gray-200 rounded py-2 text-center transition hover:border-primary">3</div></label>
+                                <label class="cursor-pointer flex-1"><input type="radio" name="cleanliness" value="4" class="score-radio sr-only"><div class="border border-gray-200 rounded py-2 text-center transition hover:border-primary">4</div></label>
+                                <label class="cursor-pointer flex-1"><input type="radio" name="cleanliness" value="5" class="score-radio sr-only"><div class="border border-gray-200 rounded py-2 text-center transition hover:border-primary">5</div></label>
+                            </div>
+                            <span class="text-xs text-gray-500 w-24 text-left">5 分 非常滿意</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium">2. 異味殘留 <span class="text-red-500">*</span></label>
+                        <div class="grid grid-cols-2 gap-4">
+                            <label class="cursor-pointer"><input type="radio" name="smell" value="有異味" class="score-radio sr-only" required><div class="border border-gray-200 rounded-lg py-2 text-center text-sm transition hover:border-primary">有異味</div></label>
+                            <label class="cursor-pointer"><input type="radio" name="smell" value="無異味" class="score-radio sr-only"><div class="border border-gray-200 rounded-lg py-2 text-center text-sm transition hover:border-primary">無異味 (空氣清新)</div></label>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium">3. 車況問題 <span class="text-red-500">*</span></label>
+                        <div class="grid grid-cols-2 gap-4">
+                            <label class="cursor-pointer"><input type="radio" name="condition" value="有不良狀況" class="score-radio sr-only" required><div class="border border-gray-200 rounded-lg py-2 text-center text-sm transition hover:border-primary">有不良狀況</div></label>
+                            <label class="cursor-pointer"><input type="radio" name="condition" value="車況良好" class="score-radio sr-only"><div class="border border-gray-200 rounded-lg py-2 text-center text-sm transition hover:border-primary">車況良好</div></label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 4: 總結 -->
+                <div class="space-y-6">
+                    <h2 class="text-lg font-bold text-primary border-b-2 border-accent/30 pb-2 flex items-center gap-2">
+                        整體感受
+                    </h2>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium">您會推薦我們給親友嗎？ <span class="text-red-500">*</span></label>
+                        <div class="flex gap-1 mt-2">
+                            <label class="cursor-pointer flex-1 min-w-[24px]"><input type="radio" name="nps" value="0" class="score-radio sr-only" required><div class="border border-gray-200 rounded py-1 sm:py-2 text-center text-xs sm:text-sm transition hover:border-primary">0</div></label>
+                            <label class="cursor-pointer flex-1 min-w-[24px]"><input type="radio" name="nps" value="1" class="score-radio sr-only"><div class="border border-gray-200 rounded py-1 sm:py-2 text-center text-xs sm:text-sm transition hover:border-primary">1</div></label>
+                            <label class="cursor-pointer flex-1 min-w-[24px]"><input type="radio" name="nps" value="2" class="score-radio sr-only"><div class="border border-gray-200 rounded py-1 sm:py-2 text-center text-xs sm:text-sm transition hover:border-primary">2</div></label>
+                            <label class="cursor-pointer flex-1 min-w-[24px]"><input type="radio" name="nps" value="3" class="score-radio sr-only"><div class="border border-gray-200 rounded py-1 sm:py-2 text-center text-xs sm:text-sm transition hover:border-primary">3</div></label>
+                            <label class="cursor-pointer flex-1 min-w-[24px]"><input type="radio" name="nps" value="4" class="score-radio sr-only"><div class="border border-gray-200 rounded py-1 sm:py-2 text-center text-xs sm:text-sm transition hover:border-primary">4</div></label>
+                            <label class="cursor-pointer flex-1 min-w-[24px]"><input type="radio" name="nps" value="5" class="score-radio sr-only"><div class="border border-gray-200 rounded py-1 sm:py-2 text-center text-xs sm:text-sm transition hover:border-primary">5</div></label>
+                            <label class="cursor-pointer flex-1 min-w-[24px]"><input type="radio" name="nps" value="6" class="score-radio sr-only"><div class="border border-gray-200 rounded py-1 sm:py-2 text-center text-xs sm:text-sm transition hover:border-primary">6</div></label>
+                            <label class="cursor-pointer flex-1 min-w-[24px]"><input type="radio" name="nps" value="7" class="score-radio sr-only"><div class="border border-gray-200 rounded py-1 sm:py-2 text-center text-xs sm:text-sm transition hover:border-primary">7</div></label>
+                            <label class="cursor-pointer flex-1 min-w-[24px]"><input type="radio" name="nps" value="8" class="score-radio sr-only"><div class="border border-gray-200 rounded py-1 sm:py-2 text-center text-xs sm:text-sm transition hover:border-primary">8</div></label>
+                            <label class="cursor-pointer flex-1 min-w-[24px]"><input type="radio" name="nps" value="9" class="score-radio sr-only"><div class="border border-gray-200 rounded py-1 sm:py-2 text-center text-xs sm:text-sm transition hover:border-primary">9</div></label>
+                            <label class="cursor-pointer flex-1 min-w-[24px]"><input type="radio" name="nps" value="10" class="score-radio sr-only"><div class="border border-gray-200 rounded py-1 sm:py-2 text-center text-xs sm:text-sm transition hover:border-primary">10</div></label>
+                        </div>
+                        <div class="flex justify-between text-xs text-gray-500 mt-1 px-1"><span>0 分 不會推薦</span><span>10 分 非常願意</span></div>
+                    </div>
+                    <div class="space-y-2 pt-2">
+                        <label class="block text-sm font-medium mb-1">其他意見（選填）</label>
+                        <textarea id="comments" rows="3" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-accent" placeholder="歡迎留下您的建議或鼓勵"></textarea>
+                    </div>
+                </div>
+
+                <!-- Submit -->
+                <div class="pt-4">
+                    <button type="submit" id="submitBtn" class="w-full bg-primary hover:bg-[#41304c] text-white font-bold py-3 px-4 rounded-lg transition flex justify-center items-center gap-2 text-lg shadow-md">
+                        <span>送出問卷並領取折扣碼</span>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </button>
+                </div>
+            </form>
+
+            <!-- Success Screen -->
+            <div id="successScreen" class="hidden p-8 text-center bg-white flex flex-col items-center justify-center min-h-[500px]">
+                <div class="w-20 h-20 bg-accent/20 rounded-full flex items-center justify-center mb-6">
+                    <svg class="w-10 h-10 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                </div>
+                <h2 class="text-2xl font-bold text-primary mb-2">感謝您的寶貴回饋！</h2>
+                <p class="text-gray-600 mb-8 leading-relaxed">您的意見是安興租車改善服務的重要參考。<br>
+                <span class="text-accent font-bold text-sm">系統已將折扣碼歸戶至您的訂車手機門號。</span></p>
+
+                <!-- Coupon -->
+                <div class="bg-gradient-to-br from-primary to-[#6b527b] text-white rounded-xl shadow-lg p-6 w-full max-w-sm relative border-2 border-dashed border-accent/50">
+                    <div class="absolute -top-3 -left-3 bg-accent text-white text-xs font-bold px-3 py-1 rounded-full transform -rotate-12">100元折扣</div>
+                    <p class="text-sm text-secondary opacity-90 mb-1">下次預約點擊「查詢專屬優惠」即可直接套用</p>
+                    <div class="text-2xl sm:text-3xl font-extrabold tracking-widest my-4" id="discountCodeText">產生中...</div>
+                    <button onclick="copyCode()" id="copyBtn" class="bg-white text-primary text-sm font-bold py-2 px-6 rounded-full hover:bg-gray-100 transition shadow">複製折扣碼</button>
+                    <div class="mt-4 pt-4 border-t border-white/20 text-xs text-left text-gray-300">
+                        <p>• 有效期限：<span id="expiryDate" class="font-bold text-white"></span></p>
+                        <p>• 使用方式：下次預約時輸入原手機號碼即可自動帶入，每次限用一張。</p>
+                    </div>
+                </div>
+                <button onclick="window.close()" class="mt-10 text-sm text-gray-500 hover:text-primary underline">關閉視窗</button>
+            </div>
+    </div>
+
+    <script>
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyHkLho-EhceBtJCSd0Vz5e1NtSDILWH08nD_8jJoJzd4c7unaXiI6q_A0ETgpuYG5x/exec';
+        const urlParams = new URLSearchParams(window.location.search);
+        const tokenParam = urlParams.get('token') || '';
+
+        function showClosedScreen(title, message) {
+            document.getElementById('surveyForm').classList.add('hidden');
+            document.getElementById('closedTitle').innerText = title;
+            document.getElementById('closedMessage').innerText = message;
+            document.getElementById('expiredScreen').classList.remove('hidden');
+        }
+
+        async function loadSurvey() {
+            if (!tokenParam) {
+                showClosedScreen('無法開啟問卷', '此問卷連結不完整，請聯絡客服協助處理。');
+                return;
+            }
+            try {
+                const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=getSurveyInvitation&token=${encodeURIComponent(tokenParam)}&t=${Date.now()}`);
+                const result = await res.json();
+                if (!result.success) return showClosedScreen('無法開啟問卷', result.error || '請聯絡客服協助處理。');
+                if (result.submitted) return showClosedScreen('問卷已完成', '此筆行程已完成回饋填寫，謝謝您的支持。');
+                if (result.expired) return showClosedScreen('問卷已截止', '此問卷已超過收到問卷後 3 天的填寫期限。');
+                document.getElementById('bookingId').value = result.bookingId || '';
+                document.getElementById('paxName').value = result.paxName || '';
+                document.getElementById('paxPhone').value = result.paxPhone || '';
+                document.getElementById('surveyForm').classList.remove('hidden');
+            } catch (error) {
+                showClosedScreen('目前無法載入問卷', '請稍後重新開啟連結，或聯絡客服協助處理。');
+            }
+        }
+
+        function copyCode() {
+            const codeText = document.getElementById('discountCodeText').innerText;
+            const tempInput = document.createElement('input');
+            tempInput.value = codeText; document.body.appendChild(tempInput);
+            tempInput.select(); document.execCommand('copy'); document.body.removeChild(tempInput);
+            const copyBtn = document.getElementById('copyBtn');
+            const originalText = copyBtn.innerText;
+            copyBtn.innerText = "已複製！ ✓"; copyBtn.classList.remove('text-primary'); copyBtn.classList.add('text-accent');
+            setTimeout(() => { copyBtn.innerText = originalText; copyBtn.classList.add('text-primary'); copyBtn.classList.remove('text-accent'); }, 2000);
+        }
+
+        const surveyForm = document.getElementById('surveyForm');
+        if(surveyForm) {
+            surveyForm.addEventListener('submit', function(e) {
+                e.preventDefault(); 
+                const submitBtn = document.getElementById('submitBtn');
+                submitBtn.innerHTML = `<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> 處理中...`;
+                submitBtn.disabled = true;
+
+                const formData = {
+                    token: tokenParam,
+                    bookingId: document.getElementById('bookingId').value,
+                    punctuality: document.querySelector('input[name="punctuality"]:checked').value,
+                    attitude: document.querySelector('input[name="attitude"]:checked').value,
+                    attire: document.querySelector('input[name="attire"]:checked').value,
+                    safety: document.querySelector('input[name="safety"]:checked').value,
+                    autopilot: document.querySelector('input[name="autopilot"]:checked').value,
+                    solicit: document.querySelector('input[name="solicit"]:checked').value,
+                    cleanliness: document.querySelector('input[name="cleanliness"]:checked').value,
+                    smell: document.querySelector('input[name="smell"]:checked').value,
+                    condition: document.querySelector('input[name="condition"]:checked').value,
+                    nps: document.querySelector('input[name="nps"]:checked').value,
+                    comments: document.getElementById('comments').value
+                };
+
+                fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'submitSurvey', data: formData }) })
+                .then(response => response.json())
+                .then(result => {
+                    if(result.success) { showSuccessScreen(result.discountCode, result.expiryDate); } 
+                    else { alert('系統發生錯誤：' + (result.message || '請稍後再試。')); resetSubmitButton(); }
+                })
+                .catch(error => { alert('網路傳送發生錯誤，請稍後再試！'); resetSubmitButton(); });
+            });
+        }
+
+        function showSuccessScreen(codeText, expiryDateText) {
+            document.getElementById('surveyForm').classList.add('hidden');
+            document.getElementById('successScreen').classList.remove('hidden');
+            document.getElementById('discountCodeText').innerText = codeText;
+            document.getElementById('expiryDate').innerText = expiryDateText;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetSubmitButton() {
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `<span>送出問卷並領取折扣碼</span><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>`;
+        }
+        loadSurvey();
+    </script>
+</body>
+</html>
