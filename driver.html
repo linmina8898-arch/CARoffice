@@ -144,7 +144,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.14.1";
+        const APP_VERSION = "v1.14.2";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -480,10 +480,28 @@
         function formatPassengerCount(v) {
             const text = cleanVal(v);
             if (!text || text === '0') return '請確認預約單';
+            const standard = text.match(/(\d+)\s*大(?:\s*(\d+)\s*中)?(?:\s*(\d+)\s*小)?/);
+            if (standard) {
+                const adult = Number(standard[1] || 0);
+                const child = Number(standard[2] || 0);
+                const infant = Number(standard[3] || 0);
+                return adult + child + infant > 0 ? `${adult}大 ${child}中 ${infant}小` : '請確認預約單';
+            }
             const legacy = text.match(/大\s*(\d+)(?:\s*中\s*(\d+))?(?:\s*小\s*(\d+))?/);
+            if (legacy) {
+                const adult = Number(legacy[1] || 0);
+                const child = Number(legacy[2] || 0);
+                const infant = Number(legacy[3] || 0);
+                return adult + child + infant > 0 ? `${adult}大 ${child}中 ${infant}小` : '請確認預約單';
+            }
             const slash = text.match(/^(\d+)\/(\d+)\/(\d+)$/);
-            if (slash) return `${slash[1]}大 ${slash[2]}中 ${slash[3]}小`;
-            return legacy ? `${legacy[1] || 0}大 ${legacy[2] || 0}中 ${legacy[3] || 0}小` : text;
+            if (slash) {
+                const adult = Number(slash[1] || 0);
+                const child = Number(slash[2] || 0);
+                const infant = Number(slash[3] || 0);
+                return adult + child + infant > 0 ? `${adult}大 ${child}中 ${infant}小` : '請確認預約單';
+            }
+            return text;
         }
         function formatLuggageCount(v) {
             const text = cleanVal(v);
