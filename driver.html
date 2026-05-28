@@ -144,7 +144,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.14.0";
+        const APP_VERSION = "v1.14.1";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -479,8 +479,10 @@
         const displayNote = (v) => escapeHtml(cleanVal(v)).replace(/\n/g, '<br>');
         function formatPassengerCount(v) {
             const text = cleanVal(v);
-            if (!text) return '';
+            if (!text || text === '0') return '請確認預約單';
             const legacy = text.match(/大\s*(\d+)(?:\s*中\s*(\d+))?(?:\s*小\s*(\d+))?/);
+            const slash = text.match(/^(\d+)\/(\d+)\/(\d+)$/);
+            if (slash) return `${slash[1]}大 ${slash[2]}中 ${slash[3]}小`;
             return legacy ? `${legacy[1] || 0}大 ${legacy[2] || 0}中 ${legacy[3] || 0}小` : text;
         }
         function formatLuggageCount(v) {
