@@ -144,7 +144,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.13.9";
+        const APP_VERSION = "v1.14.0";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -497,10 +497,6 @@
             const n = parseFloat(String(v ?? '').replace(/[^\d.-]/g, ''));
             return Number.isNaN(n) ? 0 : n;
         };
-        function formatDriverPayout(t) {
-            const payout = parseMoney(t?.driverPayout ?? t?.payout);
-            return payout > 0 ? `$${payout.toLocaleString()}` : '調度尚未設定';
-        }
         function getDriverPaymentInfo(t) {
             const method = cleanVal(t.paymentMethod);
             const isCash = method.includes('現') || method.includes('車上') || method.includes('付現');
@@ -542,7 +538,6 @@
                 let signContent = cleanVal(t.signboard) ? t.signboard : (t.remarks && t.remarks.includes('舉牌') ? '詳見客戶備註' : '');
                 let hasSign = signContent !== '';
                 const paymentInfo = getDriverPaymentInfo(t);
-                const payoutText = formatDriverPayout(t);
 
                 let tags = [];
                 let mmdd = t.date.substring(5).replace('-', '/');
@@ -595,10 +590,6 @@
                             <div class="flex flex-wrap justify-end gap-1 max-w-[54%]">${tagsHtml}</div>
                         </div>
                         <div class="task-route mt-2 text-xs text-gray-500">${summaryRoute}</div>
-                        <div class="mt-2 flex justify-between items-center rounded-lg bg-gray-50 px-2 py-1 text-xs">
-                            <span class="text-gray-500">本趟車資</span>
-                            <span class="text-[#553f62] font-bold">${payoutText}</span>
-                        </div>
                         <div class="mt-1 text-[10px] font-mono text-gray-400 flex justify-end items-center gap-1">${t.orderId} <span class="text-gray-300">❯</span></div>
                         ${actionArea}
                     </div>
@@ -644,7 +635,6 @@
             const isCashPayment = paymentInfo.isCash;
             const isBillingPayment = paymentInfo.isBilling;
             const isTransferPayment = paymentInfo.isTransfer;
-            const payoutText = formatDriverPayout(t);
             let paymentGuideHtml = '';
             if (isTransferPayment) {
                 paymentGuideHtml = `<div class="flex justify-between items-center py-3 border-t-2 border-gray-100 mt-2"><span class="text-gray-500 font-bold mr-2">付款方式</span><span class="text-[#553f62] font-bold text-right">轉帳，不簽不收</span></div>`;
@@ -710,7 +700,6 @@
                         <div class="driver-field"><span class="driver-field-label">兒童座椅</span><span class="driver-field-value">${cleanVal(t.seats)}</span></div>
                         <div class="driver-field"><span class="driver-field-label">舉牌內容</span><span class="driver-field-value">${signContent}</span></div>
                         <div class="driver-field"><span class="driver-field-label">客戶備註</span><span class="driver-field-value text-red-500">${cNote}</span></div>
-                        <div class="driver-field bg-white -mx-3 px-3 border-y border-gray-100"><span class="driver-field-label text-[#553f62]">本趟車資</span><span class="driver-field-value text-[#553f62] font-bold">${payoutText}</span></div>
                         <div class="driver-field !border-b-0"><span class="driver-field-label">車商備註</span><span class="driver-field-value text-yellow-800">${dNote}</span></div>
                         ${paymentGuideHtml}
                         ${companyHtml}
