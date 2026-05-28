@@ -144,7 +144,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.14.2";
+        const APP_VERSION = "v1.14.4";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -779,17 +779,18 @@
                         <div class="text-xl font-bold">$${Math.abs(outstandingNet).toLocaleString()}</div>
                         <div class="text-[11px] opacity-80 mt-1">未結清車資 $${unsettledPayout.toLocaleString()} - 未結清已收現 $${unsettledCash.toLocaleString()}</div>
                     </div>
-                    <div class="text-xs text-gray-500">本月共 ${recon.count || 0} 趟。${pendingReportCount ? `其中 ${pendingReportCount} 趟未確實回報。` : ''}</div>
+                    <div class="text-xs text-gray-500">本月共 ${recon.count || 0} 筆。${pendingReportCount ? `其中 ${pendingReportCount} 趟未確實回報。` : ''}</div>
                 </div>`;
 
             const historyHtml = monthlyHistory.length === 0 ? `<div class="text-center text-gray-400 mt-8 text-sm">本月尚無對帳車趟</div>` : monthlyHistory.map(t => {
                 const o = reconByOrderId[t.orderId] || {};
+                const isAdjustment = (o.recordType || t.recordType) === '補貼/異常成本';
                 const needsReport = Boolean(o.needsReport || t.needsReport);
                 const cashCollected = Number(o.cashCollected || 0);
                 const payout = Number(o.payout || 0);
                 const balance = payout - cashCollected;
                 const settled = isSettled(o);
-                const paymentLabel = o.paymentStatus || o.paymentMethod || '未標示';
+                const paymentLabel = isAdjustment ? '補貼 / 異常成本' : (o.paymentStatus || o.paymentMethod || '未標示');
                 const paymentHtml = cashCollected > 0
                     ? `${paymentLabel !== '司機收現' ? `<span class="mr-1">${paymentLabel}</span>` : ''}<span class="inline-flex px-1.5 py-0.5 rounded bg-gray-400 text-white">司機收現｜已收現 $${cashCollected.toLocaleString()}</span>`
                     : `<span>${paymentLabel}</span>`;
@@ -800,9 +801,9 @@
                 <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
                     <div class="flex justify-between mb-1">
                         <span class="text-xs text-gray-600">${t.date} ${t.time}</span>
-                        ${needsReport ? `<span class="text-xs text-red-500">未確實回報</span>` : ''}
+                        ${isAdjustment ? `<span class="text-xs text-[#553f62]">補貼</span>` : (needsReport ? `<span class="text-xs text-red-500">未確實回報</span>` : '')}
                     </div>
-                    <div class="text-sm text-gray-600">${t.routeDisplay}</div>
+                    <div class="text-sm text-gray-600 whitespace-pre-line">${t.routeDisplay}</div>
                     <div class="text-xs text-gray-400 mt-1">${t.custNameMasked}</div>
                     <div class="flex justify-between items-end border-t border-gray-200 mt-3 pt-2">
                         <div class="text-xs text-gray-500">${paymentHtml}<br>${balanceHtml}${o.payoutNote ? `<span class="inline-flex ml-1 px-1.5 py-0.5 rounded bg-gray-400 text-white">備註：${displayNote(o.payoutNote)}</span>` : ''}</div>
