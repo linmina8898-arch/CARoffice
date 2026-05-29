@@ -144,7 +144,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.14.4";
+        const APP_VERSION = "v1.14.5";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -517,13 +517,17 @@
             const n = parseFloat(String(v ?? '').replace(/[^\d.-]/g, ''));
             return Number.isNaN(n) ? 0 : n;
         };
+        const parseCashAmount = (v) => {
+            const n = parseMoney(v);
+            return n > 0 && n <= 200000 ? n : 0;
+        };
         function getDriverPaymentInfo(t) {
             const method = cleanVal(t.paymentMethod);
             const isCash = method.includes('現') || method.includes('車上') || method.includes('付現');
             const isBilling = method.includes('月結') || method.includes('簽單') || cleanVal(t.companyName);
             const isTransfer = method.includes('轉帳');
-            const manualCash = parseMoney(t.manualCashCollected ?? t.cashCollected);
-            const cashCollected = manualCash > 0 ? manualCash : (isCash ? parseMoney(t.tripAmt) : 0);
+            const manualCash = parseCashAmount(t.manualCashCollected ?? t.cashCollected);
+            const cashCollected = manualCash > 0 ? manualCash : (isCash ? parseCashAmount(t.tripAmt) : 0);
             const paymentStatus = isCash ? '司機收現' : (isBilling ? '月結簽單' : (isTransfer ? '轉帳，不簽不收' : (method || '未標示')));
             return { isCash, isBilling, isTransfer, cashCollected, paymentStatus, hasSeparateCash: manualCash > 0 && !isCash };
         }
@@ -748,12 +752,12 @@
             const recon = reconciliationData || { month: new Date().toISOString().substring(0, 7), totalPayout: 0, count: 0, orders: [] };
             const monthValue = recon.month || new Date().toISOString().substring(0, 7);
             const reconOrders = recon.orders || [];
-            const totalCash = Number(recon.totalCash || 0);
+            const totalCash = parseCashAmount(recon.totalCash || 0);
             const isSettled = o => ['已結清', '已付款'].includes(cleanVal(o.payoutStatus));
             const unsettledOrders = reconOrders.filter(o => !isSettled(o));
             const settledPayout = reconOrders.filter(isSettled).reduce((sum, o) => sum + Number(o.payout || 0), 0);
             const unsettledPayout = unsettledOrders.reduce((sum, o) => sum + Number(o.payout || 0), 0);
-            const unsettledCash = unsettledOrders.reduce((sum, o) => sum + Number(o.cashCollected || 0), 0);
+            const unsettledCash = unsettledOrders.reduce((sum, o) => sum + parseCashAmount(o.cashCollected), 0);
             const outstandingNet = unsettledPayout - unsettledCash;
             const outstandingLabel = outstandingNet >= 0 ? '公司應付司機' : '司機應繳回公司';
             const reconByOrderId = Object.fromEntries(reconOrders.map(o => [o.orderId, o]));
@@ -786,7 +790,7 @@
                 const o = reconByOrderId[t.orderId] || {};
                 const isAdjustment = (o.recordType || t.recordType) === '補貼/異常成本';
                 const needsReport = Boolean(o.needsReport || t.needsReport);
-                const cashCollected = Number(o.cashCollected || 0);
+                const cashCollected = parseCashAmount(o.cashCollected);
                 const payout = Number(o.payout || 0);
                 const balance = payout - cashCollected;
                 const settled = isSettled(o);
