@@ -144,7 +144,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.14.5";
+        const APP_VERSION = "v1.14.8";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -159,6 +159,7 @@
         let currentTaskTab = 'today'; 
         let authTimeoutTimer = null;
         let currentDetailOrderId = null;
+        let statusSubmitting = false;
         
         // 簽名板邏輯
         const canvas = document.getElementById('signaturePad');
@@ -512,7 +513,18 @@
             return cleanVal(v) === '已付款' ? '已結清' : (cleanVal(v) || '待確認');
         }
         const isPendingAccept = (t) => !cleanVal(t.driverStatus) || cleanVal(t.driverStatus) === '未出發';
-        const isTaskActionable = (t) => String(t?.date || '') >= getFormattedDate(0);
+        const parseTaskDateTime = (t) => {
+            const date = cleanVal(t?.date);
+            if (!date) return null;
+            const time = cleanVal(t?.time) || '00:00';
+            const dt = new Date(`${date}T${time}`);
+            return Number.isNaN(dt.getTime()) ? null : dt;
+        };
+        const isTaskActionable = (t) => {
+            const dt = parseTaskDateTime(t);
+            if (!dt) return String(t?.date || '') >= getFormattedDate(0);
+            return Date.now() <= dt.getTime() + 6 * 60 * 60 * 1000;
+        };
         const parseMoney = (v) => {
             const n = parseFloat(String(v ?? '').replace(/[^\d.-]/g, ''));
             return Number.isNaN(n) ? 0 : n;
@@ -631,7 +643,7 @@
             }
             if (!isTaskActionable(t)) {
                 closeTaskDetail();
-                Swal.fire('任務已過期', '此任務日期已過，請聯絡調度由中控台處理。', 'info');
+                Swal.fire('任務已過期', '此任務已超過回報期限，請聯絡調度由中控台處理。', 'info');
                 return;
             }
 
@@ -798,8 +810,9 @@
                 const paymentHtml = cashCollected > 0
                     ? `${paymentLabel !== '司機收現' ? `<span class="mr-1">${paymentLabel}</span>` : ''}<span class="inline-flex px-1.5 py-0.5 rounded bg-gray-400 text-white">司機收現｜已收現 $${cashCollected.toLocaleString()}</span>`
                     : `<span>${paymentLabel}</span>`;
+                const settledDate = o.payoutUpdatedAt ? ` ${String(o.payoutUpdatedAt).slice(5, 16)}` : '';
                 const balanceHtml = settled
-                    ? `<span class="inline-flex mt-1 px-1.5 py-0.5 rounded bg-[#553f62] text-white">已結清</span>`
+                    ? `<span class="inline-flex mt-1 px-1.5 py-0.5 rounded bg-[#553f62] text-white">已結清${settledDate}</span>`
                     : `<span class="inline-flex mt-1 px-1.5 py-0.5 rounded ${balance >= 0 ? 'bg-[#f5f1f7] text-[#553f62]' : 'bg-red-50 text-red-600'}">${balance >= 0 ? '公司應付' : '應繳回公司'} $${Math.abs(balance).toLocaleString()}</span>`;
                 return `
                 <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
@@ -819,10 +832,13 @@
         }
 
         async function updateStatus(orderId, newStatus, signatureDataUrl = '') {
+            if (statusSubmitting) return false;
+            statusSubmitting = true;
             try {
                 const task = tasks.find(x => x.orderId === orderId);
                 if (task && !isTaskActionable(task)) {
-                    Swal.fire('任務已過期', '此任務日期已過，請聯絡調度由中控台處理。', 'info');
+                    Swal.fire('任務已過期', '此任務已超過回報期限，請聯絡調度由中控台處理。', 'info');
+                    statusSubmitting = false;
                     return false;
                 }
                 let coords = { lat: '', lng: '' };
@@ -846,9 +862,11 @@
                 
                 Swal.fire({ title: '成功', text: `狀態更新為：${newStatus}`, icon: 'success', timer: 1000, showConfirmButton: false });
                 loadTasks();
+                statusSubmitting = false;
                 return true;
             } catch(e) {
                 if(e !== 'No Geolocation') Swal.fire('錯誤', e.message, 'error');
+                statusSubmitting = false;
                 return false;
             }
         }
