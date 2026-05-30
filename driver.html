@@ -144,7 +144,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.14.8";
+        const APP_VERSION = "v1.14.9";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -591,6 +591,10 @@
                 if (hasSign) tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded border border-[#f07cad] text-[#f07cad]">舉牌</span>`);
                 if (cleanVal(t.remarks) || cleanVal(t.driverNote)) tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-500 text-white">有備註</span>`);
                 let tagsHtml = tags.join('');
+                const payoutAmount = parseMoney(t.driverPayout);
+                const payoutHtml = payoutAmount > 0
+                    ? `<div class="text-right shrink-0"><div class="text-[10px] text-gray-400">本趟車資</div><div class="text-sm font-bold text-[#553f62]">$${payoutAmount.toLocaleString()}</div></div>`
+                    : `<div class="text-right shrink-0"><div class="text-[10px] text-red-400">本趟車資</div><div class="text-xs font-bold text-red-500">未設定</div></div>`;
 
                 let addressText = cleanVal(t.address);
                 let shortAddress = addressText.length > 8 ? addressText.substring(0, 8) + '...' : addressText;
@@ -626,7 +630,10 @@
                             <div class="flex flex-wrap justify-end gap-1 max-w-[54%]">${tagsHtml}</div>
                         </div>
                         <div class="task-route mt-2 text-xs text-gray-500">${summaryRoute}</div>
-                        <div class="mt-1 text-[10px] font-mono text-gray-400 flex justify-end items-center gap-1">${t.orderId} <span class="text-gray-300">❯</span></div>
+                        <div class="mt-2 flex items-end justify-between gap-3">
+                            ${payoutHtml}
+                            <div class="text-[10px] font-mono text-gray-400 flex justify-end items-center gap-1 min-w-0 text-right">${t.orderId} <span class="text-gray-300">❯</span></div>
+                        </div>
                         ${actionArea}
                     </div>
                 </div>`;
