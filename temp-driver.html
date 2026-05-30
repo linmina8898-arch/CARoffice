@@ -43,12 +43,13 @@
         </div>
     </div>
     <script>
-        const APP_VERSION = "v1.0.1";
+        const APP_VERSION = "v1.0.3";
         const GAS_URL = "https://script.google.com/macros/s/AKfycbzMLYBvdbo4mkkEUVFcjST44oh7VUXhx7gZjWejm2R8XX549ITaReot0pRAN3mbwA8n/exec";
         const token = new URLSearchParams(location.search).get("token") || "";
         let task = null;
         let driver = null;
         let hasSignature = false;
+        let statusSubmitting = false;
         const canvas = document.getElementById("signaturePad");
         const ctx = canvas.getContext("2d");
         let drawing = false;
@@ -134,6 +135,8 @@
             await updateStatus(status, "");
         }
         async function updateStatus(status, signatureDataUrl) {
+            if (statusSubmitting) return;
+            statusSubmitting = true;
             try {
                 let gps = { lat:"", lng:"" };
                 if (status !== "已收單") gps = await requireGPS();
@@ -143,12 +146,15 @@
                 if (!result.success) throw new Error(result.error || "回報失敗");
                 if (status === "已結案") {
                     closeSignature();
+                    statusSubmitting = false;
                     return showClosed("任務已完成", "結案回報已送出，謝謝您的協助。");
                 }
                 task.driverStatus = status;
                 Swal.fire({ title:"回報成功", icon:"success", timer:900, showConfirmButton:false });
                 await loadTask();
+                statusSubmitting = false;
             } catch (error) {
+                statusSubmitting = false;
                 Swal.fire("回報失敗", error.message || "請聯絡調度", "error");
             }
         }
