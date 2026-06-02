@@ -144,7 +144,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.14.12";
+        const APP_VERSION = "v1.14.13";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -541,7 +541,7 @@
             const isTransfer = method.includes('轉帳');
             const manualCash = parseCashAmount(t.manualCashCollected ?? t.cashCollected);
             const cashCollected = manualCash > 0 ? manualCash : (isCash ? parseCashAmount(t.tripAmt) : 0);
-            const paymentStatus = isCash ? '司機收現' : (isBilling ? '月結簽單' : (isTransfer ? '轉帳，不簽不收' : (method || '未標示')));
+            const paymentStatus = isCash ? '司機收現' : (isBilling ? '月結簽單，客下請簽名' : (isTransfer ? '轉帳，不簽不收' : (method || '未標示')));
             return { isCash, isBilling, isTransfer, cashCollected, paymentStatus, hasSeparateCash: manualCash > 0 && !isCash };
         }
 
@@ -690,16 +690,7 @@
 
             let cNote = cleanVal(t.remarks) ? cleanVal(t.remarks).replace(/\n/g, '<br>') : '';
             let dNote = cleanVal(t.driverNote) ? cleanVal(t.driverNote).replace(/\n/g, '<br>') : '';
-            let isMonthlyBilling = isBillingPayment;
-            let companyHtml = isMonthlyBilling ? `
-                        <div class="driver-field bg-[#fff5f8] -mx-3 px-3 border-y border-pink-100">
-                            <span class="driver-field-label text-[#553f62]">月結簽單</span>
-                            <span class="driver-field-value text-[#553f62]">${cleanVal(t.companyName) || '企業客戶'}${cleanVal(t.companyTaxId) ? `｜統編 ${cleanVal(t.companyTaxId)}` : ''}</span>
-                        </div>
-                        <div class="driver-field bg-[#fff5f8] -mx-3 px-3 border-b border-pink-100">
-                            <span class="driver-field-label text-[#553f62]">簽名提醒</span>
-                            <span class="driver-field-value text-red-500">請於客下結案時請客戶簽名確認</span>
-                        </div>` : '';
+            let companyHtml = '';
             
             let lug = cleanVal(t.luggage) === '0' ? '' : formatLuggageCount(t.luggage);
             let sport = cleanVal(t.sportLuggage);
