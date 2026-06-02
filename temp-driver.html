@@ -43,7 +43,7 @@
         </div>
     </div>
     <script>
-        const APP_VERSION = "v1.0.4";
+        const APP_VERSION = "v1.0.5";
         const GAS_URL = "https://script.google.com/macros/s/AKfycbzMLYBvdbo4mkkEUVFcjST44oh7VUXhx7gZjWejm2R8XX549ITaReot0pRAN3mbwA8n/exec";
         const token = new URLSearchParams(location.search).get("token") || "";
         let task = null;
@@ -79,7 +79,7 @@
         function renderTask(expiresAt) {
             const billing = clean(task.companyName) || String(task.paymentMethod).includes("月結") || String(task.paymentMethod).includes("簽單");
             const cash = Number(task.cashCollected || 0);
-            const payment = billing ? `月結簽單｜${clean(task.companyName) || "企業客戶"}` : (cash > 0 ? `現場收現 $${cash.toLocaleString()}` : (task.paymentStatus || task.paymentMethod || "-"));
+            const payment = billing ? "月結簽單，客下請簽名" : (cash > 0 ? `現場收現 $${cash.toLocaleString()}` : (task.paymentStatus || task.paymentMethod || "-"));
             const next = { "":"已收單", "未出發":"已收單", "已收單":"已出發", "已出發":"已抵達", "已抵達":"客上", "客上":"已結案" }[task.driverStatus || ""];
             const label = { "已收單":"確認收單", "已出發":"點我出發", "已抵達":"已抵達上車點", "客上":"客戶已上車", "已結案":"客下完成行程" }[next];
             const fields = [
