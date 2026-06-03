@@ -144,7 +144,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.14.16";
+        const APP_VERSION = "v1.14.18";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -160,6 +160,8 @@
         let authTimeoutTimer = null;
         let currentDetailOrderId = null;
         let statusSubmitting = false;
+        const statusSubmittingOrders = {};
+        let historyOnlyUnsettled = false;
         
         // 簽名板邏輯
         const canvas = document.getElementById('signaturePad');
@@ -774,8 +776,15 @@
             const outstandingNet = unsettledPayout - unsettledCash;
             const outstandingLabel = outstandingNet >= 0 ? '公司應付司機' : '司機應繳回公司';
             const reconByOrderId = Object.fromEntries(reconOrders.map(o => [o.orderId, o]));
-            const monthlyHistory = historyData.filter(t => String(t.date || '').startsWith(monthValue));
+            const monthlyHistoryBase = historyData.filter(t => String(t.date || '').startsWith(monthValue));
+            const monthlyHistory = historyOnlyUnsettled
+                ? monthlyHistoryBase.filter(t => {
+                    const o = reconByOrderId[t.orderId] || {};
+                    return !isSettled(o);
+                })
+                : monthlyHistoryBase;
             const pendingReportCount = Number(recon.pendingReportCount || 0);
+            const unsettledButtonText = historyOnlyUnsettled ? '顯示全部車趟' : `只看未結清 ${unsettledOrders.length} 筆`;
             const reconHtml = `
                 <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
                     <div class="flex items-center justify-between gap-2 mb-3">
@@ -796,10 +805,11 @@
                         <div class="text-xl font-bold">$${Math.abs(outstandingNet).toLocaleString()}</div>
                         <div class="text-[11px] opacity-80 mt-1">未結清車資 $${unsettledPayout.toLocaleString()} - 未結清已收現 $${unsettledCash.toLocaleString()}</div>
                     </div>
+                    <button type="button" onclick="toggleHistoryUnsettled()" class="w-full rounded-lg border border-[#553f62] px-3 py-2 mb-3 text-sm text-[#553f62] bg-white">${unsettledButtonText}</button>
                     <div class="text-xs text-gray-500">本月共 ${recon.count || 0} 筆。${pendingReportCount ? `其中 ${pendingReportCount} 趟未確實回報。` : ''}</div>
                 </div>`;
 
-            const historyHtml = monthlyHistory.length === 0 ? `<div class="text-center text-gray-400 mt-8 text-sm">本月尚無對帳車趟</div>` : monthlyHistory.map(t => {
+            const historyHtml = monthlyHistory.length === 0 ? `<div class="text-center text-gray-400 mt-8 text-sm">${historyOnlyUnsettled ? '本月沒有未結清車趟' : '本月尚無對帳車趟'}</div>` : monthlyHistory.map(t => {
                 const o = reconByOrderId[t.orderId] || {};
                 const isAdjustment = (o.recordType || t.recordType) === '補貼/異常成本';
                 const needsReport = Boolean(o.needsReport || t.needsReport);
@@ -832,8 +842,13 @@
             container.innerHTML = reconHtml + historyHtml;
         }
 
+        function toggleHistoryUnsettled() {
+            historyOnlyUnsettled = !historyOnlyUnsettled;
+            renderHistory();
+        }
+
         async function updateStatus(orderId, newStatus, signatureDataUrl = '') {
-            if (statusSubmitting) return false;
+            if (statusSubmitting || statusSubmittingOrders[orderId]) return false;
             if (!orderId) {
                 Swal.fire('缺少預約單號', '請關閉任務明細後重新開啟，再進行回報。', 'error');
                 return false;
@@ -843,11 +858,15 @@
                 return false;
             }
             statusSubmitting = true;
+            statusSubmittingOrders[orderId] = true;
+            setOrderActionBusy(orderId, true);
             try {
                 const task = tasks.find(x => x.orderId === orderId);
                 if (task && !isTaskActionable(task)) {
                     Swal.fire('任務已過期', '此任務已超過回報期限，請聯絡調度由中控台處理。', 'info');
                     statusSubmitting = false;
+                    delete statusSubmittingOrders[orderId];
+                    setOrderActionBusy(orderId, false);
                     return false;
                 }
                 let coords = { lat: '', lng: '' };
@@ -869,15 +888,38 @@
                     driverName: driverData.name
                 });
                 
+                if (task) task.driverStatus = newStatus;
+                renderTasks();
+                if (currentDetailOrderId === orderId) openTaskDetail(orderId);
                 Swal.fire({ title: '成功', text: `狀態更新為：${newStatus}`, icon: 'success', timer: 1000, showConfirmButton: false });
-                loadTasks();
+                await loadTasks();
                 statusSubmitting = false;
+                delete statusSubmittingOrders[orderId];
+                setOrderActionBusy(orderId, false);
                 return true;
             } catch(e) {
                 if(e !== 'No Geolocation') Swal.fire('錯誤', e.message, 'error');
                 statusSubmitting = false;
+                delete statusSubmittingOrders[orderId];
+                setOrderActionBusy(orderId, false);
                 return false;
             }
+        }
+
+        function setOrderActionBusy(orderId, busy) {
+            if (!orderId) return;
+            document.querySelectorAll(`button[onclick*="${orderId}"]`).forEach(btn => {
+                btn.disabled = busy;
+                btn.classList.toggle('opacity-60', busy);
+                btn.classList.toggle('pointer-events-none', busy);
+                if (busy) {
+                    btn.dataset.originalText = btn.dataset.originalText || btn.innerText;
+                    btn.innerText = '回報中...';
+                } else if (btn.dataset.originalText) {
+                    btn.innerText = btn.dataset.originalText;
+                    delete btn.dataset.originalText;
+                }
+            });
         }
 
         // --- 智能結案判定 (簽單 vs 免簽名) ---
