@@ -144,7 +144,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.14.14";
+        const APP_VERSION = "v1.14.16";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -539,10 +539,11 @@
             const isCash = method.includes('現') || method.includes('車上') || method.includes('付現');
             const isBilling = method.includes('月結') || method.includes('簽單') || cleanVal(t.companyName);
             const isTransfer = method.includes('轉帳');
-            const manualCash = parseCashAmount(t.manualCashCollected ?? t.cashCollected);
-            const cashCollected = manualCash > 0 ? manualCash : (isCash ? parseCashAmount(t.tripAmt) : 0);
+            const manualCash = parseCashAmount(t.manualCashCollected);
+            const backendCash = parseCashAmount(t.cashCollected);
+            const cashCollected = manualCash > 0 ? manualCash : (backendCash > 0 ? backendCash : (isCash ? parseCashAmount(t.tripAmt) : 0));
             const paymentStatus = isCash ? '司機收現' : (isBilling ? '月結簽單，客下請簽名' : (isTransfer ? '轉帳，不簽不收' : (method || '未標示')));
-            return { isCash, isBilling, isTransfer, cashCollected, paymentStatus, hasSeparateCash: manualCash > 0 && !isCash };
+            return { isCash, isBilling, isTransfer, cashCollected, paymentStatus, hasSeparateCash: cashCollected > 0 && !isCash };
         }
 
         // --- 渲染【主畫面清單 (加入「確認收單」按鈕)】 ---
@@ -579,6 +580,7 @@
                 let tags = [];
                 let mmdd = t.date.substring(5).replace('-', '/');
                 if (cleanVal(t.extraStop)) tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-600 text-white">加點</span>`);
+                if (cleanVal(t.tripCarNo) || cleanVal(t.tripCarType) || cleanVal(t.tripCarColor)) tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#553f62] text-white">本趟車輛</span>`);
                 if (paymentInfo.isBilling) {
                     tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#553f62] text-white">月結簽單</span>`);
                 } else if (paymentInfo.isCash) {
@@ -702,6 +704,8 @@
 
             let addressHtml = cleanVal(t.address) ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cleanVal(t.address))}" target="_blank" class="text-blue-600 underline">${cleanVal(t.address)}</a>` : '';
             let extraStopHtml = cleanVal(t.extraStop) ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cleanVal(t.extraStop))}" target="_blank" class="text-blue-600 underline">${cleanVal(t.extraStop)}</a>` : '';
+            const tripVehicleText = [cleanVal(t.tripCarNo), cleanVal(t.tripCarType), cleanVal(t.tripCarColor)].filter(Boolean).join(' / ');
+            const tripVehicleHtml = tripVehicleText ? `<div class="driver-field bg-[#f8f5fa] -mx-3 px-3 border-y border-[#553f62]/10"><span class="driver-field-label text-[#553f62]">本趟車輛</span><span class="driver-field-value text-[#553f62]">${tripVehicleText}${cleanVal(t.tripVehicleNote) ? `<br><span class="text-xs text-gray-500">${cleanVal(t.tripVehicleNote)}</span>` : ''}</span></div>` : '';
 
             let html = `
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
@@ -729,6 +733,7 @@
                         <div class="driver-field"><span class="driver-field-label">乘車人數</span><span class="driver-field-value">${formatPassengerCount(t.paxCount)}</span></div>
                         <div class="driver-field"><span class="driver-field-label">行李件數</span><span class="driver-field-value">${luggageText}</span></div>
                         <div class="driver-field"><span class="driver-field-label">預約車型</span><span class="driver-field-value">${cleanVal(t.car)}</span></div>
+                        ${tripVehicleHtml}
                         <div class="driver-field"><span class="driver-field-label">兒童座椅</span><span class="driver-field-value">${cleanVal(t.seats)}</span></div>
                         <div class="driver-field"><span class="driver-field-label">舉牌內容</span><span class="driver-field-value">${signContent}</span></div>
                         <div class="driver-field"><span class="driver-field-label">客戶備註</span><span class="driver-field-value text-red-500">${cNote}</span></div>
