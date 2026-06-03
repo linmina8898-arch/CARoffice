@@ -43,13 +43,14 @@
         </div>
     </div>
     <script>
-        const APP_VERSION = "v1.0.5";
+        const APP_VERSION = "v1.0.6";
         const GAS_URL = "https://script.google.com/macros/s/AKfycbzMLYBvdbo4mkkEUVFcjST44oh7VUXhx7gZjWejm2R8XX549ITaReot0pRAN3mbwA8n/exec";
         const token = new URLSearchParams(location.search).get("token") || "";
         let task = null;
         let driver = null;
         let hasSignature = false;
         let statusSubmitting = false;
+        const statusSubmittingByStatus = {};
         const canvas = document.getElementById("signaturePad");
         const ctx = canvas.getContext("2d");
         let drawing = false;
@@ -135,12 +136,14 @@
             await updateStatus(status, "");
         }
         async function updateStatus(status, signatureDataUrl) {
-            if (statusSubmitting) return;
+            if (statusSubmitting || statusSubmittingByStatus[status]) return;
             if (!task || !task.orderId) return Swal.fire("缺少預約單號", "請重新開啟臨時派遣連結後再回報。", "error");
             if (status === "已結案" && signatureDataUrl && !String(signatureDataUrl).startsWith("data:image/png;base64,")) {
                 return Swal.fire("簽名資料不完整", "請重新簽名後再送出。", "error");
             }
             statusSubmitting = true;
+            statusSubmittingByStatus[status] = true;
+            setProgressButtonsBusy(true);
             try {
                 let gps = { lat:"", lng:"" };
                 if (status !== "已收單") gps = await requireGPS();
@@ -151,16 +154,38 @@
                 if (status === "已結案") {
                     closeSignature();
                     statusSubmitting = false;
+                    delete statusSubmittingByStatus[status];
+                    setProgressButtonsBusy(false);
                     return showClosed("任務已完成", "結案回報已送出，謝謝您的協助。");
                 }
                 task.driverStatus = status;
                 Swal.fire({ title:"回報成功", icon:"success", timer:900, showConfirmButton:false });
                 await loadTask();
                 statusSubmitting = false;
+                delete statusSubmittingByStatus[status];
+                setProgressButtonsBusy(false);
             } catch (error) {
                 statusSubmitting = false;
+                delete statusSubmittingByStatus[status];
+                setProgressButtonsBusy(false);
                 Swal.fire("回報失敗", error.message || "請聯絡調度", "error");
             }
+        }
+        function setProgressButtonsBusy(busy) {
+            document.querySelectorAll("button").forEach(btn => {
+                const text = btn.innerText || "";
+                if (!/確認收單|點我出發|已抵達|客戶已上車|客下完成|確認簽名結案/.test(text)) return;
+                btn.disabled = busy;
+                btn.classList.toggle("opacity-60", busy);
+                btn.classList.toggle("pointer-events-none", busy);
+                if (busy) {
+                    btn.dataset.originalText = btn.dataset.originalText || btn.innerText;
+                    btn.innerText = "回報中...";
+                } else if (btn.dataset.originalText) {
+                    btn.innerText = btn.dataset.originalText;
+                    delete btn.dataset.originalText;
+                }
+            });
         }
         async function reportAnomaly() {
             const result = await Swal.fire({
