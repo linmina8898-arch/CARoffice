@@ -206,7 +206,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "quote-v1.0.0";
+    const APP_VERSION = "quote-v1.0.1";
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzMLYBvdbo4mkkEUVFcjST44oh7VUXhx7gZjWejm2R8XX549ITaReot0pRAN3mbwA8n/exec";
     const BOOKING_URL = location.href.includes("quote.html") ? location.href.replace("quote.html", "index.html") : "index.html";
     let priceRows = [];
@@ -290,34 +290,87 @@
       return type === "接機" ? `${airport} → ${place}` : `${place} → ${airport}`;
     }
 
+    function formatQuoteDate(value) {
+      if (!value) return "";
+      const date = new Date(`${value}T00:00:00+08:00`);
+      const normalized = String(value).replace(/-/g, "/");
+      if (isNaN(date.getTime())) return normalized;
+      const weeks = ["日", "一", "二", "三", "四", "五", "六"];
+      return `${normalized} (${weeks[date.getDay()]})`;
+    }
+
+    function formatQuoteMoney(value, plus) {
+      const n = Number(value || 0);
+      if (n < 0) return `-NT$${Math.abs(n).toLocaleString("en-US")}`;
+      return `${plus ? "+" : ""}NT$${n.toLocaleString("en-US")}`;
+    }
+
+    function buildQuoteFeeLines(items) {
+      return (items || [])
+        .filter(item => !item.isTotal && !String(item.label || "").includes("小計"))
+        .map(item => {
+          if (item.note) return `${item.label}｜${item.note}`;
+          return `${item.label}｜${formatQuoteMoney(item.amount, item.isExtra)}`;
+        });
+    }
+
     function buildQuoteText(payload, result) {
       const lines = [];
-      lines.push("安興租車｜參考報價");
+      const divider = "━━━━━";
+      lines.push("您好，感謝您諮詢安興專車接送。");
+      lines.push("以下為您的行程參考報價：");
       lines.push("");
-      lines.push(`行程：${payload.serviceType}｜${routeLine(payload.serviceType, payload.airport, payload.mainAddress || payload.mainZone)}`);
-      if (payload.rideDate || payload.rideTime) lines.push(`時間：${[payload.rideDate, payload.rideTime].filter(Boolean).join(" ")}`);
+      lines.push("");
+      lines.push("安興專車接送｜參考報價");
+      lines.push(divider);
+      lines.push("");
+      lines.push("【行程資訊】");
+      lines.push(`▪︎ 行程：${payload.serviceType}服務`);
+      lines.push(`▪︎ 路線：${routeLine(payload.serviceType, payload.airport, payload.mainAddress || payload.mainZone)}`);
+      if (payload.rideDate) lines.push(`▪︎ 日期：${formatQuoteDate(payload.rideDate)}`);
+      if (payload.rideTime) lines.push(`▪︎ 時間：${payload.rideTime}`);
+      lines.push(`▪︎ 車型：${payload.carType.replace("(SIENNA/BENZ V)", "")}`);
+      lines.push(`▪︎ 人數：${payload.paxText}`);
+      lines.push(`▪︎ 行李：${payload.luggageText}`);
+      if (payload.extraAddress || payload.extraZone) lines.push(`▪︎ 加點：${payload.extraAddress || payload.extraZone}`);
       if (payload.hasReturn) {
-        lines.push(`回程：${payload.returnServiceType}｜${routeLine(payload.returnServiceType, payload.airport, payload.returnAddress || payload.returnZone)}`);
-        if (payload.returnDate || payload.returnTime) lines.push(`回程時間：${[payload.returnDate, payload.returnTime].filter(Boolean).join(" ")}`);
+        lines.push("");
+        lines.push("【回程資訊】");
+        lines.push(`▪︎ 行程：${payload.returnServiceType}服務`);
+        lines.push(`▪︎ 路線：${routeLine(payload.returnServiceType, payload.airport, payload.returnAddress || payload.returnZone)}`);
+        if (payload.returnDate) lines.push(`▪︎ 日期：${formatQuoteDate(payload.returnDate)}`);
+        if (payload.returnTime) lines.push(`▪︎ 時間：${payload.returnTime}`);
       }
-      lines.push(`車型：${payload.carType.replace("(SIENNA/BENZ V)", "")}`);
-      lines.push(`人數：${payload.paxText}`);
-      lines.push(`行李：${payload.luggageText}`);
-      if (payload.extraAddress || payload.extraZone) lines.push(`加點：${payload.extraAddress || payload.extraZone}`);
       lines.push("");
-      lines.push("費用明細");
-      (result.items || []).forEach(item => {
-        if (item.isTotal) return;
-        if (item.note) lines.push(`${item.label} ${item.note}`);
-        else lines.push(`${item.label} ${money(item.amount, item.isExtra)}`);
+      lines.push(divider);
+      lines.push("【費用明細】");
+      lines.push("");
+      buildQuoteFeeLines(result.items).forEach(line => {
+        lines.push(line);
+        lines.push("");
       });
+      lines.push(`預估總額｜NT$${Number(result.total || 0).toLocaleString("en-US")}`);
+      lines.push(divider);
       lines.push("");
-      lines.push(`預估總額：$${Number(result.total || 0).toLocaleString("en-US")}`);
       lines.push("");
-      lines.push("此報價為依您目前提供資訊試算之參考報價，實際費用仍需依完整接送地址、行程內容、加點距離、行李數量與預訂車型確認後為準。");
-      lines.push("若此報價符合您的需求，歡迎填寫正式預約資料，我們期待為您提供安全、舒適、專業的接送服務。");
+      lines.push("📍以上為依據目前提供資訊試算之參考報價。");
+      lines.push("實際費用仍將依完整上下車地址、是否加點、行李數量及實際安排車型後確認。");
       lines.push("");
-      lines.push(`正式預約連結：${BOOKING_URL}`);
+      lines.push("");
+      lines.push("📍本公司採預約保留制，完成預約後將為您安排車輛與司機。");
+      lines.push("");
+      lines.push("");
+      lines.push("");
+      lines.push("若此報價符合您的需求，歡迎透過官方 LINE 完成正式預約。");
+      lines.push("首次透過系統預約，另享折扣碼優惠。");
+      lines.push("");
+      lines.push("官方 LINE 預約：");
+      lines.push("https://page.line.me/ansing");
+      lines.push("");
+      lines.push("期待為您提供安全、舒適、準時的接送服務。");
+      lines.push("");
+      lines.push("安興專車接送｜深耕新竹・服務全台");
+      lines.push("— 合法營運｜專業接送｜安心抵達 —");
       return lines.join("\n");
     }
 
