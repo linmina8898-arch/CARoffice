@@ -144,7 +144,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.14.18";
+        const APP_VERSION = "v1.14.19";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -162,6 +162,8 @@
         let statusSubmitting = false;
         const statusSubmittingOrders = {};
         let historyOnlyUnsettled = false;
+        let tasksLoading = false;
+        let historyLoadedMonth = "";
         
         // 簽名板邏輯
         const canvas = document.getElementById('signaturePad');
@@ -442,12 +444,14 @@
         }
 
         async function loadTasks() {
+            if (tasksLoading) return;
+            tasksLoading = true;
             const taskContainer = document.getElementById('task-list');
             if (!tasks.length && taskContainer) {
                 taskContainer.innerHTML = `<div class="text-center text-gray-400 mt-16 text-sm">任務載入中...</div>`;
             }
             try {
-                const res = await apiCall('driverGetTasks', { lineId: driverData.lineId }, 12000);
+                const res = await apiCall('driverGetTasks', { lineId: driverData.lineId }, 9000);
                 tasks = res.tasks;
                 if(res.monthCount !== undefined) {
                     document.getElementById('profCount').innerText = res.monthCount;
@@ -462,16 +466,23 @@
                     taskContainer.innerHTML = `<div class="text-center text-gray-500 mt-16 text-sm leading-relaxed">任務載入逾時<br><button onclick="loadTasks()" class="mt-3 bg-[#553f62] text-white px-4 py-2 rounded-lg font-bold">重新載入</button></div>`;
                 }
                 Swal.fire('錯誤', e.message || '無法載入任務', 'error');
+            } finally {
+                tasksLoading = false;
             }
         }
 
         async function loadHistory() {
+            const month = document.getElementById('driverReconMonth')?.value || new Date().toISOString().substring(0, 7);
+            if (reconciliationData && historyLoadedMonth === month) {
+                renderHistory();
+                return;
+            }
             Swal.showLoading();
             try {
-                const month = document.getElementById('driverReconMonth')?.value || new Date().toISOString().substring(0, 7);
-                const res = await apiCall('driverGetHistoryBundle', { lineId: driverData.lineId, month });
+                const res = await apiCall('driverGetHistoryBundle', { lineId: driverData.lineId, month }, 10000);
                 historyData = res.history || [];
                 reconciliationData = res.reconciliation || { success: true, month, totalPayout: 0, totalCash: 0, netPayable: 0, count: 0, orders: [] };
+                historyLoadedMonth = month;
                 renderHistory();
                 Swal.close();
             } catch(e) { Swal.fire('錯誤', '無法載入歷史', 'error'); }
@@ -582,7 +593,6 @@
                 let tags = [];
                 let mmdd = t.date.substring(5).replace('-', '/');
                 if (cleanVal(t.extraStop)) tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-600 text-white">加點</span>`);
-                if (cleanVal(t.tripCarNo) || cleanVal(t.tripCarType) || cleanVal(t.tripCarColor)) tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#553f62] text-white">本趟車輛</span>`);
                 if (paymentInfo.isBilling) {
                     tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#553f62] text-white">月結簽單</span>`);
                 } else if (paymentInfo.isCash) {
@@ -817,7 +827,7 @@
                 const payout = Number(o.payout || 0);
                 const balance = payout - cashCollected;
                 const settled = isSettled(o);
-                const paymentLabel = isAdjustment ? '補貼 / 異常成本' : (o.paymentStatus || o.paymentMethod || '未標示');
+                const paymentLabel = isAdjustment ? '補貼' : (o.paymentStatus || o.paymentMethod || '未標示');
                 const paymentHtml = cashCollected > 0
                     ? `${paymentLabel !== '司機收現' ? `<span class="mr-1">${paymentLabel}</span>` : ''}<span class="inline-flex px-1.5 py-0.5 rounded bg-gray-400 text-white">司機收現｜已收現 $${cashCollected.toLocaleString()}</span>`
                     : `<span>${paymentLabel}</span>`;
@@ -892,7 +902,7 @@
                 renderTasks();
                 if (currentDetailOrderId === orderId) openTaskDetail(orderId);
                 Swal.fire({ title: '成功', text: `狀態更新為：${newStatus}`, icon: 'success', timer: 1000, showConfirmButton: false });
-                await loadTasks();
+                loadTasks();
                 statusSubmitting = false;
                 delete statusSubmittingOrders[orderId];
                 setOrderActionBusy(orderId, false);
