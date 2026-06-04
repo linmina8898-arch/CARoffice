@@ -144,7 +144,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.14.22";
+        const APP_VERSION = "v1.14.23";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -611,7 +611,7 @@
                 } else if (cleanVal(t.paymentMethod)) {
                     tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded border border-gray-300 text-gray-600 bg-white">${cleanVal(t.paymentMethod)}</span>`);
                 }
-                if (paymentInfo.hasSeparateCash) tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-500 text-white">需收現 $${paymentInfo.cashCollected.toLocaleString()}</span>`);
+                if (paymentInfo.hasSeparateCash) tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#f07cad] text-white">需收現 $${paymentInfo.cashCollected.toLocaleString()}</span>`);
                 if (hasSign) tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded border border-[#f07cad] text-[#f07cad]">舉牌</span>`);
                 if (cleanVal(t.remarks) || cleanVal(t.driverNote)) tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-500 text-white">有備註</span>`);
                 const payoutAmount = parseMoney(t.driverPayout);
