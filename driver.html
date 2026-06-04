@@ -144,7 +144,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.14.20";
+        const APP_VERSION = "v1.14.21";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -230,7 +230,7 @@
         }
 
         // --- 核心：API 溝通 ---
-        async function apiCall(action, data, timeoutMs = 12000) {
+        async function apiCall(action, data, timeoutMs = 20000) {
             const controller = new AbortController();
             const timer = setTimeout(() => controller.abort(), timeoutMs);
             try {
@@ -542,6 +542,11 @@
             const dt = parseTaskDateTime(t);
             if (!dt) return String(t?.date || '') >= getFormattedDate(0);
             return Date.now() <= dt.getTime() + 6 * 60 * 60 * 1000;
+        };
+        const canDepartNow = (t) => {
+            const dt = parseTaskDateTime(t);
+            if (!dt) return true;
+            return Date.now() >= dt.getTime() - 2 * 60 * 60 * 1000;
         };
         const parseMoney = (v) => {
             const n = parseFloat(String(v ?? '').replace(/[^\d.-]/g, ''));
@@ -883,6 +888,13 @@
                     setOrderActionBusy(orderId, false);
                     return false;
                 }
+                if (newStatus === '已出發' && task && !canDepartNow(task)) {
+                    Swal.fire('尚未到出發回報時間', '出發回報需於預約時間前 2 小時內才可操作。', 'info');
+                    statusSubmitting = false;
+                    delete statusSubmittingOrders[orderId];
+                    setOrderActionBusy(orderId, false);
+                    return false;
+                }
                 let coords = { lat: '', lng: '' };
                 
                 // 只有「收單」不需要等待定位，讓操作秒速完成
@@ -900,7 +912,7 @@
                     lineId: driverData.lineId,
                     signatureDataUrl,
                     driverName: driverData.name
-                }, 30000);
+                }, 60000);
                 
                 if (task) task.driverStatus = newStatus;
                 renderTasks();
