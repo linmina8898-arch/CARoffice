@@ -144,7 +144,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.14.19";
+        const APP_VERSION = "v1.14.20";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -240,7 +240,11 @@
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     signal: controller.signal
                 }).then(r=>r.json());
-                if(!res.success) throw new Error(res.error || 'API 錯誤');
+                if(!res.success) {
+                    const errText = res.error || 'API 錯誤';
+                    if (String(errText).includes('Timeout expired')) throw new Error('系統正在處理其他回報，請稍後再按一次。');
+                    throw new Error(errText);
+                }
                 return res;
             } catch (err) {
                 if (err.name === 'AbortError') throw new Error('連線逾時，請重新整理或稍後再試');
@@ -896,7 +900,7 @@
                     lineId: driverData.lineId,
                     signatureDataUrl,
                     driverName: driverData.name
-                });
+                }, 30000);
                 
                 if (task) task.driverStatus = newStatus;
                 renderTasks();
