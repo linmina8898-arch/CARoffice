@@ -144,7 +144,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.14.21";
+        const APP_VERSION = "v1.14.22";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -277,7 +277,7 @@
                 if (!mainHidden || !bindHidden) return;
                 document.getElementById('authSpinner').classList.add('hidden');
                 document.getElementById('authMsg').innerHTML = '登入逾時，請確認網路後重新整理。<br><button onclick="window.location.reload()" class="mt-3 bg-[#553f62] text-white px-4 py-2 rounded-lg text-sm font-bold">重新登入</button>';
-            }, 12000);
+            }, 25000);
 
             try {
                 if(window !== window.parent) { 
@@ -299,7 +299,7 @@
                     return;
                 }
 
-                await withTimeout(liff.init({ liffId: LIFF_ID }), 8000, 'LIFF 初始化逾時');
+                await withTimeout(liff.init({ liffId: LIFF_ID }), 18000, 'LIFF 初始化逾時');
                 if (!liff.isLoggedIn()) { liff.login(); return; }
 
                 // 檢查是否加入好友
@@ -355,7 +355,7 @@
 
                 const proceedLogin = async () => {
                     const profile = await withTimeout(liff.getProfile(), 5000, 'LINE 資料讀取逾時');
-                    const checkRes = await apiCall('driverCheckAuth', { lineId: profile.userId }, 8000);
+                    const checkRes = await apiCall('driverCheckAuth', { lineId: profile.userId }, 15000);
                     if(checkRes.isBound) {
                         driverData = checkRes.driver;
                         loginSuccess();
@@ -455,7 +455,7 @@
                 taskContainer.innerHTML = `<div class="text-center text-gray-400 mt-16 text-sm">任務載入中...</div>`;
             }
             try {
-                const res = await apiCall('driverGetTasks', { lineId: driverData.lineId }, 9000);
+                const res = await apiCall('driverGetTasks', { lineId: driverData.lineId }, 18000);
                 tasks = res.tasks;
                 if(res.monthCount !== undefined) {
                     document.getElementById('profCount').innerText = res.monthCount;
@@ -483,7 +483,7 @@
             }
             Swal.showLoading();
             try {
-                const res = await apiCall('driverGetHistoryBundle', { lineId: driverData.lineId, month }, 10000);
+                const res = await apiCall('driverGetHistoryBundle', { lineId: driverData.lineId, month }, 20000);
                 historyData = res.history || [];
                 reconciliationData = res.reconciliation || { success: true, month, totalPayout: 0, totalCash: 0, netPayable: 0, count: 0, orders: [] };
                 historyLoadedMonth = month;
@@ -611,7 +611,7 @@
                 } else if (cleanVal(t.paymentMethod)) {
                     tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded border border-gray-300 text-gray-600 bg-white">${cleanVal(t.paymentMethod)}</span>`);
                 }
-                if (paymentInfo.hasSeparateCash) tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-500 text-white">已收現 $${paymentInfo.cashCollected.toLocaleString()}</span>`);
+                if (paymentInfo.hasSeparateCash) tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-500 text-white">需收現 $${paymentInfo.cashCollected.toLocaleString()}</span>`);
                 if (hasSign) tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded border border-[#f07cad] text-[#f07cad]">舉牌</span>`);
                 if (cleanVal(t.remarks) || cleanVal(t.driverNote)) tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-500 text-white">有備註</span>`);
                 const payoutAmount = parseMoney(t.driverPayout);
@@ -708,7 +708,7 @@
             let cashHtml = '';
             if (paymentInfo.cashCollected > 0) {
                 let amtToCollect = paymentInfo.cashCollected;
-                cashHtml = `<div class="flex justify-between items-center py-3 border-t-2 border-red-100 mt-2"><span class="text-gray-500 mr-2">現場收現金額</span><div class="text-right"><div class="text-red-600 font-bold text-xl">$${amtToCollect.toLocaleString()}</div>${cleanVal(t.cashCollectionNote) ? `<div class="text-xs text-gray-500">${cleanVal(t.cashCollectionNote)}</div>` : ''}</div></div>`;
+                cashHtml = `<div class="flex justify-between items-center py-3 border-t-2 border-red-100 mt-2"><span class="text-gray-500 mr-2">請向客人收現</span><div class="text-right"><div class="text-red-600 font-bold text-xl">$${amtToCollect.toLocaleString()}</div>${cleanVal(t.cashCollectionNote) ? `<div class="text-xs text-gray-500">${cleanVal(t.cashCollectionNote)}</div>` : ''}</div></div>`;
             }
 
             let cNote = cleanVal(t.remarks) ? cleanVal(t.remarks).replace(/\n/g, '<br>') : '';
