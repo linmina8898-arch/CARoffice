@@ -77,6 +77,12 @@
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 12px;
     }
+    .mini-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .mini-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .full { grid-column: 1 / -1; }
     .hint {
       font-size: 12px;
@@ -171,6 +177,9 @@
           <div>
             <label for="source">來源</label>
             <select id="source" name="source">
+              <option value="AS">AS</option>
+              <option value="AZ">AZ</option>
+              <option value="123">123</option>
               <option value="ANNA">ANNA</option>
               <option value="遠貿">遠貿</option>
               <option value="大台灣">大台灣</option>
@@ -197,8 +206,8 @@
           <div>
             <label for="serviceType">行程</label>
             <select id="serviceType" name="serviceType" required>
+              <option value="接機">接機</option>
               <option value="送機">送機</option>
-              <option value="接機">接機 / 回來</option>
             </select>
           </div>
           <div>
@@ -219,7 +228,7 @@
           </div>
           <div>
             <label for="flightNumber">航班編號</label>
-            <input id="flightNumber" name="flightNumber" placeholder="例如 BR7、CI11">
+            <input id="flightNumber" name="flightNumber" placeholder="例如 BR7、CI11" style="text-transform: uppercase;">
           </div>
           <div>
             <label for="fare">車資金額</label>
@@ -236,7 +245,7 @@
           <div class="full">
             <label class="pill">
               <input id="hasReturn" type="checkbox">
-              同時建立回程
+              同時預約回程
             </label>
           </div>
         </div>
@@ -247,7 +256,7 @@
             <div>
               <label for="returnServiceType">回程行程</label>
               <select id="returnServiceType" name="returnServiceType">
-                <option value="接機">接機 / 回來</option>
+                <option value="接機">接機</option>
                 <option value="送機">送機</option>
               </select>
             </div>
@@ -265,7 +274,7 @@
             </div>
             <div class="full">
               <label for="returnFlightNumber">回程航班</label>
-              <input id="returnFlightNumber" name="returnFlightNumber" placeholder="例如 BR7、CI11">
+              <input id="returnFlightNumber" name="returnFlightNumber" placeholder="例如 BR7、CI11" style="text-transform: uppercase;">
             </div>
           </div>
         </div>
@@ -300,13 +309,30 @@
               <option value="轉帳+收現">轉帳+收現</option>
             </select>
           </div>
-          <div>
-            <label for="paxCount">人數</label>
-            <input id="paxCount" name="paxCount" required value="1大 0中 0小">
+          <div class="full">
+            <label>人數</label>
+            <div class="mini-grid">
+              <select id="adultCount" aria-label="成人">
+                <option value="1">1大</option><option value="2">2大</option><option value="3">3大</option><option value="4">4大</option><option value="5">5大</option><option value="6">6大</option><option value="7">7大</option><option value="8">8大</option>
+              </select>
+              <select id="childCount" aria-label="兒童">
+                <option value="0">0中</option><option value="1">1中</option><option value="2">2中</option><option value="3">3中</option><option value="4">4中</option><option value="5">5中</option><option value="6">6中</option><option value="7">7中</option><option value="8">8中</option>
+              </select>
+              <select id="infantCount" aria-label="幼兒">
+                <option value="0">0小</option><option value="1">1小</option><option value="2">2小</option><option value="3">3小</option><option value="4">4小</option><option value="5">5小</option><option value="6">6小</option><option value="7">7小</option><option value="8">8小</option>
+              </select>
+            </div>
           </div>
-          <div>
-            <label for="luggageCount">行李</label>
-            <input id="luggageCount" name="luggageCount" required value="0大 0登機">
+          <div class="full">
+            <label>行李</label>
+            <div class="mini-grid two">
+              <select id="checkedLuggageCount" aria-label="大型行李">
+                <option value="0">0大</option><option value="1">1大</option><option value="2">2大</option><option value="3">3大</option><option value="4">4大</option><option value="5">5大</option><option value="6">6大</option><option value="7">7大</option><option value="8">8大</option>
+              </select>
+              <select id="carryLuggageCount" aria-label="登機箱">
+                <option value="0">0登機</option><option value="1">1登機</option><option value="2">2登機</option><option value="3">3登機</option><option value="4">4登機</option><option value="5">5登機</option><option value="6">6登機</option><option value="7">7登機</option><option value="8">8登機</option>
+              </select>
+            </div>
           </div>
           <div>
             <label for="seatDetails">座椅</label>
@@ -336,7 +362,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.0";
+    const APP_VERSION = "manual-booking-v1.0.2";
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzMLYBvdbo4mkkEUVFcjST44oh7VUXhx7gZjWejm2R8XX549ITaReot0pRAN3mbwA8n/exec";
     let templates = [];
 
@@ -348,6 +374,7 @@
       $("hasReturn").addEventListener("change", handleReturnToggle);
       $("serviceType").addEventListener("change", syncReturnType);
       $("templateSelect").addEventListener("change", applyTemplate);
+      ["flightNumber", "returnFlightNumber"].forEach(id => $(id).addEventListener("input", forceUppercase));
       ["source", "customSource", "serviceType", "rideDate", "rideTime", "fare", "hasReturn", "returnFare"].forEach(id => {
         const el = $(id);
         if (el) el.addEventListener("input", updateSummary);
@@ -387,8 +414,9 @@
       const idx = $("templateSelect").value;
       if (idx === "") return;
       const t = templates[Number(idx)] || {};
-      setValue("source", ["ANNA", "遠貿", "大台灣"].includes(t.source) ? t.source : (t.source ? "其他" : $("source").value));
-      setValue("customSource", ["ANNA", "遠貿", "大台灣"].includes(t.source) ? "" : t.source);
+      const known = knownSources();
+      setValue("source", known.includes(t.source) ? t.source : (t.source ? "其他" : $("source").value));
+      setValue("customSource", known.includes(t.source) ? "" : t.source);
       handleSourceChange();
       setValue("serviceType", normalizeServiceType(t.serviceType) || "送機");
       setValue("airport", t.airport || "桃園機場");
@@ -397,8 +425,8 @@
       setValue("customerName", t.name);
       setValue("phone", t.phone);
       setValue("carType", t.carType || "小車");
-      setValue("paxCount", t.paxCount || "1大 0中 0小");
-      setValue("luggageCount", t.luggageCount || "0大 0登機");
+      setPaxFieldsFromText(t.paxCount || "1大 0中 0小");
+      setLuggageFieldsFromText(t.luggageCount || "0大 0登機");
       setValue("seatDetails", t.seatDetails || "無");
       setValue("signboard", t.signboard === "需要" ? "需要" : "無");
       setValue("paymentMethod", t.paymentMethod || "現金");
@@ -411,6 +439,13 @@
     function handleSourceChange() {
       $("customSourceWrap").classList.toggle("hidden", $("source").value !== "其他");
       updateSummary();
+    }
+
+    function forceUppercase(event) {
+      const input = event.target;
+      const pos = input.selectionStart;
+      input.value = input.value.toUpperCase();
+      try { input.setSelectionRange(pos, pos); } catch (e) {}
     }
 
     function handleReturnToggle() {
@@ -440,7 +475,7 @@
         airport: $("airport").value,
         rideDate: $("rideDate").value,
         rideTime: $("rideTime").value,
-        flightNumber: $("flightNumber").value.trim(),
+        flightNumber: $("flightNumber").value.trim().toUpperCase(),
         address: $("address").value.trim(),
         extraLocation: $("extraLocation").value.trim(),
         fare: $("fare").value,
@@ -448,14 +483,14 @@
         returnServiceType: $("returnServiceType").value,
         returnDate: $("returnDate").value,
         returnTime: $("returnTime").value,
-        returnFlightNumber: $("returnFlightNumber").value.trim(),
+        returnFlightNumber: $("returnFlightNumber").value.trim().toUpperCase(),
         returnFare: $("returnFare").value,
         customerName: $("customerName").value.trim(),
         phone: $("phone").value.trim(),
         carType: $("carType").value,
         paymentMethod: $("paymentMethod").value,
-        paxCount: $("paxCount").value.trim(),
-        luggageCount: $("luggageCount").value.trim(),
+        paxCount: buildPaxCount(),
+        luggageCount: buildLuggageCount(),
         sportLuggage: "無",
         seatDetails: $("seatDetails").value.trim() || "無",
         signboard: $("signboard").value,
@@ -469,6 +504,38 @@
       if (idx === "") return "";
       const t = templates[Number(idx)] || {};
       return t.code || t.name || "";
+    }
+
+    function knownSources() {
+      return ["AS", "AZ", "123", "ANNA", "遠貿", "大台灣"];
+    }
+
+    function buildPaxCount() {
+      return `${$("adultCount").value}大 ${$("childCount").value}中 ${$("infantCount").value}小`;
+    }
+
+    function buildLuggageCount() {
+      return `${$("checkedLuggageCount").value}大 ${$("carryLuggageCount").value}登機`;
+    }
+
+    function setPaxFieldsFromText(value) {
+      const text = String(value || "");
+      const match = text.match(/(\d+)\s*大(?:\s*(\d+)\s*中)?(?:\s*(\d+)\s*小)?/);
+      setValue("adultCount", clampSelectValue(match ? match[1] : "1", 1, 8));
+      setValue("childCount", clampSelectValue(match ? (match[2] || "0") : "0", 0, 8));
+      setValue("infantCount", clampSelectValue(match ? (match[3] || "0") : "0", 0, 8));
+    }
+
+    function setLuggageFieldsFromText(value) {
+      const text = String(value || "");
+      const match = text.match(/(\d+)\s*大(?:\s*(\d+)\s*登機)?/);
+      setValue("checkedLuggageCount", clampSelectValue(match ? match[1] : "0", 0, 8));
+      setValue("carryLuggageCount", clampSelectValue(match ? (match[2] || "0") : "0", 0, 8));
+    }
+
+    function clampSelectValue(value, min, max) {
+      const n = Math.max(min, Math.min(max, Number(value || 0)));
+      return String(n);
     }
 
     function validatePayload(p) {
@@ -635,8 +702,8 @@
     function resetForm() {
       $("manualForm").reset();
       $("templateSelect").value = "";
-      setValue("paxCount", "1大 0中 0小");
-      setValue("luggageCount", "0大 0登機");
+      setPaxFieldsFromText("1大 0中 0小");
+      setLuggageFieldsFromText("0大 0登機");
       setValue("seatDetails", "無");
       handleSourceChange();
       handleReturnToggle();
