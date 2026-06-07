@@ -353,10 +353,11 @@
           </div>
           <div>
             <label for="signboard">舉牌</label>
-            <select id="signboard" name="signboard">
-              <option value="無">無</option>
-              <option value="需要">需要</option>
-            </select>
+            <input id="signboard" name="signboard" list="signboardOptions" value="無" placeholder="無 / 需要 / 舉牌內容">
+            <datalist id="signboardOptions">
+              <option value="無"></option>
+              <option value="需要"></option>
+            </datalist>
           </div>
           <div class="full">
             <label for="remarks">備註需求</label>
@@ -375,7 +376,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.8";
+    const APP_VERSION = "manual-booking-v1.0.9";
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzMLYBvdbo4mkkEUVFcjST44oh7VUXhx7gZjWejm2R8XX549ITaReot0pRAN3mbwA8n/exec";
     let templates = [];
 
@@ -441,7 +442,7 @@
       setPaxFieldsFromText(t.paxCount || "1大 0中 0小");
       setLuggageFieldsFromText(t.luggageCount || "0大 0登機");
       setValue("seatDetails", t.seatDetails || "無");
-      setValue("signboard", t.signboard === "需要" ? "需要" : "無");
+      setValue("signboard", t.signboard || "無");
       setValue("paymentMethod", t.paymentMethod || "現金");
       setValue("fare", money(t.fare) || "");
       setValue("remarks", t.remarks);
@@ -730,6 +731,7 @@
       const luggage = formatCustomerLuggage(p.luggageCount);
       const fareLine = formatCustomerFare(p.paymentMethod, trip.fare);
       const fareNote = fareLine.includes("收現") ? "\n            >請直接付給司機，謝謝" : "";
+      const signboard = formatCustomerSignboard(p.signboard);
       return [
         `預約項目：${service}`,
         `預約日期：${dateText}`,
@@ -741,8 +743,15 @@
         `接送地址：${p.address || ""}`,
         `搭車人數：${pax}`,
         `行李件數：${luggage}`,
+        signboard ? `舉牌服務：${signboard}` : "",
         `車資：${fareLine}${fareNote}`
-      ].join("\n");
+      ].filter(Boolean).join("\n");
+    }
+
+    function formatCustomerSignboard(value) {
+      const text = String(value || "").trim();
+      if (!text || text === "無" || text === "不需要") return "";
+      return text;
     }
 
     function formatCustomerDate(value) {
