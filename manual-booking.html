@@ -198,6 +198,7 @@
           </div>
           <div class="full">
             <label for="templateSelect">固定客戶範本</label>
+            <input id="templateSearch" type="search" placeholder="搜尋姓名、電話、來源或客戶代碼，例如：陳" class="mb-2">
             <select id="templateSelect">
               <option value="">手動填寫，或選擇固定客戶</option>
             </select>
@@ -374,7 +375,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.6";
+    const APP_VERSION = "manual-booking-v1.0.8";
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzMLYBvdbo4mkkEUVFcjST44oh7VUXhx7gZjWejm2R8XX549ITaReot0pRAN3mbwA8n/exec";
     let templates = [];
 
@@ -387,6 +388,7 @@
       $("hasReturn").addEventListener("change", handleReturnToggle);
       $("serviceType").addEventListener("change", syncReturnType);
       $("templateSelect").addEventListener("change", applyTemplate);
+      $("templateSearch").addEventListener("input", renderTemplateOptions);
       ["flightNumber", "returnFlightNumber"].forEach(id => $(id).addEventListener("input", forceUppercase));
       ["source", "customSource", "serviceType", "rideDate", "rideHour", "rideMinute", "fare", "hasReturn", "returnHour", "returnMinute", "returnFare"].forEach(id => {
         const el = $(id);
@@ -410,10 +412,7 @@
         }
         templates = data.templates || [];
         renderSourceOptions(templates);
-        $("templateSelect").innerHTML = '<option value="">手動填寫，或選擇固定客戶</option>' + templates.map((tpl, idx) => {
-          const label = [tpl.source, tpl.code, tpl.name, tpl.phone].filter(Boolean).join(" / ");
-          return `<option value="${idx}">${escapeHtml(label)}</option>`;
-        }).join("");
+        renderTemplateOptions();
         $("templateHint").textContent = setupCreated
           ? `已建立「固定客戶」工作表與表頭，可先手動填寫或到 Google Sheet 新增範本。`
           : templates.length
@@ -448,6 +447,29 @@
       setValue("remarks", t.remarks);
       syncReturnType();
       updateSummary();
+    }
+
+    function renderTemplateOptions() {
+      const keyword = ($("templateSearch")?.value || "").trim().toLowerCase();
+      const matched = templates
+        .map((tpl, idx) => ({ tpl, idx }))
+        .filter(item => {
+          if (!keyword) return true;
+          const haystack = [item.tpl.source, item.tpl.code, item.tpl.name, item.tpl.phone, item.tpl.address, item.tpl.remarks]
+            .filter(Boolean)
+            .join(" ")
+            .toLowerCase();
+          return haystack.includes(keyword);
+        });
+      $("templateSelect").innerHTML = '<option value="">手動填寫，或選擇固定客戶</option>' + matched.map(({ tpl, idx }) => {
+        const label = [tpl.source, tpl.code, tpl.name, tpl.phone].filter(Boolean).join(" / ");
+        return `<option value="${idx}">${escapeHtml(label)}</option>`;
+      }).join("");
+      $("templateHint").textContent = keyword
+        ? `符合「${$("templateSearch").value}」的固定客戶：${matched.length} 筆`
+        : templates.length
+        ? `已載入 ${templates.length} 筆固定客戶範本。`
+        : $("templateHint").textContent;
     }
 
     function initTimeSelects() {
@@ -656,7 +678,7 @@
     }
 
     function updateSummary(doneText) {
-      if (doneText) {
+      if (typeof doneText === "string" && doneText) {
         $("summaryText").textContent = doneText;
         return;
       }
@@ -689,7 +711,7 @@
         "如資料有誤或需變更",
         "請與我們聯絡，謝謝",
         "",
-        "📌 如行程有異動請至少提早2小時前告知",
+        "📌 如行程有異動請至少提早5小時前告知",
         "📌 司機資料出發前一天18:00左右提供",
         "─────────",
         trips.join("\n─────────\n"),
