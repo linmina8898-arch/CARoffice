@@ -83,6 +83,11 @@
       gap: 8px;
     }
     .mini-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .time-pair {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
     .full { grid-column: 1 / -1; }
     .hint {
       font-size: 12px;
@@ -223,8 +228,11 @@
             <input id="rideDate" name="rideDate" type="date" required>
           </div>
           <div>
-            <label for="rideTime">時間</label>
-            <input id="rideTime" name="rideTime" type="time" required>
+            <label>時間</label>
+            <div class="time-pair">
+              <select id="rideHour" aria-label="去程小時"></select>
+              <select id="rideMinute" aria-label="去程分鐘"></select>
+            </div>
           </div>
           <div>
             <label for="flightNumber">航班編號</label>
@@ -269,8 +277,11 @@
               <input id="returnDate" name="returnDate" type="date">
             </div>
             <div>
-              <label for="returnTime">回程時間</label>
-              <input id="returnTime" name="returnTime" type="time">
+              <label>回程時間</label>
+              <div class="time-pair">
+                <select id="returnHour" aria-label="回程小時"></select>
+                <select id="returnMinute" aria-label="回程分鐘"></select>
+              </div>
             </div>
             <div class="full">
               <label for="returnFlightNumber">回程航班</label>
@@ -362,7 +373,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.2";
+    const APP_VERSION = "manual-booking-v1.0.3";
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzMLYBvdbo4mkkEUVFcjST44oh7VUXhx7gZjWejm2R8XX549ITaReot0pRAN3mbwA8n/exec";
     let templates = [];
 
@@ -370,12 +381,13 @@
     const money = v => Number(String(v || "").replace(/[^\d.-]/g, "")) || 0;
 
     document.addEventListener("DOMContentLoaded", () => {
+      initTimeSelects();
       $("source").addEventListener("change", handleSourceChange);
       $("hasReturn").addEventListener("change", handleReturnToggle);
       $("serviceType").addEventListener("change", syncReturnType);
       $("templateSelect").addEventListener("change", applyTemplate);
       ["flightNumber", "returnFlightNumber"].forEach(id => $(id).addEventListener("input", forceUppercase));
-      ["source", "customSource", "serviceType", "rideDate", "rideTime", "fare", "hasReturn", "returnFare"].forEach(id => {
+      ["source", "customSource", "serviceType", "rideDate", "rideHour", "rideMinute", "fare", "hasReturn", "returnHour", "returnMinute", "returnFare"].forEach(id => {
         const el = $(id);
         if (el) el.addEventListener("input", updateSummary);
         if (el) el.addEventListener("change", updateSummary);
@@ -436,6 +448,17 @@
       updateSummary();
     }
 
+    function initTimeSelects() {
+      const hourOptions = Array.from({ length: 24 }, (_, i) => `<option value="${pad2(i)}">${pad2(i)}</option>`).join("");
+      const minuteOptions = Array.from({ length: 60 }, (_, i) => `<option value="${pad2(i)}">${pad2(i)}</option>`).join("");
+      ["rideHour", "returnHour"].forEach(id => $(id).innerHTML = hourOptions);
+      ["rideMinute", "returnMinute"].forEach(id => $(id).innerHTML = minuteOptions);
+      $("rideHour").value = "08";
+      $("rideMinute").value = "00";
+      $("returnHour").value = "08";
+      $("returnMinute").value = "00";
+    }
+
     function handleSourceChange() {
       $("customSourceWrap").classList.toggle("hidden", $("source").value !== "其他");
       updateSummary();
@@ -474,7 +497,7 @@
         serviceType: $("serviceType").value,
         airport: $("airport").value,
         rideDate: $("rideDate").value,
-        rideTime: $("rideTime").value,
+        rideTime: buildTime("ride"),
         flightNumber: $("flightNumber").value.trim().toUpperCase(),
         address: $("address").value.trim(),
         extraLocation: $("extraLocation").value.trim(),
@@ -482,7 +505,7 @@
         hasReturn: $("hasReturn").checked,
         returnServiceType: $("returnServiceType").value,
         returnDate: $("returnDate").value,
-        returnTime: $("returnTime").value,
+        returnTime: buildTime("return"),
         returnFlightNumber: $("returnFlightNumber").value.trim().toUpperCase(),
         returnFare: $("returnFare").value,
         customerName: $("customerName").value.trim(),
@@ -516,6 +539,14 @@
 
     function buildLuggageCount() {
       return `${$("checkedLuggageCount").value}大 ${$("carryLuggageCount").value}登機`;
+    }
+
+    function buildTime(prefix) {
+      return `${$(prefix + "Hour").value}:${$(prefix + "Minute").value}`;
+    }
+
+    function pad2(value) {
+      return String(value).padStart(2, "0");
     }
 
     function setPaxFieldsFromText(value) {
@@ -702,6 +733,10 @@
     function resetForm() {
       $("manualForm").reset();
       $("templateSelect").value = "";
+      $("rideHour").value = "08";
+      $("rideMinute").value = "00";
+      $("returnHour").value = "08";
+      $("returnMinute").value = "00";
       setPaxFieldsFromText("1大 0中 0小");
       setLuggageFieldsFromText("0大 0登機");
       setValue("seatDetails", "無");
