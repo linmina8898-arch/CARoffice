@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>客服快速代填預約</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    :root {
+      --primary: #553f62;
+      --accent: #f07cad;
+      --soft: #f8f3f7;
+      --line: #e7dde8;
+      --text: #1f2937;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #f6f4f7;
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+      letter-spacing: 0;
+    }
+    .shell {
+      width: min(100%, 920px);
+      margin: 0 auto;
+      padding: 18px 14px 96px;
+    }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: rgba(246, 244, 247, .94);
+      backdrop-filter: blur(10px);
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(231, 221, 232, .8);
+    }
+    .panel {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 8px 22px rgba(31, 41, 55, .06);
+      padding: 16px;
+      margin-top: 14px;
+    }
+    .section-title {
+      color: var(--primary);
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      color: #6b7280;
+      margin-bottom: 6px;
+    }
+    input, select, textarea {
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid #d8cddd;
+      border-radius: 12px;
+      background: #fff;
+      color: var(--text);
+      font-size: 15px;
+      padding: 10px 12px;
+      outline: none;
+    }
+    textarea { min-height: 82px; resize: vertical; }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(85, 63, 98, .12);
+    }
+    .grid-form {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .full { grid-column: 1 / -1; }
+    .hint {
+      font-size: 12px;
+      color: #8a7b92;
+      line-height: 1.6;
+      margin-top: 6px;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      padding: 5px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--primary);
+      background: var(--soft);
+      font-size: 13px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .pill input { width: auto; min-height: auto; margin-right: 6px; accent-color: var(--primary); }
+    .submitbar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 30;
+      background: rgba(255, 255, 255, .96);
+      border-top: 1px solid var(--line);
+      padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+      box-shadow: 0 -8px 24px rgba(31, 41, 55, .08);
+    }
+    .submit-inner {
+      width: min(100%, 920px);
+      margin: 0 auto;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .primary-btn {
+      border: 0;
+      border-radius: 12px;
+      background: var(--primary);
+      color: white;
+      min-height: 46px;
+      padding: 0 18px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .secondary-btn {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      color: var(--primary);
+      min-height: 44px;
+      padding: 0 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .summary {
+      color: var(--primary);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .hidden { display: none !important; }
+    @media (max-width: 640px) {
+      .shell { padding-left: 10px; padding-right: 10px; }
+      .grid-form { grid-template-columns: 1fr; gap: 10px; }
+      .panel { border-radius: 14px; padding: 14px; }
+      .submit-inner { align-items: stretch; flex-direction: column; }
+      .primary-btn, .secondary-btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="topbar">
+      <div class="flex items-center justify-between gap-3">
+        <div>
+          <h1 class="text-[22px] font-bold text-[#553f62] m-0">客服快速代填預約</h1>
+          <p class="text-sm text-gray-500 mt-1">固定客、客服代填、手動車資，不套折扣。</p>
+        </div>
+        <button class="secondary-btn !min-h-[38px]" type="button" onclick="resetForm()">清空</button>
+      </div>
+    </div>
+
+    <form id="manualForm">
+      <section class="panel">
+        <div class="section-title">來源與固定客戶</div>
+        <div class="grid-form">
+          <div>
+            <label for="source">來源</label>
+            <select id="source" name="source">
+              <option value="ANNA">ANNA</option>
+              <option value="遠貿">遠貿</option>
+              <option value="大台灣">大台灣</option>
+              <option value="其他">其他</option>
+            </select>
+          </div>
+          <div id="customSourceWrap" class="hidden">
+            <label for="customSource">自訂來源</label>
+            <input id="customSource" name="customSource" placeholder="例如：某公司、某店家">
+          </div>
+          <div class="full">
+            <label for="templateSelect">固定客戶範本</label>
+            <select id="templateSelect">
+              <option value="">手動填寫，或選擇固定客戶</option>
+            </select>
+            <div id="templateHint" class="hint">讀取固定客戶中...</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="section-title">本次行程</div>
+        <div class="grid-form">
+          <div>
+            <label for="serviceType">行程</label>
+            <select id="serviceType" name="serviceType" required>
+              <option value="送機">送機</option>
+              <option value="接機">接機 / 回來</option>
+            </select>
+          </div>
+          <div>
+            <label for="airport">機場</label>
+            <select id="airport" name="airport" required>
+              <option value="桃園機場">桃園機場</option>
+              <option value="松山機場">松山機場</option>
+              <option value="台中機場">台中機場</option>
+            </select>
+          </div>
+          <div>
+            <label for="rideDate">日期</label>
+            <input id="rideDate" name="rideDate" type="date" required>
+          </div>
+          <div>
+            <label for="rideTime">時間</label>
+            <input id="rideTime" name="rideTime" type="time" required>
+          </div>
+          <div>
+            <label for="flightNumber">航班編號</label>
+            <input id="flightNumber" name="flightNumber" placeholder="例如 BR7、CI11">
+          </div>
+          <div>
+            <label for="fare">車資金額</label>
+            <input id="fare" name="fare" type="number" inputmode="numeric" min="0" required placeholder="由客服手動輸入">
+          </div>
+          <div class="full">
+            <label for="address">接送地址</label>
+            <input id="address" name="address" required placeholder="完整地址">
+          </div>
+          <div class="full">
+            <label for="extraLocation">加點</label>
+            <input id="extraLocation" name="extraLocation" placeholder="沒有請留空">
+          </div>
+          <div class="full">
+            <label class="pill">
+              <input id="hasReturn" type="checkbox">
+              同時建立回程
+            </label>
+          </div>
+        </div>
+
+        <div id="returnPanel" class="mt-4 pt-4 border-t border-[#e7dde8] hidden">
+          <div class="section-title !text-[15px]">回程資料</div>
+          <div class="grid-form">
+            <div>
+              <label for="returnServiceType">回程行程</label>
+              <select id="returnServiceType" name="returnServiceType">
+                <option value="接機">接機 / 回來</option>
+                <option value="送機">送機</option>
+              </select>
+            </div>
+            <div>
+              <label for="returnFare">回程車資</label>
+              <input id="returnFare" name="returnFare" type="number" inputmode="numeric" min="0" placeholder="不填則同去程金額">
+            </div>
+            <div>
+              <label for="returnDate">回程日期</label>
+              <input id="returnDate" name="returnDate" type="date">
+            </div>
+            <div>
+              <label for="returnTime">回程時間</label>
+              <input id="returnTime" name="returnTime" type="time">
+            </div>
+            <div class="full">
+              <label for="returnFlightNumber">回程航班</label>
+              <input id="returnFlightNumber" name="returnFlightNumber" placeholder="例如 BR7、CI11">
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="section-title">乘客與服務內容</div>
+        <div class="grid-form">
+          <div>
+            <label for="customerName">乘客姓名</label>
+            <input id="customerName" name="customerName" required placeholder="例如 陳小姐">
+          </div>
+          <div>
+            <label for="phone">電話</label>
+            <input id="phone" name="phone" type="tel" inputmode="tel" required placeholder="09xx-xxx-xxx">
+          </div>
+          <div>
+            <label for="carType">車型</label>
+            <select id="carType" name="carType" required>
+              <option value="小車">小車</option>
+              <option value="大車">大車</option>
+              <option value="進口商務車">進口商務車</option>
+            </select>
+          </div>
+          <div>
+            <label for="paymentMethod">付款方式</label>
+            <select id="paymentMethod" name="paymentMethod" required>
+              <option value="現金">現金</option>
+              <option value="轉帳">轉帳</option>
+              <option value="月結簽單">月結簽單</option>
+              <option value="簽單+收現">簽單+收現</option>
+              <option value="轉帳+收現">轉帳+收現</option>
+            </select>
+          </div>
+          <div>
+            <label for="paxCount">人數</label>
+            <input id="paxCount" name="paxCount" required value="1大 0中 0小">
+          </div>
+          <div>
+            <label for="luggageCount">行李</label>
+            <input id="luggageCount" name="luggageCount" required value="0大 0登機">
+          </div>
+          <div>
+            <label for="seatDetails">座椅</label>
+            <input id="seatDetails" name="seatDetails" value="無">
+          </div>
+          <div>
+            <label for="signboard">舉牌</label>
+            <select id="signboard" name="signboard">
+              <option value="無">無</option>
+              <option value="需要">需要</option>
+            </select>
+          </div>
+          <div class="full">
+            <label for="remarks">備註需求</label>
+            <textarea id="remarks" name="remarks" placeholder="例如 無煙車、需收據、客人特殊需求"></textarea>
+          </div>
+        </div>
+      </section>
+    </form>
+  </div>
+
+  <div class="submitbar">
+    <div class="submit-inner">
+      <div class="summary" id="summaryText">未建立預約</div>
+      <button id="submitBtn" class="primary-btn" type="button" onclick="submitManualBooking()">送出建立預約</button>
+    </div>
+  </div>
+
+  <script>
+    const APP_VERSION = "manual-booking-v1.0.0";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzMLYBvdbo4mkkEUVFcjST44oh7VUXhx7gZjWejm2R8XX549ITaReot0pRAN3mbwA8n/exec";
+    let templates = [];
+
+    const $ = id => document.getElementById(id);
+    const money = v => Number(String(v || "").replace(/[^\d.-]/g, "")) || 0;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      $("source").addEventListener("change", handleSourceChange);
+      $("hasReturn").addEventListener("change", handleReturnToggle);
+      $("serviceType").addEventListener("change", syncReturnType);
+      $("templateSelect").addEventListener("change", applyTemplate);
+      ["source", "customSource", "serviceType", "rideDate", "rideTime", "fare", "hasReturn", "returnFare"].forEach(id => {
+        const el = $(id);
+        if (el) el.addEventListener("input", updateSummary);
+        if (el) el.addEventListener("change", updateSummary);
+      });
+      loadTemplates();
+      updateSummary();
+    });
+
+    async function loadTemplates() {
+      try {
+        const data = await fetch(`${GAS_URL}?action=getManualBookingTemplates&t=${Date.now()}`).then(r => r.json());
+        let setupCreated = false;
+        if (data && data.success && data.sheetExists === false) {
+          const setup = await fetch(`${GAS_URL}?action=setupManualCustomerSheet&t=${Date.now()}`).then(r => r.json());
+          if (setup.success) {
+            setupCreated = true;
+            data.suggestedHeaders = setup.headers || data.suggestedHeaders;
+          }
+        }
+        templates = data.templates || [];
+        $("templateSelect").innerHTML = '<option value="">手動填寫，或選擇固定客戶</option>' + templates.map((tpl, idx) => {
+          const label = [tpl.source, tpl.code, tpl.name, tpl.phone].filter(Boolean).join(" / ");
+          return `<option value="${idx}">${escapeHtml(label)}</option>`;
+        }).join("");
+        $("templateHint").textContent = setupCreated
+          ? `已建立「固定客戶」工作表與表頭，可先手動填寫或到 Google Sheet 新增範本。`
+          : templates.length
+          ? `已載入 ${templates.length} 筆固定客戶範本。`
+          : `尚未建立固定客戶範本，可先手動填寫。建議欄位：${(data.suggestedHeaders || []).join("、")}`;
+      } catch (err) {
+        $("templateHint").textContent = "固定客戶範本讀取失敗，可先手動填寫。";
+      }
+    }
+
+    function applyTemplate() {
+      const idx = $("templateSelect").value;
+      if (idx === "") return;
+      const t = templates[Number(idx)] || {};
+      setValue("source", ["ANNA", "遠貿", "大台灣"].includes(t.source) ? t.source : (t.source ? "其他" : $("source").value));
+      setValue("customSource", ["ANNA", "遠貿", "大台灣"].includes(t.source) ? "" : t.source);
+      handleSourceChange();
+      setValue("serviceType", normalizeServiceType(t.serviceType) || "送機");
+      setValue("airport", t.airport || "桃園機場");
+      setValue("address", t.address);
+      setValue("extraLocation", t.extraLocation);
+      setValue("customerName", t.name);
+      setValue("phone", t.phone);
+      setValue("carType", t.carType || "小車");
+      setValue("paxCount", t.paxCount || "1大 0中 0小");
+      setValue("luggageCount", t.luggageCount || "0大 0登機");
+      setValue("seatDetails", t.seatDetails || "無");
+      setValue("signboard", t.signboard === "需要" ? "需要" : "無");
+      setValue("paymentMethod", t.paymentMethod || "現金");
+      setValue("fare", money(t.fare) || "");
+      setValue("remarks", t.remarks);
+      syncReturnType();
+      updateSummary();
+    }
+
+    function handleSourceChange() {
+      $("customSourceWrap").classList.toggle("hidden", $("source").value !== "其他");
+      updateSummary();
+    }
+
+    function handleReturnToggle() {
+      const enabled = $("hasReturn").checked;
+      $("returnPanel").classList.toggle("hidden", !enabled);
+      $("returnDate").required = enabled;
+      $("returnTime").required = enabled;
+      syncReturnType();
+      updateSummary();
+    }
+
+    function syncReturnType() {
+      if ($("serviceType").value === "送機") $("returnServiceType").value = "接機";
+      else $("returnServiceType").value = "送機";
+      updateSummary();
+    }
+
+    function currentSource() {
+      return $("source").value === "其他" ? $("customSource").value.trim() : $("source").value;
+    }
+
+    function collectPayload() {
+      return {
+        source: currentSource(),
+        templateCode: selectedTemplateCode(),
+        serviceType: $("serviceType").value,
+        airport: $("airport").value,
+        rideDate: $("rideDate").value,
+        rideTime: $("rideTime").value,
+        flightNumber: $("flightNumber").value.trim(),
+        address: $("address").value.trim(),
+        extraLocation: $("extraLocation").value.trim(),
+        fare: $("fare").value,
+        hasReturn: $("hasReturn").checked,
+        returnServiceType: $("returnServiceType").value,
+        returnDate: $("returnDate").value,
+        returnTime: $("returnTime").value,
+        returnFlightNumber: $("returnFlightNumber").value.trim(),
+        returnFare: $("returnFare").value,
+        customerName: $("customerName").value.trim(),
+        phone: $("phone").value.trim(),
+        carType: $("carType").value,
+        paymentMethod: $("paymentMethod").value,
+        paxCount: $("paxCount").value.trim(),
+        luggageCount: $("luggageCount").value.trim(),
+        sportLuggage: "無",
+        seatDetails: $("seatDetails").value.trim() || "無",
+        signboard: $("signboard").value,
+        remarks: $("remarks").value.trim(),
+        appVersion: APP_VERSION
+      };
+    }
+
+    function selectedTemplateCode() {
+      const idx = $("templateSelect").value;
+      if (idx === "") return "";
+      const t = templates[Number(idx)] || {};
+      return t.code || t.name || "";
+    }
+
+    function validatePayload(p) {
+      const errors = [];
+      if (!p.source) errors.push("來源");
+      if (!p.customerName) errors.push("乘客姓名");
+      if (!p.phone.replace(/\D/g, "")) errors.push("電話");
+      if (!p.rideDate) errors.push("日期");
+      if (!p.rideTime) errors.push("時間");
+      if (!p.address) errors.push("接送地址");
+      if (!money(p.fare)) errors.push("車資金額");
+      if (!p.paxCount) errors.push("人數");
+      if (!p.luggageCount) errors.push("行李");
+      if (p.hasReturn) {
+        if (!p.returnDate) errors.push("回程日期");
+        if (!p.returnTime) errors.push("回程時間");
+      }
+      return errors;
+    }
+
+    async function submitManualBooking() {
+      const payload = collectPayload();
+      const errors = validatePayload(payload);
+      if (errors.length) {
+        Swal.fire("資料未填完整", errors.join("、"), "warning");
+        return;
+      }
+      const confirmText = `${payload.source}｜${payload.rideDate} ${payload.rideTime} ${payload.serviceType}\n${payload.customerName} / ${payload.phone}\n車資 $${money(payload.fare).toLocaleString()}${payload.hasReturn ? `\n回程 $${money(payload.returnFare || payload.fare).toLocaleString()}` : ""}`;
+      const ok = await Swal.fire({
+        title: "確認建立預約？",
+        text: confirmText,
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonText: "建立預約",
+        cancelButtonText: "再檢查",
+        confirmButtonColor: "#553f62"
+      }).then(r => r.isConfirmed);
+      if (!ok) return;
+
+      $("submitBtn").disabled = true;
+      $("submitBtn").textContent = "建立中...";
+      Swal.fire({ title: "正在建立預約單", text: "請勿關閉畫面", allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      try {
+        const res = await fetch(GAS_URL, {
+          method: "POST",
+          body: JSON.stringify({ action: "createManualBooking", data: payload }),
+          headers: { "Content-Type": "text/plain;charset=utf-8" }
+        }).then(r => r.json());
+        if (!res.success) throw new Error(res.error || "建立失敗");
+        const ids = (res.reservationIds || []).join("\n");
+        const customerText = buildCustomerConfirmText(payload);
+        await Swal.fire({
+          title: "預約已建立",
+          html: `<div style="text-align:left;line-height:1.7;font-size:14px;">
+            單號：<br><pre style="white-space:pre-wrap;background:#f8f3f7;border-radius:10px;padding:10px;">${escapeHtml(ids)}</pre>
+            <div style="color:#6b7280;margin-bottom:10px;">已寫入預約單、原始檔，並同步建立行事曆。</div>
+            <label style="display:block;color:#553f62;font-weight:700;margin-bottom:6px;">傳給客人的確認文字</label>
+            <textarea id="customerConfirmText" style="width:100%;height:260px;border:1px solid #e7dde8;border-radius:12px;padding:10px;font-size:13px;line-height:1.6;">${escapeHtml(customerText)}</textarea>
+          </div>`,
+          icon: "success",
+          confirmButtonText: "複製文字",
+          showCancelButton: true,
+          cancelButtonText: "關閉",
+          confirmButtonColor: "#553f62",
+          preConfirm: async () => {
+            const text = document.getElementById("customerConfirmText")?.value || customerText;
+            try { await navigator.clipboard.writeText(text); } catch (e) {}
+            return true;
+          }
+        });
+        updateSummary(ids || "已建立");
+      } catch (err) {
+        Swal.fire("建立失敗", err.message || "請稍後再試", "error");
+      } finally {
+        $("submitBtn").disabled = false;
+        $("submitBtn").textContent = "送出建立預約";
+      }
+    }
+
+    function updateSummary(doneText) {
+      if (doneText) {
+        $("summaryText").textContent = doneText;
+        return;
+      }
+      const total = money($("fare").value) + ($("hasReturn").checked ? money($("returnFare").value || $("fare").value) : 0);
+      $("summaryText").textContent = `${currentSource() || "未選來源"}｜${$("serviceType").value || "行程"}｜總車資 $${total.toLocaleString()}`;
+    }
+
+    function buildCustomerConfirmText(p) {
+      const service = p.serviceType || "接機";
+      const dateText = formatCustomerDate(p.rideDate);
+      const timeText = p.rideTime || "";
+      const flight = p.flightNumber || "無";
+      const pax = formatCustomerPax(p.paxCount);
+      const luggage = formatCustomerLuggage(p.luggageCount);
+      const fareLine = formatCustomerFare(p.paymentMethod, p.fare);
+      const fareNote = fareLine.includes("收現") ? "\n            >請直接付給司機，謝謝" : "";
+      const remarks = (p.remarks || "").trim() || "無";
+      return [
+        "親愛的客戶您好",
+        "您已成功預約接送服務",
+        "以下為您的預約資料",
+        "如資料有誤或需變更",
+        "請與我們聯絡，謝謝",
+        "",
+        "📌 如行程有異動請至少提早2小時前告知",
+        "📌 司機資料出發前一天18:00左右提供",
+        "─────────",
+        `預約項目：${service}`,
+        `預約日期：${dateText}`,
+        `預約時間：${timeText}`,
+        `航班編號：${flight}`,
+        "▂▂▂",
+        `乘客姓名：${p.customerName || ""}`,
+        `聯絡電話：${p.phone || ""}`,
+        `接送地址：${p.address || ""}`,
+        `搭車人數：${pax}`,
+        `行李件數：${luggage}`,
+        `車資：${fareLine}${fareNote}`,
+        "",
+        "【其他備註】",
+        remarks
+      ].join("\n");
+    }
+
+    function formatCustomerDate(value) {
+      if (!value) return "";
+      const parts = String(value).split("-");
+      if (parts.length !== 3) return value;
+      const dt = new Date(`${value}T00:00:00`);
+      const weekdays = ["日", "一", "二", "三", "四", "五", "六"];
+      return `${Number(parts[1])}/${Number(parts[2])}(${weekdays[dt.getDay()]})`;
+    }
+
+    function formatCustomerPax(value) {
+      const text = String(value || "").trim();
+      const match = text.match(/(\d+)\s*大(?:\s*(\d+)\s*中)?(?:\s*(\d+)\s*小)?/);
+      if (!match) return text || "請確認";
+      const total = Number(match[1] || 0) + Number(match[2] || 0) + Number(match[3] || 0);
+      return total ? `${total}人` : text;
+    }
+
+    function formatCustomerLuggage(value) {
+      const text = String(value || "").trim();
+      const match = text.match(/(\d+)\s*大(?:\s*(\d+)\s*登機)?/);
+      if (!match) return text || "無";
+      const checked = Number(match[1] || 0);
+      const carry = Number(match[2] || 0);
+      const parts = [];
+      if (checked) parts.push(`${checked}大`);
+      if (carry) parts.push(`${carry}登機`);
+      return parts.join(" ") || "無";
+    }
+
+    function formatCustomerFare(paymentMethod, fare) {
+      const amount = `$${money(fare).toLocaleString()}`;
+      const payment = String(paymentMethod || "");
+      if (payment.includes("現金") || payment.includes("收現")) return `收現${amount}`;
+      if (payment.includes("轉帳")) return `轉帳${amount}`;
+      if (payment.includes("簽單") || payment.includes("月結")) return `${payment}${money(fare) ? amount : ""}`;
+      return `${payment || "車資"}${amount}`;
+    }
+
+    function resetForm() {
+      $("manualForm").reset();
+      $("templateSelect").value = "";
+      setValue("paxCount", "1大 0中 0小");
+      setValue("luggageCount", "0大 0登機");
+      setValue("seatDetails", "無");
+      handleSourceChange();
+      handleReturnToggle();
+      updateSummary();
+    }
+
+    function setValue(id, value) {
+      const el = $(id);
+      if (el) el.value = value || "";
+    }
+
+    function normalizeServiceType(value) {
+      const text = String(value || "");
+      if (text.includes("接") || text.includes("回")) return "接機";
+      if (text.includes("送")) return "送機";
+      return "";
+    }
+
+    function escapeHtml(value) {
+      return String(value || "").replace(/[&<>"']/g, ch => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[ch]));
+    }
+  </script>
+</body>
+</html>
