@@ -185,6 +185,7 @@
               <option value="AS">AS</option>
               <option value="AZ">AZ</option>
               <option value="123">123</option>
+              <option value="W">W</option>
               <option value="ANNA">ANNA</option>
               <option value="遠貿">遠貿</option>
               <option value="大台灣">大台灣</option>
@@ -211,8 +212,8 @@
           <div>
             <label for="serviceType">行程</label>
             <select id="serviceType" name="serviceType" required>
-              <option value="接機">接機</option>
               <option value="送機">送機</option>
+              <option value="接機">接機</option>
             </select>
           </div>
           <div>
@@ -264,8 +265,8 @@
             <div>
               <label for="returnServiceType">回程行程</label>
               <select id="returnServiceType" name="returnServiceType">
-                <option value="接機">接機</option>
                 <option value="送機">送機</option>
+                <option value="接機">接機</option>
               </select>
             </div>
             <div>
@@ -373,7 +374,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.3";
+    const APP_VERSION = "manual-booking-v1.0.5";
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzMLYBvdbo4mkkEUVFcjST44oh7VUXhx7gZjWejm2R8XX549ITaReot0pRAN3mbwA8n/exec";
     let templates = [];
 
@@ -408,6 +409,7 @@
           }
         }
         templates = data.templates || [];
+        renderSourceOptions(templates);
         $("templateSelect").innerHTML = '<option value="">手動填寫，或選擇固定客戶</option>' + templates.map((tpl, idx) => {
           const label = [tpl.source, tpl.code, tpl.name, tpl.phone].filter(Boolean).join(" / ");
           return `<option value="${idx}">${escapeHtml(label)}</option>`;
@@ -450,7 +452,7 @@
 
     function initTimeSelects() {
       const hourOptions = Array.from({ length: 24 }, (_, i) => `<option value="${pad2(i)}">${pad2(i)}</option>`).join("");
-      const minuteOptions = Array.from({ length: 60 }, (_, i) => `<option value="${pad2(i)}">${pad2(i)}</option>`).join("");
+      const minuteOptions = Array.from({ length: 12 }, (_, i) => `<option value="${pad2(i * 5)}">${pad2(i * 5)}</option>`).join("");
       ["rideHour", "returnHour"].forEach(id => $(id).innerHTML = hourOptions);
       ["rideMinute", "returnMinute"].forEach(id => $(id).innerHTML = minuteOptions);
       $("rideHour").value = "08";
@@ -530,7 +532,14 @@
     }
 
     function knownSources() {
-      return ["AS", "AZ", "123", "ANNA", "遠貿", "大台灣"];
+      return Array.from(new Set(["AS", "AZ", "123", "W", "ANNA", "遠貿", "大台灣", ...templates.map(t => t.source).filter(Boolean)]));
+    }
+
+    function renderSourceOptions(items) {
+      const current = $("source").value;
+      const options = Array.from(new Set(["AS", "AZ", "123", "W", "ANNA", "遠貿", "大台灣", ...(items || []).map(t => t.source).filter(Boolean)]));
+      $("source").innerHTML = options.map(source => `<option value="${escapeHtml(source)}">${escapeHtml(source)}</option>`).join("") + '<option value="其他">其他</option>';
+      if (options.includes(current) || current === "其他") $("source").value = current;
     }
 
     function buildPaxCount() {
