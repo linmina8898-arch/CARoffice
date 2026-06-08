@@ -376,7 +376,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.9";
+    const APP_VERSION = "manual-booking-v1.0.10";
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzMLYBvdbo4mkkEUVFcjST44oh7VUXhx7gZjWejm2R8XX549ITaReot0pRAN3mbwA8n/exec";
     let templates = [];
 
@@ -583,17 +583,20 @@
 
     function setPaxFieldsFromText(value) {
       const text = String(value || "");
-      const match = text.match(/(\d+)\s*大(?:\s*(\d+)\s*中)?(?:\s*(\d+)\s*小)?/);
-      setValue("adultCount", clampSelectValue(match ? match[1] : "1", 1, 8));
-      setValue("childCount", clampSelectValue(match ? (match[2] || "0") : "0", 0, 8));
-      setValue("infantCount", clampSelectValue(match ? (match[3] || "0") : "0", 0, 8));
+      const adult = (text.match(/(\d+)\s*(?:大|成人|人)/) || [])[1] || "1";
+      const child = (text.match(/(\d+)\s*(?:中|兒童|小孩)/) || [])[1] || "0";
+      const infant = (text.match(/(\d+)\s*(?:小|幼兒|嬰兒)/) || [])[1] || "0";
+      setValue("adultCount", clampSelectValue(adult, 1, 8));
+      setValue("childCount", clampSelectValue(child, 0, 8));
+      setValue("infantCount", clampSelectValue(infant, 0, 8));
     }
 
     function setLuggageFieldsFromText(value) {
       const text = String(value || "");
-      const match = text.match(/(\d+)\s*大(?:\s*(\d+)\s*登機)?/);
-      setValue("checkedLuggageCount", clampSelectValue(match ? match[1] : "0", 0, 8));
-      setValue("carryLuggageCount", clampSelectValue(match ? (match[2] || "0") : "0", 0, 8));
+      const checked = (text.match(/(\d+)\s*(?:大|大型|托運)/) || [])[1] || "0";
+      const carry = (text.match(/(\d+)\s*(?:登機|小|手提)/) || [])[1] || "0";
+      setValue("checkedLuggageCount", clampSelectValue(checked, 0, 8));
+      setValue("carryLuggageCount", clampSelectValue(carry, 0, 8));
     }
 
     function clampSelectValue(value, min, max) {
