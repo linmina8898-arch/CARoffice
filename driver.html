@@ -144,7 +144,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.14.23";
+        const APP_VERSION = "v1.14.25";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -261,6 +261,24 @@
             ]);
         }
 
+        function waitForLiffSdk(ms = 8000) {
+            return new Promise((resolve, reject) => {
+                const startedAt = Date.now();
+                const check = () => {
+                    if (window.liff && typeof liff.init === 'function') {
+                        resolve();
+                        return;
+                    }
+                    if (Date.now() - startedAt >= ms) {
+                        reject(new Error('LINE LIFF SDK 載入失敗，請關閉 LINE 後重新開啟，或聯絡調度確認 LIFF 設定。'));
+                        return;
+                    }
+                    setTimeout(check, 120);
+                };
+                check();
+            });
+        }
+
         function clearAuthTimeout() {
             if (authTimeoutTimer) {
                 clearTimeout(authTimeoutTimer);
@@ -299,6 +317,7 @@
                     return;
                 }
 
+                await waitForLiffSdk();
                 await withTimeout(liff.init({ liffId: LIFF_ID }), 18000, 'LIFF 初始化逾時');
                 if (!liff.isLoggedIn()) { liff.login(); return; }
 
@@ -375,7 +394,7 @@
             } catch (err) {
                 clearAuthTimeout();
                 document.getElementById('authSpinner').classList.add('hidden');
-                document.getElementById('authMsg').innerText = '登入失敗，請重新整理或聯絡調度。';
+                document.getElementById('authMsg').innerText = '登入失敗：' + (err.message || '請重新整理或聯絡調度。');
                 Swal.fire('系統錯誤', err.message || 'LIFF 初始化失敗，請確認已在 LINE 中開啟', 'error');
             }
             initCanvas();
@@ -708,7 +727,7 @@
             let cashHtml = '';
             if (paymentInfo.cashCollected > 0) {
                 let amtToCollect = paymentInfo.cashCollected;
-                cashHtml = `<div class="flex justify-between items-center py-3 border-t-2 border-red-100 mt-2"><span class="text-gray-500 mr-2">請向客人收現</span><div class="text-right"><div class="text-red-600 font-bold text-xl">$${amtToCollect.toLocaleString()}</div>${cleanVal(t.cashCollectionNote) ? `<div class="text-xs text-gray-500">${cleanVal(t.cashCollectionNote)}</div>` : ''}</div></div>`;
+                cashHtml = `<div class="flex justify-between items-center py-3 border-t-2 border-red-100 mt-2 font-bold"><span class="text-gray-700 mr-2">請向客人收現</span><div class="text-right"><div class="text-red-600 text-xl">$${amtToCollect.toLocaleString()}</div>${cleanVal(t.cashCollectionNote) ? `<div class="text-xs text-gray-500 font-normal">${cleanVal(t.cashCollectionNote)}</div>` : ''}</div></div>`;
             }
 
             let cNote = cleanVal(t.remarks) ? cleanVal(t.remarks).replace(/\n/g, '<br>') : '';
@@ -744,7 +763,7 @@
                     
                     <div class="space-y-0 text-sm bg-gray-50 p-3 rounded-lg border border-gray-100">
                         <div class="driver-field"><span class="driver-field-label">接送機場</span><span class="driver-field-value">${cleanVal(t.airport)}</span></div>
-                        <div class="driver-field"><span class="driver-field-label">航班編號</span><span class="driver-field-value text-[#f07cad]">${cleanVal(t.flightNo)}</span></div>
+                        <div class="driver-field"><span class="driver-field-label">航班編號</span><span class="driver-field-value text-gray-800">${cleanVal(t.flightNo)}</span></div>
                         <div class="driver-field">
                             <span class="driver-field-label">客戶姓名</span>
                             <div class="driver-field-value flex items-center justify-end"><span>${cleanVal(t.custName)}</span>${callBtn}</div>
