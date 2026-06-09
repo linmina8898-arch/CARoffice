@@ -197,6 +197,7 @@
         <div>
           <h1 class="text-[22px] font-bold text-[#553f62] m-0">客服快速代填預約</h1>
           <p class="text-sm text-gray-500 mt-1">固定客、客服代填、手動車資，不套折扣。</p>
+          <p class="text-[11px] text-gray-400 mt-1">版本：<span id="versionDisplay">載入中</span></p>
         </div>
         <button class="secondary-btn !min-h-[38px]" type="button" onclick="resetForm()">清空</button>
       </div>
@@ -412,7 +413,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.14";
+    const APP_VERSION = "manual-booking-v1.0.15";
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzMLYBvdbo4mkkEUVFcjST44oh7VUXhx7gZjWejm2R8XX549ITaReot0pRAN3mbwA8n/exec";
     let templates = [];
 
@@ -421,6 +422,7 @@
     let lastCustomerMessage = "";
 
     document.addEventListener("DOMContentLoaded", () => {
+      $("versionDisplay").textContent = APP_VERSION;
       initTimeSelects();
       $("source").addEventListener("change", handleSourceChange);
       $("hasReturn").addEventListener("change", handleReturnToggle);
@@ -428,6 +430,7 @@
       $("templateSelect").addEventListener("change", applyTemplate);
       $("templateSearch").addEventListener("input", renderTemplateOptions);
       ["flightNumber", "returnFlightNumber"].forEach(id => $(id).addEventListener("input", forceUppercase));
+      $("phone").addEventListener("input", formatPhoneInput);
       ["source", "customSource", "serviceType", "rideDate", "rideHour", "rideMinute", "fare", "hasReturn", "returnHour", "returnMinute", "returnFare"].forEach(id => {
         const el = $(id);
         if (el) el.addEventListener("input", updateSummary);
@@ -474,7 +477,7 @@
       setValue("address", t.address);
       setValue("extraLocation", t.extraLocation);
       setValue("customerName", t.name);
-      setValue("phone", t.phone);
+      setValue("phone", formatPhoneNumber(t.phone));
       setValue("carType", t.carType || "小車");
       setPaxFieldsFromText(t.paxCount || "1大 0中 0小");
       setLuggageFieldsFromText(t.luggageCount || "0大 0登機");
@@ -533,6 +536,18 @@
       try { input.setSelectionRange(pos, pos); } catch (e) {}
     }
 
+    function formatPhoneNumber(value) {
+      const digits = String(value || "").replace(/\D/g, "").slice(0, 10);
+      if (digits.length <= 4) return digits;
+      if (digits.length <= 7) return `${digits.slice(0, 4)}-${digits.slice(4)}`;
+      return `${digits.slice(0, 4)}-${digits.slice(4, 7)}-${digits.slice(7)}`;
+    }
+
+    function formatPhoneInput(event) {
+      const input = event.target;
+      input.value = formatPhoneNumber(input.value);
+    }
+
     function handleReturnToggle() {
       const enabled = $("hasReturn").checked;
       $("returnPanel").classList.toggle("hidden", !enabled);
@@ -571,7 +586,7 @@
         returnFlightNumber: $("returnFlightNumber").value.trim().toUpperCase(),
         returnFare: $("returnFare").value,
         customerName: $("customerName").value.trim(),
-        phone: $("phone").value.trim(),
+        phone: formatPhoneNumber($("phone").value),
         carType: $("carType").value,
         paymentMethod: $("paymentMethod").value,
         paxCount: buildPaxCount(),
