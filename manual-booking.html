@@ -109,6 +109,33 @@
       user-select: none;
     }
     .pill input { width: auto; min-height: auto; margin-right: 6px; accent-color: var(--primary); }
+    .last-message-panel {
+      display: none;
+      margin-top: 14px;
+      border: 1px solid #e7dde8;
+      border-radius: 14px;
+      background: #fff;
+      padding: 14px;
+      box-shadow: 0 8px 24px rgba(31, 41, 55, .06);
+    }
+    .last-message-panel.show { display: block; }
+    .last-message-panel textarea {
+      width: 100%;
+      min-height: 160px;
+      border: 1px solid #e7dde8;
+      border-radius: 12px;
+      padding: 10px;
+      font-size: 13px;
+      line-height: 1.6;
+      margin-top: 8px;
+    }
+    .last-message-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      margin-top: 10px;
+    }
     .submitbar {
       position: fixed;
       left: 0;
@@ -178,7 +205,7 @@
     <form id="manualForm">
       <section class="panel">
         <div class="section-title">來源與固定客戶</div>
-        <div class="grid-form">
+    <div class="grid-form">
           <div>
             <label for="source">來源</label>
             <select id="source" name="source">
@@ -365,6 +392,15 @@
           </div>
         </div>
       </section>
+      <section id="lastMessagePanel" class="last-message-panel">
+        <div class="section-title" style="margin-bottom:4px;">最近建立的預約文字</div>
+        <div style="font-size:12px;color:#6b7280;">關掉彈出視窗後，可在這裡重新開啟或複製，不會重複建立預約。</div>
+        <textarea id="lastCustomerMessage" readonly></textarea>
+        <div class="last-message-actions">
+          <button class="secondary-btn" type="button" onclick="openLastCustomerMessage()">重新開啟</button>
+          <button class="primary-btn" type="button" onclick="copyLastCustomerMessage()">複製文字</button>
+        </div>
+      </section>
     </form>
   </div>
 
@@ -376,12 +412,13 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.11";
+    const APP_VERSION = "manual-booking-v1.0.14";
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzMLYBvdbo4mkkEUVFcjST44oh7VUXhx7gZjWejm2R8XX549ITaReot0pRAN3mbwA8n/exec";
     let templates = [];
 
     const $ = id => document.getElementById(id);
     const money = v => Number(String(v || "").replace(/[^\d.-]/g, "")) || 0;
+    let lastCustomerMessage = "";
 
     document.addEventListener("DOMContentLoaded", () => {
       initTimeSelects();
@@ -653,6 +690,7 @@
         if (!res.success) throw new Error(res.error || "建立失敗");
         const ids = (res.reservationIds || []).join("\n");
         const customerText = buildCustomerConfirmMessage(payload);
+        saveLastCustomerMessage(customerText);
         await Swal.fire({
           title: "預約已建立",
           html: `<div style="text-align:left;line-height:1.7;font-size:14px;">
@@ -707,7 +745,6 @@
           fare: p.returnFare || p.fare
         }));
       }
-      const remarks = (p.remarks || "").trim() || "無";
       return [
         "親愛的客戶您好",
         "您已成功預約接送服務",
@@ -718,10 +755,7 @@
         "📌 如行程有異動請至少提早5小時前告知",
         "📌 司機資料出發前一天18:00左右提供",
         "─────────",
-        trips.join("\n─────────\n"),
-        "",
-        "【其他備註】",
-        remarks
+        trips.join("\n─────────\n")
       ].join("\n");
     }
 
@@ -735,11 +769,14 @@
       const fareLine = formatCustomerFare(p.paymentMethod, trip.fare);
       const fareNote = fareLine.includes("收現") ? "\n            >請直接付給司機，謝謝" : "";
       const signboard = formatCustomerSignboard(p.signboard);
+      const remarks = (p.remarks || "").trim() || "無";
       return [
         `預約項目：${service}`,
         `預約日期：${dateText}`,
         `預約時間：${timeText}`,
         `航班編號：${flight}`,
+        `接送機場：${p.airport || "無"}`,
+        `車型：${p.carType || "無"}`,
         "▂▂▂",
         `乘客姓名：${p.customerName || ""}`,
         `聯絡電話：${p.phone || ""}`,
@@ -747,8 +784,46 @@
         `搭車人數：${pax}`,
         `行李件數：${luggage}`,
         signboard ? `舉牌服務：${signboard}` : "",
-        `車資：${fareLine}${fareNote}`
+        `車資：${fareLine}${fareNote}`,
+        "",
+        `備註：${remarks}`
       ].filter(Boolean).join("\n");
+    }
+
+    function saveLastCustomerMessage(text) {
+      lastCustomerMessage = text || "";
+      $("lastCustomerMessage").value = lastCustomerMessage;
+      $("lastMessagePanel").classList.toggle("show", Boolean(lastCustomerMessage));
+    }
+
+    async function copyLastCustomerMessage() {
+      if (!lastCustomerMessage) {
+        Swal.fire("目前沒有可複製的文字", "", "info");
+        return;
+      }
+      try { await navigator.clipboard.writeText(lastCustomerMessage); } catch (e) {}
+      Swal.fire({ title: "已複製", icon: "success", timer: 900, showConfirmButton: false });
+    }
+
+    async function openLastCustomerMessage() {
+      if (!lastCustomerMessage) {
+        Swal.fire("目前沒有可開啟的文字", "", "info");
+        return;
+      }
+      await Swal.fire({
+        title: "最近建立的預約文字",
+        html: `<textarea id="customerConfirmText" style="width:100%;height:300px;border:1px solid #e7dde8;border-radius:12px;padding:10px;font-size:13px;line-height:1.6;">${escapeHtml(lastCustomerMessage)}</textarea>`,
+        confirmButtonText: "複製文字",
+        showCancelButton: true,
+        cancelButtonText: "關閉",
+        confirmButtonColor: "#553f62",
+        preConfirm: async () => {
+          const text = document.getElementById("customerConfirmText")?.value || lastCustomerMessage;
+          saveLastCustomerMessage(text);
+          try { await navigator.clipboard.writeText(text); } catch (e) {}
+          return true;
+        }
+      });
     }
 
     function formatCustomerSignboard(value) {
