@@ -376,7 +376,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.10";
+    const APP_VERSION = "manual-booking-v1.0.11";
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzMLYBvdbo4mkkEUVFcjST44oh7VUXhx7gZjWejm2R8XX549ITaReot0pRAN3mbwA8n/exec";
     let templates = [];
 
@@ -770,8 +770,7 @@
       const text = String(value || "").trim();
       const match = text.match(/(\d+)\s*大(?:\s*(\d+)\s*中)?(?:\s*(\d+)\s*小)?/);
       if (!match) return text || "請確認";
-      const total = Number(match[1] || 0) + Number(match[2] || 0) + Number(match[3] || 0);
-      return total ? `${total}人` : text;
+      return `${Number(match[1] || 0)}大 ${Number(match[2] || 0)}中 ${Number(match[3] || 0)}小`;
     }
 
     function formatCustomerLuggage(value) {
