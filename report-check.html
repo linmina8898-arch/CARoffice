@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AS 派車回報查詢</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    :root { --primary:#553f62; --pink:#f07cad; --line:#e7dde8; --bg:#f6f4f7; }
+    body { margin:0; background:var(--bg); color:#172033; font-family: system-ui, -apple-system, "Noto Sans TC", sans-serif; }
+    .shell { max-width: 920px; margin:0 auto; padding:14px; }
+    .card { background:#fff; border:1px solid var(--line); border-radius:14px; box-shadow:0 8px 22px rgba(31,41,55,.06); }
+    input { width:100%; min-height:42px; border:1px solid #d8cddd; border-radius:10px; padding:0 12px; outline:none; }
+    input:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(85,63,98,.12); }
+    button { min-height:42px; border-radius:10px; padding:0 14px; font-weight:600; }
+    .primary { background:var(--primary); color:#fff; }
+    .secondary { background:#fff; color:var(--primary); border:1px solid var(--line); }
+    .tab.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+    .report-grid { display:grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap:6px; }
+    .report-chip { border:1px solid var(--line); border-radius:9px; padding:6px 4px; text-align:center; font-size:12px; line-height:1.25; }
+    .report-chip.done { background:#f4f8f1; border-color:#d7ebc9; color:#2f6b1f; }
+    .report-chip.missing { background:#fafafa; color:#9ca3af; }
+    .warn { color:#be123c; background:#fff1f5; border-color:#ffd3df; }
+    .ok { color:#166534; background:#f0fdf4; border-color:#bbf7d0; }
+    .order-card { padding:12px; margin-bottom:10px; }
+    .muted { color:#6b7280; }
+    .tiny { font-size:11px; }
+    @media (max-width:640px) {
+      .shell { padding:10px; }
+      .report-grid { gap:4px; }
+      .report-chip { font-size:11px; padding:5px 2px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="flex items-center justify-between gap-3 mb-3">
+      <div>
+        <h1 class="text-[22px] font-bold text-[#553f62] m-0">AS 派車回報查詢</h1>
+        <div class="text-[11px] text-gray-400 mt-1">版本：<span id="versionText">載入中</span></div>
+      </div>
+      <button id="logoutBtn" class="secondary hidden" onclick="logout()">登出</button>
+    </header>
+
+    <section id="loginCard" class="card p-4">
+      <div class="text-sm text-gray-500 mb-3">使用中控台帳號登入。</div>
+      <div class="grid gap-3">
+        <input id="account" placeholder="帳號" autocomplete="username">
+        <input id="password" type="password" placeholder="密碼" autocomplete="current-password">
+        <button class="primary" onclick="login()">登入查詢</button>
+      </div>
+    </section>
+
+    <main id="appCard" class="hidden">
+      <section class="card p-3 mb-3">
+        <div class="grid grid-cols-3 gap-2 mb-3">
+          <button id="tabToday" class="tab active secondary" onclick="setMode('today')">今日回報</button>
+          <button id="tabOrder" class="tab secondary" onclick="setMode('order')">搜尋單號</button>
+          <button id="tabCustomer" class="tab secondary" onclick="setMode('customer')">搜尋客人</button>
+        </div>
+        <div class="flex gap-2">
+          <input id="keyword" class="flex-1" placeholder="輸入單號、姓名或電話" onkeydown="if(event.key==='Enter') loadOrders()">
+          <button class="primary" onclick="loadOrders()">查詢</button>
+        </div>
+        <label class="flex items-center gap-2 mt-3 text-sm text-gray-600">
+          <input id="onlyMissing" type="checkbox" class="w-auto min-h-0 accent-[#553f62]" onchange="renderOrders()">
+          只看未確實回報
+        </label>
+      </section>
+
+      <section class="card p-3 mb-3">
+        <div id="summary" class="text-sm text-[#553f62]">尚未查詢</div>
+      </section>
+
+      <section id="orders"></section>
+    </main>
+  </div>
+
+  <script>
+    const APP_VERSION = "report-check-v1.0.0";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzMLYBvdbo4mkkEUVFcjST44oh7VUXhx7gZjWejm2R8XX549ITaReot0pRAN3mbwA8n/exec";
+    const $ = id => document.getElementById(id);
+    let session = JSON.parse(localStorage.getItem("reportCheckSession") || "null");
+    let mode = "today";
+    let lastOrders = [];
+
+    document.addEventListener("DOMContentLoaded", () => {
+      $("versionText").textContent = APP_VERSION;
+      if (session && session.account && session.password) showApp();
+    });
+
+    async function login() {
+      const account = $("account").value.trim();
+      const password = $("password").value.trim();
+      if (!account || !password) return Swal.fire("請輸入帳號密碼", "", "warning");
+      Swal.fire({ title:"登入中", allowOutsideClick:false, didOpen:()=>Swal.showLoading() });
+      try {
+        const res = await post("reportCheckLogin", { account, password });
+        if (!res.success) throw new Error(res.error || "登入失敗");
+        session = { account, password };
+        localStorage.setItem("reportCheckSession", JSON.stringify(session));
+        Swal.close();
+        showApp();
+      } catch (err) {
+        Swal.fire("登入失敗", err.message || "請稍後再試", "error");
+      }
+    }
+
+    function showApp() {
+      $("loginCard").classList.add("hidden");
+      $("appCard").classList.remove("hidden");
+      $("logoutBtn").classList.remove("hidden");
+      loadOrders();
+    }
+
+    function logout() {
+      localStorage.removeItem("reportCheckSession");
+      session = null;
+      location.reload();
+    }
+
+    function setMode(nextMode) {
+      mode = nextMode;
+      ["Today", "Order", "Customer"].forEach(name => $("tab" + name).classList.remove("active"));
+      $("tab" + (mode === "today" ? "Today" : mode === "order" ? "Order" : "Customer")).classList.add("active");
+      $("keyword").placeholder = mode === "today" ? "今日模式可留空，也可輸入關鍵字" : (mode === "order" ? "輸入單號，例如 AS-20260608" : "輸入姓名、電話或後三碼");
+      if (mode === "today") $("keyword").value = "";
+      loadOrders();
+    }
+
+    async function loadOrders() {
+      if (!session) return;
+      const keyword = $("keyword").value.trim();
+      if (mode !== "today" && !keyword) return Swal.fire("請輸入搜尋內容", "", "info");
+      $("summary").textContent = "查詢中...";
+      $("orders").innerHTML = "";
+      try {
+        const res = await post("getReportCheckOrders", { ...session, mode, keyword });
+        if (!res.success) throw new Error(res.error || "查詢失敗");
+        lastOrders = res.orders || [];
+        renderOrders();
+      } catch (err) {
+        $("summary").textContent = "查詢失敗";
+        Swal.fire("查詢失敗", err.message || "請稍後再試", "error");
+      }
+    }
+
+    function renderOrders() {
+      const onlyMissing = $("onlyMissing").checked;
+      const rows = onlyMissing ? lastOrders.filter(o => o.needsReport) : lastOrders;
+      const missing = lastOrders.filter(o => o.needsReport).length;
+      $("summary").textContent = `${mode === "today" ? "今日回報" : "搜尋結果"}：${rows.length} 筆｜未確實回報 ${missing} 筆`;
+      $("orders").innerHTML = rows.map(renderOrder).join("") || `<div class="card p-8 text-center text-gray-400">查無資料</div>`;
+    }
+
+    function renderOrder(o) {
+      const statusClass = o.needsReport ? "warn" : "ok";
+      const flight = o.flightNo ? ` ${escapeHtml(o.flightNo)}` : "";
+      const cash = Number(o.cashCollected || 0) > 0 ? `<span class="text-rose-600 font-semibold">需收現 $${Number(o.cashCollected).toLocaleString()}</span>` : escapeHtml(o.paymentStatus || "");
+      return `<article class="card order-card">
+        <div class="flex justify-between gap-2 items-start">
+          <div>
+            <div class="text-lg font-bold text-[#553f62]">${escapeHtml(o.date)} ${escapeHtml(o.time)} ${escapeHtml(o.type)}${flight}</div>
+            <div class="text-sm text-gray-700 mt-1">${escapeHtml(o.route)}</div>
+          </div>
+          <span class="tiny px-2 py-1 rounded border ${statusClass}">${escapeHtml(o.reportStatus)}</span>
+        </div>
+        <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-sm mt-3">
+          <div><span class="muted">客人</span> ${escapeHtml(o.custName)} / ${escapeHtml(o.custPhone)}</div>
+          <div><span class="muted">司機</span> ${escapeHtml(o.driverName)}</div>
+          <div><span class="muted">付款</span> ${cash}</div>
+          <div><span class="muted">狀態</span> ${escapeHtml(o.driverStatus)}</div>
+        </div>
+        <div class="report-grid mt-3">
+          ${reportChip("收", o.reports.accepted)}
+          ${reportChip("發", o.reports.departed)}
+          ${reportChip("抵", o.reports.arrived)}
+          ${reportChip("上", o.reports.onboard)}
+          ${reportChip("結", o.reports.closed)}
+        </div>
+        <div class="tiny text-gray-400 mt-3">${escapeHtml(o.orderId)}</div>
+      </article>`;
+    }
+
+    function reportChip(label, value) {
+      return `<div class="report-chip ${value ? "done" : "missing"}"><div>${label}</div><div>${escapeHtml(value || "-")}</div></div>`;
+    }
+
+    function post(action, data) {
+      return fetch(GAS_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action, data })
+      }).then(r => r.json());
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, s => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[s]));
+    }
+  </script>
+</body>
+</html>
