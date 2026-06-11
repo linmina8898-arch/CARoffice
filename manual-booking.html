@@ -329,6 +329,14 @@
             <input id="customerName" name="customerName" required placeholder="例如 陳小姐">
           </div>
           <div>
+            <label for="customerTitle">稱謂</label>
+            <select id="customerTitle" name="customerTitle">
+              <option value="先生">先生</option>
+              <option value="小姐">小姐</option>
+              <option value="">不顯示</option>
+            </select>
+          </div>
+          <div>
             <label for="phone">電話</label>
             <input id="phone" name="phone" type="tel" inputmode="tel" required placeholder="09xx-xxx-xxx">
           </div>
@@ -413,7 +421,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.16";
+    const APP_VERSION = "manual-booking-v1.0.17";
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyHkLho-EhceBtJCSd0Vz5e1NtSDILWH08nD_8jJoJzd4c7unaXiI6q_A0ETgpuYG5x/exec";
     let templates = [];
 
@@ -552,7 +560,6 @@
       const enabled = $("hasReturn").checked;
       $("returnPanel").classList.toggle("hidden", !enabled);
       $("returnDate").required = enabled;
-      $("returnTime").required = enabled;
       syncReturnType();
       updateSummary();
     }
@@ -586,6 +593,7 @@
         returnFlightNumber: $("returnFlightNumber").value.trim().toUpperCase(),
         returnFare: $("returnFare").value,
         customerName: $("customerName").value.trim(),
+        customerTitle: $("customerTitle").value,
         phone: formatPhoneNumber($("phone").value),
         carType: $("carType").value,
         paymentMethod: $("paymentMethod").value,
@@ -762,15 +770,15 @@
       }
       return [
         "親愛的客戶您好",
-        "您已成功預約接送服務",
-        "以下為您的預約資料",
-        "如資料有誤或需變更",
-        "請與我們聯絡，謝謝",
+        "您已成功預約接送服務，以下為預約資料：",
         "",
-        "📌 如行程有異動請至少提早5小時前告知",
-        "📌 司機資料出發前一天18:00左右提供",
-        "─────────",
-        trips.join("\n─────────\n")
+        "* 行程異動請至少提早 5 小時前告知",
+        "* 司機資料於出發前一天 18:00 左右提供",
+        "* 如資料有誤或需變更，請與我們聯絡，謝謝",
+        "",
+        "────",
+        "",
+        trips.join("\n\n────\n\n")
       ].join("\n");
     }
 
@@ -782,27 +790,30 @@
       const pax = formatCustomerPax(p.paxCount);
       const luggage = formatCustomerLuggage(p.luggageCount);
       const fareLine = formatCustomerFare(p.paymentMethod, trip.fare);
-      const fareNote = fareLine.includes("收現") ? "\n            >請直接付給司機，謝謝" : "";
-      const signboard = formatCustomerSignboard(p.signboard);
       const remarks = (p.remarks || "").trim() || "無";
       return [
-        `預約項目：${service}`,
-        `預約日期：${dateText}`,
-        `預約時間：${timeText}`,
-        `航班編號：${flight}`,
-        `接送機場：${p.airport || "無"}`,
+        `${dateText} ${timeText} ${service}`,
+        "",
+        `航班：${flight}`,
+        `機場：${p.airport || "無"}`,
         `車型：${p.carType || "無"}`,
-        "▂▂▂",
-        `乘客姓名：${p.customerName || ""}`,
-        `聯絡電話：${p.phone || ""}`,
-        `接送地址：${p.address || ""}`,
-        `搭車人數：${pax}`,
-        `行李件數：${luggage}`,
-        signboard ? `舉牌服務：${signboard}` : "",
-        `車資：${fareLine}${fareNote}`,
+        `車資：${fareLine}`,
+        "",
+        `乘客：${displayCustomerName(p)} ${p.phone || ""}`.trim(),
+        `人數：${pax}`,
+        `行李：${luggage}`,
+        "地址：",
+        `${p.address || ""}`,
         "",
         `備註：${remarks}`
       ].filter(Boolean).join("\n");
+    }
+
+    function displayCustomerName(p) {
+      const name = String(p.customerName || "").trim();
+      const title = String(p.customerTitle || "").trim();
+      if (!title || /(?:先生|小姐|女士|太太)$/.test(name)) return name;
+      return `${name}${title}`;
     }
 
     function saveLastCustomerMessage(text) {
@@ -878,10 +889,10 @@
     function formatCustomerFare(paymentMethod, fare) {
       const amount = `$${money(fare).toLocaleString()}`;
       const payment = String(paymentMethod || "");
-      if (payment.includes("現金") || payment.includes("收現")) return `收現${amount}`;
-      if (payment.includes("轉帳")) return `轉帳${amount}`;
-      if (payment.includes("簽單") || payment.includes("月結")) return `${payment}${money(fare) ? amount : ""}`;
-      return `${payment || "車資"}${amount}`;
+      if (payment.includes("現金") || payment.includes("收現")) return `收現 ${amount} 元`;
+      if (payment.includes("轉帳")) return `轉帳 ${amount} 元`;
+      if (payment.includes("簽單") || payment.includes("月結")) return `簽單 ${amount} 元`;
+      return `${payment || "車資"} ${amount} 元`;
     }
 
     function resetForm() {
