@@ -23,6 +23,7 @@
     .report-chip.missing { background:#fafafa; color:#9ca3af; }
     .warn { color:#be123c; background:#fff1f5; border-color:#ffd3df; }
     .ok { color:#553f62; background:#f8f3f7; border-color:#e7dde8; }
+    .status-badge { display:inline-flex; align-items:center; justify-content:center; min-width:68px; white-space:nowrap; }
     .order-card { padding:12px; margin-bottom:10px; }
     .muted { color:#6b7280; }
     .tiny { font-size:11px; }
@@ -79,7 +80,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "report-check-v1.0.3";
+    const APP_VERSION = "report-check-v1.0.4";
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyHkLho-EhceBtJCSd0Vz5e1NtSDILWH08nD_8jJoJzd4c7unaXiI6q_A0ETgpuYG5x/exec";
     const $ = id => document.getElementById(id);
     let session = JSON.parse(localStorage.getItem("reportCheckSession") || "null");
@@ -160,7 +161,7 @@
       const onlyMissing = $("onlyMissing").checked;
       const rows = onlyMissing ? lastOrders.filter(o => o.needsReport) : lastOrders;
       const missing = lastOrders.filter(o => o.needsReport).length;
-      $("summary").textContent = `${mode === "today" ? "今日回報" : "搜尋結果"}：${rows.length} 筆｜未確實回報 ${missing} 筆`;
+      $("summary").innerHTML = `${mode === "today" ? "今日回報" : "搜尋結果"}：${rows.length} 筆｜未確實回報 ${missing} 筆${missing ? '<span class="ml-2 text-rose-600">提示：標示未確實回報者，請優先確認司機是否已完成收/發/抵/上/結。</span>' : ''}`;
       $("orders").innerHTML = rows.map(renderOrder).join("") || `<div class="card p-8 text-center text-gray-400">查無資料</div>`;
     }
 
@@ -174,7 +175,7 @@
             <div class="text-lg font-bold text-[#553f62]">${escapeHtml(o.date)} ${escapeHtml(o.time)} ${escapeHtml(o.type)}${flight}</div>
             <div class="text-sm text-gray-700 mt-1">${escapeHtml(o.route)}</div>
           </div>
-          <span class="tiny px-2 py-1 rounded border ${statusClass}">${escapeHtml(o.reportStatus)}</span>
+          <span class="tiny px-2 py-1 rounded border ${statusClass} status-badge">${escapeHtml(o.reportStatus)}</span>
         </div>
         <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-sm mt-3">
           <div><span class="muted">客人</span> ${escapeHtml(o.custName)} / ${escapeHtml(o.custPhone)}</div>
