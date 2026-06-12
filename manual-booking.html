@@ -421,7 +421,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.19";
+    const APP_VERSION = "manual-booking-v1.0.20";
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyHkLho-EhceBtJCSd0Vz5e1NtSDILWH08nD_8jJoJzd4c7unaXiI6q_A0ETgpuYG5x/exec";
     let templates = [];
 
@@ -790,7 +790,7 @@
       const pax = formatCustomerPax(p.paxCount);
       const luggage = formatCustomerLuggage(p.luggageCount);
       const fareLine = formatCustomerFare(p.paymentMethod, trip.fare);
-      const remarks = (p.remarks || "").trim() || "無";
+      const remarksLines = formatCustomerRemarksLines(p.remarks);
       const extraLocation = String(p.extraLocation || "").trim();
       return [
         `${dateText} ${timeText} ${service}`,
@@ -809,8 +809,15 @@
         extraLocation ? `加點：${extraLocation}` : "",
         "",
         "",
-        `備註：${remarks}`
+        ...remarksLines
       ].filter(line => line !== null && line !== undefined).join("\n").replace(/\n{4,}/g, "\n\n\n");
+    }
+
+    function formatCustomerRemarksLines(value) {
+      const text = String(value || "").replace(/\r\n/g, "\n").trim();
+      if (!text) return ["備註：無"];
+      if (text.includes("\n")) return ["備註：", text];
+      return [`備註：${text}`];
     }
 
     function displayCustomerName(p) {
