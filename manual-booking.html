@@ -421,7 +421,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.17";
+    const APP_VERSION = "manual-booking-v1.0.18";
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyHkLho-EhceBtJCSd0Vz5e1NtSDILWH08nD_8jJoJzd4c7unaXiI6q_A0ETgpuYG5x/exec";
     let templates = [];
 
@@ -791,6 +791,7 @@
       const luggage = formatCustomerLuggage(p.luggageCount);
       const fareLine = formatCustomerFare(p.paymentMethod, trip.fare);
       const remarks = (p.remarks || "").trim() || "無";
+      const extraLocation = String(p.extraLocation || "").trim();
       return [
         `${dateText} ${timeText} ${service}`,
         "",
@@ -804,6 +805,7 @@
         `行李：${luggage}`,
         "地址：",
         `${p.address || ""}`,
+        extraLocation ? `加點：${extraLocation}` : "",
         "",
         `備註：${remarks}`
       ].filter(Boolean).join("\n");
