@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>安興租車 - 搭乘回饋問卷</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -235,6 +236,7 @@
                         <label class="block text-sm font-medium mb-1">想對我們說的話（選填）</label>
                         <p class="text-xs text-gray-500">分享本次搭乘感受、司機服務、車況或預約流程，滿 20 字可再獲得 50 元乘車折抵金。</p>
                         <textarea id="comments" rows="3" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-accent" placeholder="歡迎留下您的搭乘感受、建議或鼓勵"></textarea>
+                        <div id="commentCounter" class="text-xs text-gray-400 text-right">目前 0 字｜滿 20 字可加送 50 元</div>
                     </div>
                 </div>
 
@@ -276,14 +278,17 @@
                         </div>
                     </div>
                 </div>
-                <p id="lineReturnHint" class="mt-10 text-sm text-gray-500">折扣碼已同步傳送至 LINE 對話，請點右上角 X 返回查看。</p>
+                <p id="lineReturnHint" class="mt-10 text-sm text-gray-500">回饋卡片已同步傳送至 LINE 對話，系統將自動返回 LINE。</p>
             </div>
     </div>
 
     <script>
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyHkLho-EhceBtJCSd0Vz5e1NtSDILWH08nD_8jJoJzd4c7unaXiI6q_A0ETgpuYG5x/exec';
+        const LIFF_IDS = { AS: '2009922945-KmKUgqbg', AZ: '2010218931-J293DdSb' };
         const urlParams = new URLSearchParams(window.location.search);
         const tokenParam = urlParams.get('token') || '';
+        const sourceParam = (urlParams.get('source') || urlParams.get('s') || 'AS').trim().toUpperCase();
+        let liffReady = false;
 
         function showClosedScreen(title, message) {
             document.getElementById('loadingScreen').classList.add('hidden');
@@ -326,6 +331,42 @@
             const originalText = copyBtn.innerText;
             copyBtn.innerText = "已複製！ ✓"; copyBtn.classList.remove('text-primary'); copyBtn.classList.add('text-accent');
             setTimeout(() => { copyBtn.innerText = originalText; copyBtn.classList.add('text-primary'); copyBtn.classList.remove('text-accent'); }, 2000);
+        }
+
+        async function initializeSurveyLiff() {
+            if (!window.liff) return;
+            try {
+                await liff.init({ liffId: LIFF_IDS[sourceParam] || LIFF_IDS.AS });
+                liffReady = true;
+            } catch (error) {
+                liffReady = false;
+            }
+        }
+
+        function countCommentChars() {
+            const textarea = document.getElementById('comments');
+            const counter = document.getElementById('commentCounter');
+            if (!textarea || !counter) return 0;
+            const count = textarea.value.replace(/\s/g, '').length;
+            const remain = Math.max(20 - count, 0);
+            counter.textContent = count >= 20
+                ? `目前 ${count} 字｜已符合加送 50 元`
+                : `目前 ${count} 字｜再 ${remain} 字可加送 50 元`;
+            counter.className = count >= 20 ? 'text-xs text-primary text-right font-medium' : 'text-xs text-gray-400 text-right';
+            return count;
+        }
+
+        function closeSurveyWindowSoon() {
+            setTimeout(() => {
+                try {
+                    if (window.liff && liffReady && liff.isInClient()) {
+                        liff.closeWindow();
+                        return;
+                    }
+                } catch (error) {}
+                try { window.close(); } catch (error) {}
+                document.getElementById('lineReturnHint').innerText = '回饋卡片已同步傳送至 LINE 對話，請點右上角 X 返回查看。';
+            }, 2500);
         }
 
         const surveyForm = document.getElementById('surveyForm');
@@ -371,9 +412,10 @@
             document.getElementById('rewardBadge').innerText = `${amount}元折抵`;
             document.getElementById('rewardSummary').innerText = `本次獲得 ${amount} 元乘車折抵金`;
             document.getElementById('lineReturnHint').innerText = lineNoticeSent
-                ? '回饋卡片已同步傳送至 LINE 對話，請點右上角 X 返回查看。'
-                : '折抵金已成功歸戶，請點右上角 X 返回 LINE。';
+                ? '回饋卡片已同步傳送至 LINE 對話，系統將自動返回 LINE。'
+                : '折抵金已成功歸戶，系統將自動返回 LINE。';
             window.scrollTo({ top: 0, behavior: 'smooth' });
+            closeSurveyWindowSoon();
         }
 
         function resetSubmitButton() {
@@ -381,6 +423,9 @@
             submitBtn.disabled = false;
             submitBtn.innerHTML = `<span>送出回饋並領取折抵金</span><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>`;
         }
+        document.getElementById('comments')?.addEventListener('input', countCommentChars);
+        countCommentChars();
+        initializeSurveyLiff();
         loadSurvey();
     </script>
 </body>
