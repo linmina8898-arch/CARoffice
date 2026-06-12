@@ -421,7 +421,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.18";
+    const APP_VERSION = "manual-booking-v1.0.19";
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyHkLho-EhceBtJCSd0Vz5e1NtSDILWH08nD_8jJoJzd4c7unaXiI6q_A0ETgpuYG5x/exec";
     let templates = [];
 
@@ -800,6 +800,7 @@
         `車型：${p.carType || "無"}`,
         `車資：${fareLine}`,
         "",
+        "",
         `乘客：${displayCustomerName(p)} ${p.phone || ""}`.trim(),
         `人數：${pax}`,
         `行李：${luggage}`,
@@ -807,8 +808,9 @@
         `${p.address || ""}`,
         extraLocation ? `加點：${extraLocation}` : "",
         "",
+        "",
         `備註：${remarks}`
-      ].filter(Boolean).join("\n");
+      ].filter(line => line !== null && line !== undefined).join("\n").replace(/\n{4,}/g, "\n\n\n");
     }
 
     function displayCustomerName(p) {
@@ -873,7 +875,14 @@
       const text = String(value || "").trim();
       const match = text.match(/(\d+)\s*大(?:\s*(\d+)\s*中)?(?:\s*(\d+)\s*小)?/);
       if (!match) return text || "請確認";
-      return `${Number(match[1] || 0)}大 ${Number(match[2] || 0)}中 ${Number(match[3] || 0)}小`;
+      const parts = [];
+      const adult = Number(match[1] || 0);
+      const child = Number(match[2] || 0);
+      const infant = Number(match[3] || 0);
+      if (adult) parts.push(`${adult}大`);
+      if (child) parts.push(`${child}中`);
+      if (infant) parts.push(`${infant}小`);
+      return parts.join(" ") || "0人";
     }
 
     function formatCustomerLuggage(value) {
