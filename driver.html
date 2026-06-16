@@ -177,7 +177,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.14.30";
+        const APP_VERSION = "v1.14.31";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -836,10 +836,9 @@
             const t = tasks.find(x => x.orderId === orderId);
             if (!t) return;
             const tripCarNo = cleanVal(t.tripCarNo) || cleanVal(driverData?.carNo);
-            const tripCarType = cleanVal(t.tripCarType) || cleanVal(t.car) || cleanVal(driverData?.carType);
-            const driverLicenseNo = cleanVal(driverData?.driverLicenseNo) || cleanVal(driverData?.licenseNo) || cleanVal(t.driverLicenseNo);
+            const driverCarType = cleanVal(driverData?.carType);
+            const driverLicenseNo = cleanVal(driverData?.idNumber) || cleanVal(driverData?.driverIdNumber) || cleanVal(driverData?.driverLicenseNo) || cleanVal(driverData?.licenseNo) || cleanVal(t.driverLicenseNo);
             const driverAddress = cleanVal(driverData?.address) || cleanVal(t.driverAddress);
-            const fare = parseMoney(t.tripAmt || t.driverPayout || t.grandTotal);
             document.getElementById('rentalFormOrderText').innerText = cleanVal(t.orderId);
             setRentalText('rentalOrderId', cleanVal(t.orderId));
             setRentalText('rentalCustomerName', cleanVal(t.custName));
@@ -849,7 +848,7 @@
             setRentalText('rentalDriverLicenseNo', driverLicenseNo);
             setRentalText('rentalDriverAddress', driverAddress);
             setRentalText('rentalCarNo', tripCarNo);
-            setRentalText('rentalCarModel', normalizeRentalCarModel(tripCarType));
+            setRentalText('rentalCarModel', driverCarType);
             setRentalText('rentalPeriod', formatRentalPeriod(t.date, t.time));
             setRentalText('rentalFare', '━');
             setRentalText('rentalFlightNo', cleanVal(t.flightNo) === '無' ? '' : cleanVal(t.flightNo));
