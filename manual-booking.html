@@ -421,7 +421,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.21";
+    const APP_VERSION = "manual-booking-v1.0.22";
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyHkLho-EhceBtJCSd0Vz5e1NtSDILWH08nD_8jJoJzd4c7unaXiI6q_A0ETgpuYG5x/exec";
     let templates = [];
 
@@ -771,16 +771,22 @@
         }));
       }
       return [
+        "【預約成功通知】",
+        "",
         "親愛的客戶您好",
-        "您已成功預約接送服務，以下為預約資料：",
+        "您的接送服務已預約成功。",
+        "以下為您的預約明細：",
         "",
-        "* 行程異動請至少提早 5 小時前告知",
-        "* 司機資料於出發前一天 18:00 左右提供",
-        "* 如資料有誤或需變更，請與我們聯絡，謝謝",
+        trips.join("\n\n"),
         "",
-        "────",
+        "▌ 其他說明",
+        "──────────",
+        "✦ 司機資料將於前一日 18:00 發送",
+        "✦ 行程異動請於出發前 5 小時告知",
+        "✦ 需變更請直接回覆本訊息",
         "",
-        trips.join("\n\n────\n\n")
+        "【24小時客服專線】",
+        "➤ ᴘʜᴏɴᴇ 電話：0955311306"
       ].join("\n");
     }
 
@@ -793,35 +799,40 @@
       const pax = formatCustomerPax(p.paxCount);
       const luggage = formatCustomerLuggage(p.luggageCount);
       const fareLine = formatCustomerFare(p.paymentMethod, trip.fare);
-      const remarksLines = formatCustomerRemarksLines(p.remarks);
+      const remarkText = formatCustomerRemarkText(p.remarks);
       const extraLocation = String(p.extraLocation || "").trim();
+      const serviceName = service === "送機" ? "機場送機" : "機場接機";
+      const blockTitle = p.hasReturn && label ? `▌ 預約資訊（${label}）` : "▌ 預約資訊";
       return [
-        label ? `【${label}】` : "",
-        `${dateText} ${timeText} ${service}`,
+        blockTitle,
+        "──────────",
+        `．日期時間：${dateText} ${timeText}`,
+        `．服務項目：${serviceName}`,
+        `．航班編號：${flight}`,
+        `．乘車機場：${p.airport || "無"}`,
         "",
-        `航班：${flight}`,
-        `機場：${p.airport || "無"}`,
-        `車型：${p.carType || "無"}`,
-        `車資：${fareLine}`,
+        "▌ 乘客與行程",
+        "──────────",
+        `．乘車人員：${displayCustomerName(p)}`,
+        `．聯絡電話：${p.phone || ""}`,
+        `．乘車人數：${pax}`,
+        `．行李件數：${luggage}`,
+        `．接送地址：${p.address || "無"}`,
+        extraLocation ? `．加點地址：${extraLocation}` : "",
         "",
-        "",
-        `乘客：${displayCustomerName(p)} ${p.phone || ""}`.trim(),
-        `人數：${pax}`,
-        `行李：${luggage}`,
-        "地址：",
-        `${p.address || ""}`,
-        extraLocation ? `加點：${extraLocation}` : "",
-        "",
-        "",
-        ...remarksLines
+        "▌ 費用",
+        "──────────",
+        `．乘車車型：${p.carType || "無"}`,
+        `．車資總計：${fareLine}`,
+        `．特殊備註：${remarkText}`
       ].filter(line => line !== null && line !== undefined).join("\n").replace(/\n{4,}/g, "\n\n\n");
     }
 
-    function formatCustomerRemarksLines(value) {
+    function formatCustomerRemarkText(value) {
       const text = String(value || "").replace(/\r\n/g, "\n").trim();
-      if (!text) return ["備註：無"];
-      if (text.includes("\n")) return ["備註：", text];
-      return [`備註：${text}`];
+      if (!text) return "無";
+      if (/收據/.test(text) && !/需開立收據|需收據/.test(text)) return "需開立收據";
+      return text;
     }
 
     function displayCustomerName(p) {
@@ -879,7 +890,7 @@
       if (parts.length !== 3) return value;
       const dt = new Date(`${value}T00:00:00`);
       const weekdays = ["日", "一", "二", "三", "四", "五", "六"];
-      return `${Number(parts[1])}/${Number(parts[2])}(${weekdays[dt.getDay()]})`;
+      return `${Number(parts[1])}/${Number(parts[2])} (${weekdays[dt.getDay()]})`;
     }
 
     function formatCustomerPax(value) {
@@ -909,12 +920,12 @@
     }
 
     function formatCustomerFare(paymentMethod, fare) {
-      const amount = `$${money(fare).toLocaleString()}`;
+      const amount = `$${money(fare).toLocaleString()} 元`;
       const payment = String(paymentMethod || "");
-      if (payment.includes("現金") || payment.includes("收現")) return `收現 ${amount} 元`;
-      if (payment.includes("轉帳")) return `轉帳 ${amount} 元`;
-      if (payment.includes("簽單") || payment.includes("月結")) return `簽單 ${amount} 元`;
-      return `${payment || "車資"} ${amount} 元`;
+      if (payment.includes("現金") || payment.includes("收現")) return `${amount} (現場收現)`;
+      if (payment.includes("轉帳")) return `${amount} (轉帳)`;
+      if (payment.includes("簽單") || payment.includes("月結")) return `${amount} (月結簽單)`;
+      return `${amount}${payment ? ` (${payment})` : ""}`;
     }
 
     function resetForm() {
