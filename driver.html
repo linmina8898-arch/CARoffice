@@ -18,6 +18,11 @@
         .driver-field { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 8px; align-items: start; padding: 8px 0; border-bottom: 1px solid rgba(229,231,235,.8); }
         .driver-field-label { color: #6b7280; font-size: 12px; font-weight: 400; white-space: nowrap; }
         .driver-field-value { color: #1f2937; font-weight: 500; text-align: right; overflow-wrap: anywhere; }
+        .rental-sheet-box { position: relative; width: min(980px, calc(100vw - 24px)); margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,.22); background: #fff; }
+        .rental-sheet-box img { width: 100%; display: block; user-select: none; pointer-events: none; }
+        .rental-field { position: absolute; color: #111; font-weight: 600; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: clamp(10px, 2.05vw, 20px); }
+        .rental-small { font-size: clamp(8px, 1.55vw, 15px); }
+        .rental-order { font-size: clamp(8px, 1.45vw, 14px); }
         /* 簽名板 */
         #signaturePad { border: 2px dashed #cbd5e1; border-radius: 10px; width: 100%; flex: 1; min-height: 58vh; touch-action: none; background: #fff; }
     </style>
@@ -142,9 +147,37 @@
         </div>
     </div>
 
+    <!-- 出租單出示 Modal -->
+    <div id="rentalFormModal" class="fixed inset-0 bg-black/80 z-[70] hidden overflow-auto">
+        <div class="sticky top-0 z-10 bg-white px-4 py-3 shadow flex items-center justify-between">
+            <div>
+                <div class="text-sm font-bold text-[#553f62]">汽車出租單</div>
+                <div id="rentalFormOrderText" class="text-[11px] text-gray-500"></div>
+            </div>
+            <button onclick="closeRentalForm()" class="px-3 py-1.5 rounded-lg bg-[#553f62] text-white text-sm font-bold">關閉</button>
+        </div>
+        <div class="p-3">
+            <div class="rental-sheet-box" id="rentalSheetBox">
+                <img src="rental-form-template.jpg" alt="汽車出租單">
+                <div id="rentalOrderId" class="rental-field rental-order" style="left:76.5%;top:7.1%;width:17%;"></div>
+                <div id="rentalCustomerName" class="rental-field" style="left:20.4%;top:11.2%;width:16%;"></div>
+                <div id="rentalCustomerPhone" class="rental-field" style="left:45.1%;top:11.2%;width:17%;"></div>
+                <div id="rentalCustomerAddress" class="rental-field" style="left:20.4%;top:18.1%;width:42%;"></div>
+                <div id="rentalDriverName" class="rental-field" style="left:31.2%;top:30.6%;width:13%;"></div>
+                <div id="rentalDriverLicenseNo" class="rental-field rental-small" style="left:49.8%;top:30.9%;width:13%;"></div>
+                <div id="rentalDriverAddress" class="rental-field" style="left:73.2%;top:30.6%;width:15%;"></div>
+                <div id="rentalCarNo" class="rental-field" style="left:31.1%;top:37.4%;width:17%;"></div>
+                <div id="rentalCarModel" class="rental-field" style="left:73.2%;top:37.4%;width:16%;"></div>
+                <div id="rentalPeriod" class="rental-field rental-small" style="left:21.9%;top:44.5%;width:69%;"></div>
+                <div id="rentalFare" class="rental-field" style="left:21.9%;top:51.4%;width:18%;"></div>
+                <div id="rentalFlightNo" class="rental-field" style="left:73.2%;top:51.4%;width:16%;"></div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.14.27";
+        const APP_VERSION = "v1.14.28";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -785,6 +818,7 @@
                 </div>
                 
                 <div class="flex flex-col gap-3 mt-4 mb-4">
+                    <button onclick="openRentalForm('${t.orderId}')" class="w-full border border-[#553f62] text-[#553f62] py-3 rounded-xl font-bold text-sm bg-white hover:bg-[#f8f5fa] transition">出示出租單</button>
                     ${actionBtn}
                     <button onclick="reportAnomaly('${t.orderId}')" class="w-full border border-red-300 text-red-500 py-3 rounded-xl font-bold text-sm bg-white hover:bg-red-50 transition">異常狀況回報</button>
                 </div>
@@ -797,6 +831,52 @@
         function closeTaskDetail() {
             currentDetailOrderId = null;
             document.getElementById('view-task-detail').classList.add('hidden');
+        }
+
+        function openRentalForm(orderId) {
+            const t = tasks.find(x => x.orderId === orderId);
+            if (!t) return;
+            const tripCarNo = cleanVal(t.tripCarNo) || cleanVal(driverData?.carNo);
+            const tripCarType = cleanVal(t.tripCarType) || cleanVal(t.car) || cleanVal(driverData?.carType);
+            const driverLicenseNo = cleanVal(driverData?.driverLicenseNo) || cleanVal(driverData?.licenseNo) || cleanVal(t.driverLicenseNo);
+            const driverAddress = cleanVal(driverData?.address) || cleanVal(t.driverAddress);
+            const fare = parseMoney(t.tripAmt || t.driverPayout || t.grandTotal);
+            document.getElementById('rentalFormOrderText').innerText = cleanVal(t.orderId);
+            setRentalText('rentalOrderId', cleanVal(t.orderId));
+            setRentalText('rentalCustomerName', cleanVal(t.custName));
+            setRentalText('rentalCustomerPhone', cleanVal(t.custPhone));
+            setRentalText('rentalCustomerAddress', cleanVal(t.address));
+            setRentalText('rentalDriverName', cleanVal(driverData?.name));
+            setRentalText('rentalDriverLicenseNo', driverLicenseNo);
+            setRentalText('rentalDriverAddress', driverAddress);
+            setRentalText('rentalCarNo', tripCarNo);
+            setRentalText('rentalCarModel', normalizeRentalCarModel(tripCarType));
+            setRentalText('rentalPeriod', formatRentalPeriod(t.date, t.time));
+            setRentalText('rentalFare', fare > 0 ? '$' + fare.toLocaleString() : '');
+            setRentalText('rentalFlightNo', cleanVal(t.flightNo) === '無' ? '' : cleanVal(t.flightNo));
+            document.getElementById('rentalFormModal').classList.remove('hidden');
+        }
+
+        function closeRentalForm() {
+            document.getElementById('rentalFormModal').classList.add('hidden');
+        }
+
+        function setRentalText(id, value) {
+            const el = document.getElementById(id);
+            if (el) el.innerText = value || '';
+        }
+
+        function normalizeRentalCarModel(value) {
+            const text = cleanVal(value);
+            if (/TOYOTA|Toyota|豐田|Sienna|SIENNA|Alphard|ALPHARD/.test(text)) return text || 'TOYOTA';
+            return text;
+        }
+
+        function formatRentalPeriod(dateText, timeText) {
+            const date = parseTaskDateTime({ date: dateText, time: timeText });
+            if (!date) return '';
+            const end = new Date(date.getTime() + 60 * 60 * 1000);
+            return `自民國 ${date.getFullYear() - 1911} 年 ${date.getMonth() + 1} 月 ${date.getDate()} 日 ${date.getHours()} 時 ${date.getMinutes()} 分 起至 ${end.getFullYear() - 1911} 年 ${end.getMonth() + 1} 月 ${end.getDate()} 日 ${end.getHours()} 時 ${end.getMinutes()} 分止`;
         }
 
         // --- 狀態更新邏輯 (針對「收單」加速，不讀取 GPS) ---
