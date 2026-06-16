@@ -20,9 +20,7 @@
         .driver-field-value { color: #1f2937; font-weight: 500; text-align: right; overflow-wrap: anywhere; }
         .rental-sheet-box { position: relative; width: min(980px, calc(100vw - 24px)); margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,.22); background: #fff; }
         .rental-sheet-box img { width: 100%; display: block; user-select: none; pointer-events: none; }
-        .rental-field { position: absolute; color: #111; font-weight: 400; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: clamp(4px, .82vw, 8px); }
-        .rental-small { font-size: clamp(4px, .72vw, 7px); }
-        .rental-order { font-size: clamp(4px, .68vw, 7px); }
+        .rental-sheet-canvas { width: 100%; display: block; user-select: none; }
         /* 簽名板 */
         #signaturePad { border: 2px dashed #cbd5e1; border-radius: 10px; width: 100%; flex: 1; min-height: 58vh; touch-action: none; background: #fff; }
     </style>
@@ -158,26 +156,14 @@
         </div>
         <div class="p-3">
             <div class="rental-sheet-box" id="rentalSheetBox">
-                <img src="rental-form-template.jpg?v=20260617a" alt="汽車出租單">
-                <div id="rentalOrderId" class="rental-field rental-order" style="left:76.6%;top:7.0%;width:16%;"></div>
-                <div id="rentalCustomerName" class="rental-field" style="left:21.2%;top:11.2%;width:14%;"></div>
-                <div id="rentalCustomerPhone" class="rental-field" style="left:45.8%;top:11.2%;width:15%;"></div>
-                <div id="rentalCustomerAddress" class="rental-field rental-small" style="left:21.0%;top:17.4%;width:41%;"></div>
-                <div id="rentalDriverName" class="rental-field rental-small" style="left:31.8%;top:30.3%;width:10%;"></div>
-                <div id="rentalDriverLicenseNo" class="rental-field rental-small" style="left:51.0%;top:30.3%;width:11%;"></div>
-                <div id="rentalDriverAddress" class="rental-field rental-small" style="left:73.2%;top:30.3%;width:15%;"></div>
-                <div id="rentalCarNo" class="rental-field rental-small" style="left:31.5%;top:36.4%;width:15%;"></div>
-                <div id="rentalCarModel" class="rental-field rental-small" style="left:73.2%;top:36.4%;width:15%;"></div>
-                <div id="rentalPeriod" class="rental-field rental-small" style="left:22.2%;top:42.8%;width:66%;"></div>
-                <div id="rentalFare" class="rental-field" style="left:22.5%;top:49.4%;width:16%;"></div>
-                <div id="rentalFlightNo" class="rental-field rental-small" style="left:73.3%;top:49.4%;width:15%;"></div>
+                <canvas id="rentalFormCanvas" class="rental-sheet-canvas" width="1280" height="903"></canvas>
             </div>
         </div>
     </div>
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.14.35";
+        const APP_VERSION = "v1.14.36";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -197,6 +183,9 @@
         let historyOnlyUnsettled = false;
         let tasksLoading = false;
         let historyLoadedMonth = "";
+        const RENTAL_TEMPLATE_URL = 'rental-form-template.jpg?v=20260617b';
+        const rentalTemplateImage = new Image();
+        rentalTemplateImage.src = RENTAL_TEMPLATE_URL;
         
         // 簽名板邏輯
         const canvas = document.getElementById('signaturePad');
@@ -849,18 +838,20 @@
             const driverLicenseNo = cleanVal(driverData?.idNumber) || cleanVal(driverData?.driverIdNumber) || cleanVal(driverData?.driverLicenseNo) || cleanVal(driverData?.licenseNo) || cleanVal(t.driverLicenseNo);
             const driverAddress = cleanVal(driverData?.address) || cleanVal(t.driverAddress);
             document.getElementById('rentalFormOrderText').innerText = cleanVal(t.orderId);
-            setRentalText('rentalOrderId', cleanVal(t.orderId));
-            setRentalText('rentalCustomerName', cleanVal(t.custName));
-            setRentalText('rentalCustomerPhone', cleanVal(t.custPhone));
-            setRentalText('rentalCustomerAddress', cleanVal(t.address));
-            setRentalText('rentalDriverName', cleanVal(driverData?.name));
-            setRentalText('rentalDriverLicenseNo', driverLicenseNo);
-            setRentalText('rentalDriverAddress', driverAddress);
-            setRentalText('rentalCarNo', tripCarNo);
-            setRentalText('rentalCarModel', driverCarType);
-            setRentalText('rentalPeriod', formatRentalPeriod(t.date, t.time));
-            setRentalText('rentalFare', '━');
-            setRentalText('rentalFlightNo', cleanVal(t.flightNo) === '無' ? '' : cleanVal(t.flightNo));
+            drawRentalForm({
+                orderId: cleanVal(t.orderId),
+                customerName: cleanVal(t.custName),
+                customerPhone: cleanVal(t.custPhone),
+                customerAddress: cleanVal(t.address),
+                driverName: cleanVal(driverData?.name),
+                driverLicenseNo,
+                driverAddress,
+                carNo: tripCarNo,
+                carModel: driverCarType,
+                period: formatRentalPeriod(t.date, t.time),
+                fare: '━',
+                flightNo: cleanVal(t.flightNo) === '無' ? '' : cleanVal(t.flightNo)
+            });
             document.getElementById('rentalFormModal').classList.remove('hidden');
         }
 
@@ -871,6 +862,43 @@
         function setRentalText(id, value) {
             const el = document.getElementById(id);
             if (el) el.innerText = value || '';
+        }
+
+        function drawRentalForm(data) {
+            const canvas = document.getElementById('rentalFormCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const render = () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(rentalTemplateImage, 0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#111';
+                ctx.textBaseline = 'middle';
+                const draw = (text, x, y, w, size = 18) => {
+                    const value = cleanVal(text);
+                    if (!value) return;
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.rect(x, y - size, w, size * 1.8);
+                    ctx.clip();
+                    ctx.font = `${size}px "Microsoft JhengHei", Arial, sans-serif`;
+                    ctx.fillText(value, x, y);
+                    ctx.restore();
+                };
+                draw(data.orderId, 930, 67, 220, 14);
+                draw(data.customerName, 260, 111, 165, 19);
+                draw(data.customerPhone, 565, 111, 190, 19);
+                draw(data.customerAddress, 260, 174, 500, 16);
+                draw(data.driverName, 397, 303, 120, 15);
+                draw(data.driverLicenseNo, 635, 303, 145, 14);
+                draw(data.driverAddress, 905, 303, 170, 14);
+                draw(data.carNo, 397, 365, 170, 15);
+                draw(data.carModel, 905, 365, 170, 15);
+                draw(data.period, 280, 427, 820, 15);
+                draw(data.fare, 280, 493, 210, 18);
+                draw(data.flightNo, 905, 493, 170, 15);
+            };
+            if (rentalTemplateImage.complete) render();
+            else rentalTemplateImage.onload = render;
         }
 
         function normalizeRentalCarModel(value) {
