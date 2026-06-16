@@ -227,6 +227,9 @@
           <div class="full">
             <label for="templateSelect">固定客戶範本</label>
             <input id="templateSearch" type="search" placeholder="搜尋姓名、電話、來源或客戶代碼，例如：陳" class="mb-2">
+            <select id="templateSourceFilter" class="mb-2">
+              <option value="">全部來源</option>
+            </select>
             <select id="templateSelect">
               <option value="">手動填寫，或選擇固定客戶</option>
             </select>
@@ -435,7 +438,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.29";
+    const APP_VERSION = "manual-booking-v1.0.30";
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyHkLho-EhceBtJCSd0Vz5e1NtSDILWH08nD_8jJoJzd4c7unaXiI6q_A0ETgpuYG5x/exec";
     let templates = [];
 
@@ -451,6 +454,7 @@
       $("serviceType").addEventListener("change", syncReturnType);
       $("templateSelect").addEventListener("change", applyTemplate);
       $("templateSearch").addEventListener("input", renderTemplateOptions);
+      $("templateSourceFilter").addEventListener("change", renderTemplateOptions);
       ["flightNumber", "returnFlightNumber"].forEach(id => $(id).addEventListener("input", forceUppercase));
       $("phone").addEventListener("input", formatPhoneInput);
       ["source", "customSource", "serviceType", "rideDate", "rideHour", "rideMinute", "fare", "hasReturn", "returnHour", "returnMinute", "returnFare"].forEach(id => {
@@ -475,6 +479,7 @@
         }
         templates = data.templates || [];
         renderSourceOptions(templates);
+        renderTemplateSourceFilter();
         renderTemplateOptions();
         $("templateHint").textContent = setupCreated
           ? `已建立「固定客戶」工作表與表頭，可先手動填寫或到 Google Sheet 新增範本。`
@@ -514,25 +519,43 @@
 
     function renderTemplateOptions() {
       const keyword = ($("templateSearch")?.value || "").trim().toLowerCase();
+      const sourceFilter = $("templateSourceFilter")?.value || "";
       const matched = templates
         .map((tpl, idx) => ({ tpl, idx }))
         .filter(item => {
+          if (sourceFilter && item.tpl.source !== sourceFilter) return false;
           if (!keyword) return true;
           const haystack = [item.tpl.source, item.tpl.code, item.tpl.name, item.tpl.phone, item.tpl.address, item.tpl.remarks]
             .filter(Boolean)
             .join(" ")
             .toLowerCase();
           return haystack.includes(keyword);
+        })
+        .sort((a, b) => {
+          const as = String(a.tpl.source || "");
+          const bs = String(b.tpl.source || "");
+          if (as !== bs) return as.localeCompare(bs, "zh-Hant");
+          const an = String(a.tpl.name || a.tpl.code || "");
+          const bn = String(b.tpl.name || b.tpl.code || "");
+          return an.localeCompare(bn, "zh-Hant");
         });
       $("templateSelect").innerHTML = '<option value="">手動填寫，或選擇固定客戶</option>' + matched.map(({ tpl, idx }) => {
         const label = [tpl.source, tpl.code, tpl.name, tpl.phone].filter(Boolean).join(" / ");
         return `<option value="${idx}">${escapeHtml(label)}</option>`;
       }).join("");
-      $("templateHint").textContent = keyword
-        ? `符合「${$("templateSearch").value}」的固定客戶：${matched.length} 筆`
+      $("templateHint").textContent = keyword || sourceFilter
+        ? `符合${sourceFilter ? `「${sourceFilter}」來源` : ""}${keyword ? `「${$("templateSearch").value}」` : ""}的固定客戶：${matched.length} 筆`
         : templates.length
         ? `已載入 ${templates.length} 筆固定客戶範本。`
         : $("templateHint").textContent;
+    }
+
+    function renderTemplateSourceFilter() {
+      const current = $("templateSourceFilter").value;
+      const sources = Array.from(new Set(templates.map(t => t.source).filter(Boolean)))
+        .sort((a, b) => String(a).localeCompare(String(b), "zh-Hant"));
+      $("templateSourceFilter").innerHTML = '<option value="">全部來源</option>' + sources.map(source => `<option value="${escapeHtml(source)}">${escapeHtml(source)}</option>`).join("");
+      if (sources.includes(current)) $("templateSourceFilter").value = current;
     }
 
     function initTimeSelects() {
