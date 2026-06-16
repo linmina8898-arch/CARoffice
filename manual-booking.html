@@ -435,7 +435,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.26";
+    const APP_VERSION = "manual-booking-v1.0.27";
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyHkLho-EhceBtJCSd0Vz5e1NtSDILWH08nD_8jJoJzd4c7unaXiI6q_A0ETgpuYG5x/exec";
     let templates = [];
 
@@ -784,15 +784,19 @@
           fare: p.returnFare || p.fare
         }));
       }
+      return trips.map(tripText => buildCustomerMessageEnvelope(tripText)).join("\n\n");
+    }
+
+    function buildCustomerMessageEnvelope(tripText) {
       return [
         "【預約成功通知】",
         "親愛的客戶您好",
         "您的接送服務已預約成功",
         "以下為您的預約明細：",
         "",
-        trips.join("\n\n"),
+        tripText,
         "",
-        "▌ 其他說明────────",
+        "▌ 注意事項────────",
         "．司機資料將於前一日 18:00 發送",
         "．行程異動請於出發前 5 小時告知",
         "．需變更請直接回覆本訊息",
@@ -831,22 +835,7 @@
       const list = (orders || []).filter(Boolean);
       if (!list.length) return "";
       const blocks = list.map((order, index) => buildCustomerTripBlockFromOrder(order, list.length > 1, index));
-      return [
-        "【預約成功通知】",
-        "親愛的客戶您好",
-        "您的接送服務已預約成功",
-        "以下為您的預約明細：",
-        "",
-        blocks.join("\n\n"),
-        "",
-        "▌ 其他說明────────",
-        "．司機資料將於前一日 18:00 發送",
-        "．行程異動請於出發前 5 小時告知",
-        "．需變更請直接回覆本訊息",
-        "",
-        "【24小時客服專線】",
-        "➤ ᴘʜᴏɴᴇ 電話：0955311306"
-      ].join("\n");
+      return blocks.map(block => buildCustomerMessageEnvelope(block)).join("\n\n");
     }
 
     function buildCustomerTripBlockFromOrder(order, multipleTrips, index) {
@@ -862,7 +851,7 @@
         `．航班編號：${order.flightNumber || "無"}`,
         `．接送機場：${order.airport || "無"}`,
         "",
-        "▌ 乘客與行程───────",
+        "▌ 乘車資訊────────",
         `．乘車人員：${order.customerName || "無"}`,
         `．聯絡電話：${order.phone || ""}`,
         `．乘車人數：${formatCustomerPax(order.paxCount)}`,
@@ -871,7 +860,7 @@
         `    ${order.address || "無"}`,
         order.extraLocation ? `．加點地址：\n    ${order.extraLocation}` : "",
         "",
-        "▌ 車型與費用───────",
+        "▌ 費用資訊────────",
         `．乘車車型：${order.carType || "無"}`,
         `．車資總計：${fareLine}`,
         `．特殊備註：${remarkText}`
@@ -896,7 +885,7 @@
         `．航班編號：${flight}`,
         `．接送機場：${p.airport || "無"}`,
         "",
-        "▌ 乘客與行程───────",
+        "▌ 乘車資訊────────",
         `．乘車人員：${displayCustomerName(p)}`,
         `．聯絡電話：${p.phone || ""}`,
         `．乘車人數：${pax}`,
@@ -905,7 +894,7 @@
         `    ${p.address || "無"}`,
         extraLocation ? `．加點地址：\n    ${extraLocation}` : "",
         "",
-        "▌ 車型與費用───────",
+        "▌ 費用資訊────────",
         `．乘車車型：${p.carType || "無"}`,
         `．車資總計：${fareLine}`,
         `．特殊備註：${remarkText}`
