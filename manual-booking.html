@@ -421,7 +421,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.20";
+    const APP_VERSION = "manual-booking-v1.0.21";
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyHkLho-EhceBtJCSd0Vz5e1NtSDILWH08nD_8jJoJzd4c7unaXiI6q_A0ETgpuYG5x/exec";
     let templates = [];
 
@@ -753,6 +753,7 @@
 
     function buildCustomerConfirmMessage(p) {
       const trips = [buildCustomerTripBlock(p, {
+        label: "去程",
         serviceType: p.serviceType,
         rideDate: p.rideDate,
         rideTime: p.rideTime,
@@ -761,6 +762,7 @@
       })];
       if (p.hasReturn) {
         trips.push(buildCustomerTripBlock(p, {
+          label: "回程",
           serviceType: p.returnServiceType,
           rideDate: p.returnDate,
           rideTime: p.returnTime,
@@ -784,6 +786,7 @@
 
     function buildCustomerTripBlock(p, trip) {
       const service = trip.serviceType || "接機";
+      const label = trip.label || "";
       const dateText = formatCustomerDate(trip.rideDate);
       const timeText = trip.rideTime || "";
       const flight = trip.flightNumber || "無";
@@ -793,6 +796,7 @@
       const remarksLines = formatCustomerRemarksLines(p.remarks);
       const extraLocation = String(p.extraLocation || "").trim();
       return [
+        label ? `【${label}】` : "",
         `${dateText} ${timeText} ${service}`,
         "",
         `航班：${flight}`,
