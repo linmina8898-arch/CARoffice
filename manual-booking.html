@@ -435,7 +435,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.27";
+    const APP_VERSION = "manual-booking-v1.0.28";
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyHkLho-EhceBtJCSd0Vz5e1NtSDILWH08nD_8jJoJzd4c7unaXiI6q_A0ETgpuYG5x/exec";
     let templates = [];
 
@@ -858,7 +858,7 @@
         `．行李件數：${formatCustomerLuggage(order.luggageCount)}`,
         "．接送地址：",
         `    ${order.address || "無"}`,
-        order.extraLocation ? `．加點地址：\n    ${order.extraLocation}` : "",
+        order.extraLocation ? `．加點地址：\n    ${order.extraLocation}` : null,
         "",
         "▌ 費用資訊────────",
         `．乘車車型：${order.carType || "無"}`,
@@ -892,7 +892,7 @@
         `．行李件數：${luggage}`,
         "．接送地址：",
         `    ${p.address || "無"}`,
-        extraLocation ? `．加點地址：\n    ${extraLocation}` : "",
+        extraLocation ? `．加點地址：\n    ${extraLocation}` : null,
         "",
         "▌ 費用資訊────────",
         `．乘車車型：${p.carType || "無"}`,
