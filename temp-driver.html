@@ -74,7 +74,7 @@
         </div>
     </div>
     <script>
-        const APP_VERSION = "v1.0.10";
+        const APP_VERSION = "v1.0.11";
         const GAS_URL = "https://script.google.com/macros/s/AKfycbyHkLho-EhceBtJCSd0Vz5e1NtSDILWH08nD_8jJoJzd4c7unaXiI6q_A0ETgpuYG5x/exec";
         const token = new URLSearchParams(location.search).get("token") || "";
         let task = null;
@@ -158,10 +158,10 @@
         function openRentalForm() {
             if (!task) return;
             const driverName = driver?.displayName || driver?.name || task.driverName || "";
-            const driverLicenseNo = driver?.driverLicenseNo || driver?.licenseNo || "";
-            const driverAddress = driver?.address || "";
+            const driverLicenseNo = driver?.idNumber || driver?.driverIdNumber || driver?.driverLicenseNo || driver?.licenseNo || "";
+            const driverAddress = driver?.address || driver?.driverAddress || "";
             const carNo = driver?.carNo || task.carNo || "";
-            const carModel = normalizeRentalCarModel(driver?.carType || task.driverCarType || task.car || "");
+            const carModel = driver?.carType || task.driverCarType || "";
             setRentalText("rentalOrderId", task.orderId);
             setRentalText("rentalCustomerName", task.custName);
             setRentalText("rentalCustomerPhone", task.custPhone);
