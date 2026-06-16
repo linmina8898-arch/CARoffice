@@ -20,9 +20,9 @@
         .driver-field-value { color: #1f2937; font-weight: 500; text-align: right; overflow-wrap: anywhere; }
         .rental-sheet-box { position: relative; width: min(980px, calc(100vw - 24px)); margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,.22); background: #fff; }
         .rental-sheet-box img { width: 100%; display: block; user-select: none; pointer-events: none; }
-        .rental-field { position: absolute; color: #111; font-weight: 600; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: clamp(10px, 2.05vw, 20px); }
-        .rental-small { font-size: clamp(8px, 1.55vw, 15px); }
-        .rental-order { font-size: clamp(8px, 1.45vw, 14px); }
+        .rental-field { position: absolute; color: #111; font-weight: 400; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: clamp(7px, 1.45vw, 14px); }
+        .rental-small { font-size: clamp(6px, 1.1vw, 11px); }
+        .rental-order { font-size: clamp(6px, 1vw, 10px); }
         /* 簽名板 */
         #signaturePad { border: 2px dashed #cbd5e1; border-radius: 10px; width: 100%; flex: 1; min-height: 58vh; touch-action: none; background: #fff; }
     </style>
@@ -80,7 +80,7 @@
         <header class="bg-[#553f62] shadow-md px-4 py-3 flex items-center justify-between sticky top-0 z-50">
             <button onclick="closeTaskDetail()" class="text-white font-bold text-xl px-2 py-1 active:bg-white/20 rounded">⬅</button>
             <h1 class="text-lg font-black text-white tracking-widest">任務明細</h1>
-            <div class="w-8"></div> <!-- 佔位對齊用 -->
+            <button onclick="openRentalForm(currentDetailOrderId)" class="text-[11px] bg-white/15 border border-white/40 text-white px-2 py-1 rounded-md">出租單</button>
         </header>
         <div id="task-detail-content" class="p-4 pb-24">
             <!-- 明細內容由 JS 動態生成 -->
@@ -159,25 +159,25 @@
         <div class="p-3">
             <div class="rental-sheet-box" id="rentalSheetBox">
                 <img src="rental-form-template.jpg" alt="汽車出租單">
-                <div id="rentalOrderId" class="rental-field rental-order" style="left:76.5%;top:7.1%;width:17%;"></div>
-                <div id="rentalCustomerName" class="rental-field" style="left:20.4%;top:11.2%;width:16%;"></div>
-                <div id="rentalCustomerPhone" class="rental-field" style="left:45.1%;top:11.2%;width:17%;"></div>
-                <div id="rentalCustomerAddress" class="rental-field" style="left:20.4%;top:18.1%;width:42%;"></div>
-                <div id="rentalDriverName" class="rental-field" style="left:31.2%;top:30.6%;width:13%;"></div>
-                <div id="rentalDriverLicenseNo" class="rental-field rental-small" style="left:49.8%;top:30.9%;width:13%;"></div>
-                <div id="rentalDriverAddress" class="rental-field" style="left:73.2%;top:30.6%;width:15%;"></div>
-                <div id="rentalCarNo" class="rental-field" style="left:31.1%;top:37.4%;width:17%;"></div>
-                <div id="rentalCarModel" class="rental-field" style="left:73.2%;top:37.4%;width:16%;"></div>
-                <div id="rentalPeriod" class="rental-field rental-small" style="left:21.9%;top:44.5%;width:69%;"></div>
-                <div id="rentalFare" class="rental-field" style="left:21.9%;top:51.4%;width:18%;"></div>
-                <div id="rentalFlightNo" class="rental-field" style="left:73.2%;top:51.4%;width:16%;"></div>
+                <div id="rentalOrderId" class="rental-field rental-order" style="left:76.2%;top:6.5%;width:18%;"></div>
+                <div id="rentalCustomerName" class="rental-field" style="left:20.5%;top:10.7%;width:16%;"></div>
+                <div id="rentalCustomerPhone" class="rental-field" style="left:45.2%;top:10.7%;width:17%;"></div>
+                <div id="rentalCustomerAddress" class="rental-field" style="left:20.5%;top:17.0%;width:42%;"></div>
+                <div id="rentalDriverName" class="rental-field" style="left:31.3%;top:29.7%;width:13%;"></div>
+                <div id="rentalDriverLicenseNo" class="rental-field rental-small" style="left:49.8%;top:30.0%;width:13%;"></div>
+                <div id="rentalDriverAddress" class="rental-field" style="left:73.2%;top:29.7%;width:15%;"></div>
+                <div id="rentalCarNo" class="rental-field" style="left:31.2%;top:36.1%;width:17%;"></div>
+                <div id="rentalCarModel" class="rental-field" style="left:73.2%;top:36.1%;width:16%;"></div>
+                <div id="rentalPeriod" class="rental-field rental-small" style="left:21.9%;top:42.3%;width:69%;"></div>
+                <div id="rentalFare" class="rental-field" style="left:21.9%;top:48.8%;width:18%;"></div>
+                <div id="rentalFlightNo" class="rental-field" style="left:73.2%;top:48.8%;width:16%;"></div>
             </div>
         </div>
     </div>
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.14.28";
+        const APP_VERSION = "v1.14.30";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -818,7 +818,6 @@
                 </div>
                 
                 <div class="flex flex-col gap-3 mt-4 mb-4">
-                    <button onclick="openRentalForm('${t.orderId}')" class="w-full border border-[#553f62] text-[#553f62] py-3 rounded-xl font-bold text-sm bg-white hover:bg-[#f8f5fa] transition">出示出租單</button>
                     ${actionBtn}
                     <button onclick="reportAnomaly('${t.orderId}')" class="w-full border border-red-300 text-red-500 py-3 rounded-xl font-bold text-sm bg-white hover:bg-red-50 transition">異常狀況回報</button>
                 </div>
@@ -852,7 +851,7 @@
             setRentalText('rentalCarNo', tripCarNo);
             setRentalText('rentalCarModel', normalizeRentalCarModel(tripCarType));
             setRentalText('rentalPeriod', formatRentalPeriod(t.date, t.time));
-            setRentalText('rentalFare', fare > 0 ? '$' + fare.toLocaleString() : '');
+            setRentalText('rentalFare', '━');
             setRentalText('rentalFlightNo', cleanVal(t.flightNo) === '無' ? '' : cleanVal(t.flightNo));
             document.getElementById('rentalFormModal').classList.remove('hidden');
         }
