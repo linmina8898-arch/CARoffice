@@ -435,7 +435,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.24";
+    const APP_VERSION = "manual-booking-v1.0.26";
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyHkLho-EhceBtJCSd0Vz5e1NtSDILWH08nD_8jJoJzd4c7unaXiI6q_A0ETgpuYG5x/exec";
     let templates = [];
 
@@ -785,7 +785,9 @@
         }));
       }
       return [
-        "【預約成功通知】親愛的客戶您好，您的接送服務已預約成功。",
+        "【預約成功通知】",
+        "親愛的客戶您好",
+        "您的接送服務已預約成功",
         "以下為您的預約明細：",
         "",
         trips.join("\n\n"),
@@ -830,7 +832,9 @@
       if (!list.length) return "";
       const blocks = list.map((order, index) => buildCustomerTripBlockFromOrder(order, list.length > 1, index));
       return [
-        "【預約成功通知】親愛的客戶您好，您的接送服務已預約成功。",
+        "【預約成功通知】",
+        "親愛的客戶您好",
+        "您的接送服務已預約成功",
         "以下為您的預約明細：",
         "",
         blocks.join("\n\n"),
@@ -847,8 +851,7 @@
 
     function buildCustomerTripBlockFromOrder(order, multipleTrips, index) {
       const service = order.serviceType || "接機";
-      const label = order.label || (index === 1 ? "回程" : "去程");
-      const title = multipleTrips ? `▌ 預約資訊（${label}）────────` : "▌ 預約資訊────────";
+      const title = "▌ 預約資訊────────";
       const dateText = formatCustomerDate(order.rideDate);
       const fareLine = formatCustomerFareWithManualCash(order.paymentMethod, order.fare || order.grandTotal, order.manualCashCollected);
       const remarkText = formatCustomerRemarkText(order.remarks);
@@ -877,7 +880,6 @@
 
     function buildCustomerTripBlock(p, trip) {
       const service = trip.serviceType || "接機";
-      const label = trip.label || "";
       const dateText = formatCustomerDate(trip.rideDate);
       const timeText = trip.rideTime || "";
       const flight = trip.flightNumber || "無";
@@ -886,9 +888,9 @@
       const fareLine = formatCustomerFare(p.paymentMethod, trip.fare);
       const remarkText = formatCustomerRemarkText(p.remarks);
       const extraLocation = String(p.extraLocation || "").trim();
-      const blockTitle = p.hasReturn && label ? `▌ 預約資訊（${label}）────────` : "▌ 預約資訊────────";
+      const title = "▌ 預約資訊────────";
       return [
-        blockTitle,
+        title,
         `．日期時間：${dateText} ${timeText}`,
         `．服務項目：${service}`,
         `．航班編號：${flight}`,
@@ -968,11 +970,18 @@
 
     function formatCustomerDate(value) {
       if (!value) return "";
-      const parts = String(value).split("-");
-      if (parts.length !== 3) return value;
-      const dt = new Date(`${value}T00:00:00`);
+      const text = String(value).replace(/'/g, "").trim();
       const weekdays = ["日", "一", "二", "三", "四", "五", "六"];
-      return `${Number(parts[1])}/${Number(parts[2])} (${weekdays[dt.getDay()]})`;
+      const match = text.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+      if (match) {
+        const dt = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+        return `${Number(match[2])}/${Number(match[3])} (${weekdays[dt.getDay()]})`;
+      }
+      const dt = new Date(text);
+      if (!isNaN(dt.getTime())) {
+        return `${dt.getMonth() + 1}/${dt.getDate()} (${weekdays[dt.getDay()]})`;
+      }
+      return text;
     }
 
     function formatCustomerPax(value) {
