@@ -15,9 +15,9 @@
         #signaturePad { border:2px dashed #cbd5e1; border-radius:10px; width:100%; flex:1; min-height:58vh; touch-action:none; background:#fff; }
         .rental-sheet-box { position:relative; width:min(96vw, 920px); margin:0 auto; background:#fff; -webkit-text-size-adjust:none; text-size-adjust:none; }
         .rental-sheet-box img { width:100%; display:block; user-select:none; pointer-events:none; }
-        .rental-field { position:absolute; color:#111; font-weight:400; line-height:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:10px; transform:scale(.68); transform-origin:left center; -webkit-text-size-adjust:none; text-size-adjust:none; }
-        .rental-small { font-size:9px; transform:scale(.64); }
-        .rental-order { font-size:8px; transform:scale(.62); }
+        .rental-field { position:absolute; color:#111; font-weight:400; line-height:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:8px; -webkit-text-size-adjust:none; text-size-adjust:none; }
+        .rental-small { font-size:7px; }
+        .rental-order { font-size:6px; }
     </style>
 </head>
 <body class="min-h-screen">
@@ -74,7 +74,7 @@
         </div>
     </div>
     <script>
-        const APP_VERSION = "v1.0.18";
+        const APP_VERSION = "v1.0.19";
         const GAS_URL = "https://script.google.com/macros/s/AKfycbyHkLho-EhceBtJCSd0Vz5e1NtSDILWH08nD_8jJoJzd4c7unaXiI6q_A0ETgpuYG5x/exec";
         const token = new URLSearchParams(location.search).get("token") || "";
         let task = null;
