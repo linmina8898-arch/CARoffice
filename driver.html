@@ -18,11 +18,11 @@
         .driver-field { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 8px; align-items: start; padding: 8px 0; border-bottom: 1px solid rgba(229,231,235,.8); }
         .driver-field-label { color: #6b7280; font-size: 12px; font-weight: 400; white-space: nowrap; }
         .driver-field-value { color: #1f2937; font-weight: 500; text-align: right; overflow-wrap: anywhere; }
-        .rental-sheet-box { position: relative; width: min(980px, calc(100vw - 24px)); margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,.22); background: #fff; }
+        .rental-sheet-box { position: relative; width: min(980px, calc(100vw - 24px)); margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,.22); background: #fff; -webkit-text-size-adjust: none; text-size-adjust: none; }
         .rental-sheet-box img { width: 100%; display: block; user-select: none; pointer-events: none; }
-        .rental-field { position: absolute; color: #111; font-weight: 400; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: clamp(3px, .62vw, 6px); }
-        .rental-small { font-size: clamp(2px, .5vw, 5px); }
-        .rental-order { font-size: clamp(2px, .48vw, 5px); }
+        .rental-field { position: absolute; color: #111; font-weight: 400; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 10px; transform: scale(.68); transform-origin: left center; -webkit-text-size-adjust: none; text-size-adjust: none; }
+        .rental-small { font-size: 9px; transform: scale(.64); }
+        .rental-order { font-size: 8px; transform: scale(.62); }
         /* 簽名板 */
         #signaturePad { border: 2px dashed #cbd5e1; border-radius: 10px; width: 100%; flex: 1; min-height: 58vh; touch-action: none; background: #fff; }
     </style>
@@ -159,25 +159,25 @@
         <div class="p-3">
             <div class="rental-sheet-box" id="rentalSheetBox">
                 <img src="rental-form-template.jpg?v=20260617c" alt="汽車出租單">
-                <div id="rentalOrderId" class="rental-field rental-order" style="left:76.2%;top:5.7%;width:17%;"></div>
-                <div id="rentalCustomerName" class="rental-field" style="left:20.8%;top:9.9%;width:15%;"></div>
-                <div id="rentalCustomerPhone" class="rental-field" style="left:45.2%;top:9.9%;width:16%;"></div>
-                <div id="rentalCustomerAddress" class="rental-field rental-small" style="left:20.7%;top:16.2%;width:42%;"></div>
-                <div id="rentalDriverName" class="rental-field rental-small" style="left:31.5%;top:28.7%;width:11%;"></div>
-                <div id="rentalDriverLicenseNo" class="rental-field rental-small" style="left:49.2%;top:28.7%;width:14%;"></div>
-                <div id="rentalDriverAddress" class="rental-field rental-small" style="left:72.2%;top:28.7%;width:17%;"></div>
-                <div id="rentalCarNo" class="rental-field rental-small" style="left:31.0%;top:34.9%;width:16%;"></div>
-                <div id="rentalCarModel" class="rental-field rental-small" style="left:72.2%;top:34.9%;width:17%;"></div>
-                <div id="rentalPeriod" class="rental-field rental-small" style="left:21.5%;top:41.3%;width:68%;"></div>
-                <div id="rentalFare" class="rental-field" style="left:22.0%;top:47.8%;width:17%;"></div>
-                <div id="rentalFlightNo" class="rental-field rental-small" style="left:72.3%;top:47.8%;width:16%;"></div>
+                <div id="rentalOrderId" class="rental-field rental-order" style="left:75.9%;top:6.1%;width:20%;"></div>
+                <div id="rentalCustomerName" class="rental-field" style="left:20.7%;top:10.8%;width:18%;"></div>
+                <div id="rentalCustomerPhone" class="rental-field" style="left:45.0%;top:10.8%;width:19%;"></div>
+                <div id="rentalCustomerAddress" class="rental-field rental-small" style="left:20.6%;top:17.0%;width:50%;"></div>
+                <div id="rentalDriverName" class="rental-field rental-small" style="left:31.1%;top:29.0%;width:14%;"></div>
+                <div id="rentalDriverLicenseNo" class="rental-field rental-small" style="left:48.4%;top:29.0%;width:18%;"></div>
+                <div id="rentalDriverAddress" class="rental-field rental-small" style="left:72.0%;top:29.1%;width:20%;"></div>
+                <div id="rentalCarNo" class="rental-field rental-small" style="left:30.7%;top:35.2%;width:18%;"></div>
+                <div id="rentalCarModel" class="rental-field rental-small" style="left:72.0%;top:35.3%;width:20%;"></div>
+                <div id="rentalPeriod" class="rental-field rental-small" style="left:21.4%;top:41.6%;width:78%;"></div>
+                <div id="rentalFare" class="rental-field" style="left:22.0%;top:48.3%;width:18%;"></div>
+                <div id="rentalFlightNo" class="rental-field rental-small" style="left:72.2%;top:48.3%;width:19%;"></div>
             </div>
         </div>
     </div>
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.14.39";
+        const APP_VERSION = "v1.14.40";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
