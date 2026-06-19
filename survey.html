@@ -286,9 +286,12 @@
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby9KWdatRfDZY5g2DkieUkAhyEJDDCnKcMb_l8o2_J4JCaOtKYfEEkvzk-1sW-oZWIF/exec';
         const LIFF_IDS = { AS: '2009922945-KmKUgqbg', AZ: '2010218931-J293DdSb' };
         const urlParams = new URLSearchParams(window.location.search);
-        const tokenParam = urlParams.get('token') || '';
+        const tokenParam = urlParams.get('token') || urlParams.get('t') || urlParams.get('surveyToken') || '';
         const sourceParam = (urlParams.get('source') || urlParams.get('s') || 'AS').trim().toUpperCase();
         let liffReady = false;
+        let liffRedirecting = false;
+        let currentLineId = '';
+        let currentLineDisplayName = '';
 
         function showClosedScreen(title, message) {
             document.getElementById('loadingScreen').classList.add('hidden');
@@ -338,6 +341,17 @@
             try {
                 await liff.init({ liffId: LIFF_IDS[sourceParam] || LIFF_IDS.AS });
                 liffReady = true;
+                const alreadyFromLiff = urlParams.has('liffClientId') || urlParams.has('code') || urlParams.has('state');
+                if (!liff.isLoggedIn() && tokenParam && !alreadyFromLiff && !urlParams.has('skipLiffLogin')) {
+                    liffRedirecting = true;
+                    liff.login({ redirectUri: window.location.href });
+                    return;
+                }
+                if (liff.isLoggedIn()) {
+                    const profile = await liff.getProfile();
+                    currentLineId = profile.userId || '';
+                    currentLineDisplayName = profile.displayName || '';
+                }
             } catch (error) {
                 liffReady = false;
             }
@@ -379,6 +393,9 @@
 
                 const formData = {
                     token: tokenParam,
+                    source: sourceParam,
+                    lineId: currentLineId,
+                    lineDisplayName: currentLineDisplayName,
                     bookingId: document.getElementById('bookingId').value,
                     punctuality: document.querySelector('input[name="punctuality"]:checked').value,
                     attitude: document.querySelector('input[name="attitude"]:checked').value,
@@ -425,8 +442,11 @@
         }
         document.getElementById('comments')?.addEventListener('input', countCommentChars);
         countCommentChars();
-        initializeSurveyLiff();
-        loadSurvey();
+        async function bootstrapSurvey() {
+            await initializeSurveyLiff();
+            if (!liffRedirecting) await loadSurvey();
+        }
+        bootstrapSurvey();
     </script>
 </body>
 </html>
