@@ -284,12 +284,11 @@
 
     <script>
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby9KWdatRfDZY5g2DkieUkAhyEJDDCnKcMb_l8o2_J4JCaOtKYfEEkvzk-1sW-oZWIF/exec';
-        const LIFF_IDS = { AS: '2009922945-KmKUgqbg', AZ: '2010218931-J293DdSb' };
+        const LIFF_IDS = { AS: '2009922945-xkFscb9Q', AZ: '2010218931-9a6Ss9xn' };
         const urlParams = new URLSearchParams(window.location.search);
         const tokenParam = urlParams.get('token') || urlParams.get('t') || urlParams.get('surveyToken') || '';
         const sourceParam = (urlParams.get('source') || urlParams.get('s') || 'AS').trim().toUpperCase();
         let liffReady = false;
-        let liffRedirecting = false;
         let currentLineId = '';
         let currentLineDisplayName = '';
 
@@ -336,25 +335,32 @@
             setTimeout(() => { copyBtn.innerText = originalText; copyBtn.classList.add('text-primary'); copyBtn.classList.remove('text-accent'); }, 2000);
         }
 
+        function getSurveyRedirectUrl() {
+            const cleanUrl = new URL(window.location.href);
+            ['code', 'state', 'liffClientId', 'liffRedirectUri'].forEach(key => cleanUrl.searchParams.delete(key));
+            return cleanUrl.toString();
+        }
+
         async function initializeSurveyLiff() {
-            if (!window.liff) return;
+            if (!window.liff) return true;
             try {
                 await liff.init({ liffId: LIFF_IDS[sourceParam] || LIFF_IDS.AS });
                 liffReady = true;
-                const alreadyFromLiff = urlParams.has('liffClientId') || urlParams.has('code') || urlParams.has('state');
-                if (!liff.isLoggedIn() && tokenParam && !alreadyFromLiff && !urlParams.has('skipLiffLogin')) {
-                    liffRedirecting = true;
-                    liff.login({ redirectUri: window.location.href });
-                    return;
+                if (!liff.isLoggedIn()) {
+                    const hasLineAuthParams = urlParams.has('code') || urlParams.has('liffClientId') || urlParams.has('liffRedirectUri');
+                    if (!hasLineAuthParams && tokenParam) {
+                        liff.login({ redirectUri: getSurveyRedirectUrl() });
+                        return false;
+                    }
+                    return true;
                 }
-                if (liff.isLoggedIn()) {
-                    const profile = await liff.getProfile();
-                    currentLineId = profile.userId || '';
-                    currentLineDisplayName = profile.displayName || '';
-                }
+                const profile = await liff.getProfile();
+                currentLineId = profile.userId || '';
+                currentLineDisplayName = profile.displayName || '';
             } catch (error) {
                 liffReady = false;
             }
+            return true;
         }
 
         function countCommentChars() {
@@ -443,8 +449,9 @@
         document.getElementById('comments')?.addEventListener('input', countCommentChars);
         countCommentChars();
         async function bootstrapSurvey() {
-            await initializeSurveyLiff();
-            if (!liffRedirecting) await loadSurvey();
+            const shouldLoad = await initializeSurveyLiff();
+            if (shouldLoad === false) return;
+            await loadSurvey();
         }
         bootstrapSurvey();
     </script>
