@@ -451,7 +451,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.31";
+    const APP_VERSION = "manual-booking-v1.0.32";
     const GAS_URL = "https://script.google.com/macros/s/AKfycby9KWdatRfDZY5g2DkieUkAhyEJDDCnKcMb_l8o2_J4JCaOtKYfEEkvzk-1sW-oZWIF/exec";
     let templates = [];
 
@@ -972,7 +972,7 @@
         }).then(r => r.json());
         if (!res.success) throw new Error(res.error || "建立失敗");
         const ids = (res.reservationIds || []).join("\n");
-        const customerText = buildCustomerConfirmMessage(payload);
+        const customerText = buildCustomerConfirmMessage(payload, res.reservationIds || []);
         saveLastCustomerMessage(customerText);
         await Swal.fire({
           title: "預約已建立",
@@ -1011,30 +1011,36 @@
       $("summaryText").textContent = `${currentSource() || "未選來源"}｜${$("serviceType").value || "行程"}｜總車資 $${total.toLocaleString()}`;
     }
 
-    function buildCustomerConfirmMessage(p) {
-      const trips = [buildCustomerTripBlock(p, {
+    function buildCustomerConfirmMessage(p, reservationIds = []) {
+      const trips = [{
+        text: buildCustomerTripBlock(p, {
         label: "去程",
         serviceType: p.serviceType,
         rideDate: p.rideDate,
         rideTime: p.rideTime,
         flightNumber: p.flightNumber,
         fare: p.fare
-      })];
+        }),
+        reservationId: reservationIds[0] || ""
+      }];
       if (p.hasReturn) {
-        trips.push(buildCustomerTripBlock(p, {
+        trips.push({
+          text: buildCustomerTripBlock(p, {
           label: "回程",
           serviceType: p.returnServiceType,
           rideDate: p.returnDate,
           rideTime: p.returnTime,
           flightNumber: p.returnFlightNumber,
           fare: p.returnFare || p.fare
-        }));
+          }),
+          reservationId: reservationIds[1] || ""
+        });
       }
-      return trips.map(tripText => buildCustomerMessageEnvelope(tripText)).join("\n\n");
+      return trips.map(trip => buildCustomerMessageEnvelope(trip.text, trip.reservationId)).join("\n\n");
     }
 
-    function buildCustomerMessageEnvelope(tripText) {
-      return [
+    function buildCustomerMessageEnvelope(tripText, reservationId = "") {
+      const lines = [
         "【預約成功通知】",
         "親愛的客戶您好",
         "您的接送服務已預約成功",
@@ -1049,7 +1055,11 @@
         "",
         "【24小時客服專線】",
         "➤ ᴘʜᴏɴᴇ 電話：0955311306"
-      ].join("\n");
+      ];
+      if (reservationId) {
+        lines.push("", "預約編號：", reservationId);
+      }
+      return lines.join("\n");
     }
 
     async function generateMessageByReservationId() {
@@ -1080,8 +1090,11 @@
     function buildCustomerConfirmMessageFromOrders(orders) {
       const list = (orders || []).filter(Boolean);
       if (!list.length) return "";
-      const blocks = list.map((order, index) => buildCustomerTripBlockFromOrder(order, list.length > 1, index));
-      return blocks.map(block => buildCustomerMessageEnvelope(block)).join("\n\n");
+      const blocks = list.map((order, index) => ({
+        text: buildCustomerTripBlockFromOrder(order, list.length > 1, index),
+        reservationId: order.reservationId || ""
+      }));
+      return blocks.map(block => buildCustomerMessageEnvelope(block.text, block.reservationId)).join("\n\n");
     }
 
     function buildCustomerTripBlockFromOrder(order, multipleTrips, index) {
