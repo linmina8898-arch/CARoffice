@@ -177,7 +177,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.14.45";
+        const APP_VERSION = "v1.14.47";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -450,7 +450,39 @@
             document.getElementById('profLicense').innerText = driverData.license || '-';
             document.getElementById('profInsurance').innerText = driverData.insurance || '-';
             
+            restoreCachedTasks();
             loadTasks();
+        }
+
+        function driverTaskCacheKey() {
+            return driverData && driverData.lineId ? `driverTasks:${driverData.lineId}` : '';
+        }
+
+        function restoreCachedTasks() {
+            try {
+                const key = driverTaskCacheKey();
+                if (!key) return;
+                const cached = JSON.parse(localStorage.getItem(key) || 'null');
+                if (!cached || !Array.isArray(cached.tasks)) return;
+                if (Date.now() - Number(cached.savedAt || 0) > 10 * 60 * 1000) return;
+                tasks = cached.tasks;
+                if (cached.monthCount !== undefined) {
+                    document.getElementById('profCount').innerText = cached.monthCount;
+                }
+                renderTasks();
+            } catch (err) {
+                console.warn('restoreCachedTasks failed', err);
+            }
+        }
+
+        function saveCachedTasks(monthCount) {
+            try {
+                const key = driverTaskCacheKey();
+                if (!key) return;
+                localStorage.setItem(key, JSON.stringify({ tasks, monthCount, savedAt: Date.now() }));
+            } catch (err) {
+                console.warn('saveCachedTasks failed', err);
+            }
         }
 
         async function handleBind(e, lineId) {
@@ -515,6 +547,7 @@
                 if(res.monthCount !== undefined) {
                     document.getElementById('profCount').innerText = res.monthCount;
                 }
+                saveCachedTasks(res.monthCount);
                 renderTasks();
                 // 如果明細頁開著，重新渲染明細內容以更新按鈕狀態
                 if(currentDetailOrderId) {
@@ -621,8 +654,10 @@
             const manualCash = parseCashAmount(t.manualCashCollected);
             const backendCash = parseCashAmount(t.cashCollected);
             const cashCollected = manualCash > 0 ? manualCash : (backendCash > 0 ? backendCash : (isCash ? parseCashAmount(t.tripAmt) : 0));
+            const payoutAmount = parseCashAmount(t.driverPayout || t.payout);
+            const cashReturn = cashCollected > 0 && payoutAmount > 0 ? cashCollected - payoutAmount : 0;
             const paymentStatus = isCash ? '司機收現' : (isBilling ? '月結簽單，客下請簽名' : (isTransfer ? '轉帳，不簽不收' : (method || '未標示')));
-            return { isCash, isBilling, isTransfer, cashCollected, paymentStatus, hasSeparateCash: cashCollected > 0 && !isCash };
+            return { isCash, isBilling, isTransfer, cashCollected, payoutAmount, cashReturn, paymentStatus, hasSeparateCash: cashCollected > 0 && !isCash };
         }
 
         // --- 渲染【主畫面清單 (加入「確認收單」按鈕)】 ---
@@ -667,13 +702,13 @@
                 if (paymentInfo.isBilling) {
                     tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#553f62] text-white">月結簽單</span>`);
                 } else if (paymentInfo.isCash) {
-                    tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#f07cad] text-white">現金</span>`);
+                    tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#f07cad] text-white">現場收現 $${paymentInfo.cashCollected.toLocaleString()}</span>`);
                 } else if (paymentInfo.isTransfer) {
                     tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded border border-[#553f62] text-[#553f62] bg-white">轉帳</span>`);
                 } else if (cleanVal(t.paymentMethod)) {
                     tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded border border-gray-300 text-gray-600 bg-white">${cleanVal(t.paymentMethod)}</span>`);
                 }
-                if (paymentInfo.hasSeparateCash) tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#f07cad] text-white">需收現 $${paymentInfo.cashCollected.toLocaleString()}</span>`);
+                if (paymentInfo.hasSeparateCash) tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#f07cad] text-white">現場收現 $${paymentInfo.cashCollected.toLocaleString()}</span>`);
                 if (hasSign) tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded border border-[#f07cad] text-[#f07cad]">舉牌</span>`);
                 if (cleanVal(t.remarks) || cleanVal(t.driverNote)) tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-500 text-white">有備註</span>`);
                 const payoutAmount = parseMoney(t.driverPayout);
@@ -770,7 +805,9 @@
             let cashHtml = '';
             if (paymentInfo.cashCollected > 0) {
                 let amtToCollect = paymentInfo.cashCollected;
-                cashHtml = `<div class="flex justify-between items-center py-3 border-t-2 border-red-100 mt-2 font-bold"><span class="text-gray-700 mr-2">請向客人收現</span><div class="text-right"><div class="text-red-600 text-xl">$${amtToCollect.toLocaleString()}</div>${cleanVal(t.cashCollectionNote) ? `<div class="text-xs text-gray-500 font-normal">${cleanVal(t.cashCollectionNote)}</div>` : ''}</div></div>`;
+                const payoutAmount = paymentInfo.payoutAmount;
+                const cashNoteBtn = payoutAmount > 0 ? `<button type="button" onclick="showCashSettlementNote(${amtToCollect}, ${payoutAmount})" class="ml-2 rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[11px] font-bold text-red-600">備註</button>` : '';
+                cashHtml = `<div class="flex justify-between items-center py-3 border-t-2 border-red-100 mt-2 font-bold"><span class="text-gray-700 mr-2">現場收現</span><div class="text-right"><div class="flex items-center justify-end"><div class="text-red-600 text-xl">$${amtToCollect.toLocaleString()}</div>${cashNoteBtn}</div>${cleanVal(t.cashCollectionNote) ? `<div class="text-xs text-gray-500 font-normal">${cleanVal(t.cashCollectionNote)}</div>` : ''}</div></div>`;
             }
 
             let cNote = cleanVal(t.remarks) ? cleanVal(t.remarks).replace(/\n/g, '<br>') : '';
@@ -840,6 +877,22 @@
         function closeTaskDetail() {
             currentDetailOrderId = null;
             document.getElementById('view-task-detail').classList.add('hidden');
+        }
+
+        function showCashSettlementNote(cashCollected, payoutAmount) {
+            const cash = parseCashAmount(cashCollected);
+            const payout = parseCashAmount(payoutAmount);
+            const returnCash = cash - payout;
+            Swal.fire({
+                title: '收現備註',
+                html: `<div class="text-left text-sm leading-7 text-gray-700">
+                    <div>此趟收現 <b class="text-red-600">$${cash.toLocaleString()}</b></div>
+                    <div>回金 <b class="text-red-600">$${returnCash.toLocaleString()}</b></div>
+                    <div class="mt-2 text-xs text-gray-500">回金 = 收現金額 - 司機實拿車資</div>
+                </div>`,
+                confirmButtonText: '知道了',
+                confirmButtonColor: '#553f62'
+            });
         }
 
         function openRentalForm(orderId) {
