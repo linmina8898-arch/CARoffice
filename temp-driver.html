@@ -80,7 +80,7 @@
         </div>
     </div>
     <script>
-        const APP_VERSION = "v1.0.28";
+        const APP_VERSION = "v1.0.29";
         const GAS_URL = "https://script.google.com/macros/s/AKfycby9KWdatRfDZY5g2DkieUkAhyEJDDCnKcMb_l8o2_J4JCaOtKYfEEkvzk-1sW-oZWIF/exec";
         const token = new URLSearchParams(location.search).get("token") || "";
         let task = null;
@@ -165,7 +165,7 @@
                 const cash = parseCashAmount(task && task.cashCollected);
                 const payout = parseCashAmount(task && (task.driverPayout || task.payout));
                 const noteBtn = payout > 0 ? `<button type="button" onclick="showCashSettlementNote(${cash}, ${payout})" class="ml-2 rounded-full border border-[#EADDE8] bg-[#FBF7FA] px-2 py-0.5 text-[11px] font-bold text-[#7A6A82]">收現備註</button>` : "";
-                return `<span class="font-bold text-[#553f62]">${esc(value)}</span>${noteBtn}`;
+                return `<span class="text-[#553f62]" style="font-weight:700;">${esc(value)}</span>${noteBtn}`;
             }
             return esc(value);
         }
