@@ -13,7 +13,8 @@
         .field-label { color:#6b7280; font-size:12px; }
         .field-value { text-align:right; font-weight:500; overflow-wrap:anywhere; }
         .map-link { color:#1f2937; text-decoration:none; display:inline-flex; align-items:center; justify-content:flex-end; gap:6px; }
-        .map-chip { font-size:10px; line-height:1; color:#7a6a82; background:#fbf7fa; border:1px solid #eadde8; border-radius:999px; padding:2px 6px; white-space:nowrap; }
+        .map-chip { width:24px; height:24px; color:#553f62; background:#fbf7fa; border:1px solid #eadde8; border-radius:999px; display:inline-flex; align-items:center; justify-content:center; flex:0 0 auto; }
+        .map-chip svg { width:13px; height:13px; display:block; }
         .cash-note-popup { border-radius:16px !important; }
         .cash-note-title { color:#1a0b3d !important; font-size:28px !important; font-weight:700 !important; }
         .cash-note-confirm { background:#553f62 !important; color:#fff !important; border-radius:10px !important; padding:10px 28px !important; }
@@ -79,7 +80,7 @@
         </div>
     </div>
     <script>
-        const APP_VERSION = "v1.0.27";
+        const APP_VERSION = "v1.0.28";
         const GAS_URL = "https://script.google.com/macros/s/AKfycby9KWdatRfDZY5g2DkieUkAhyEJDDCnKcMb_l8o2_J4JCaOtKYfEEkvzk-1sW-oZWIF/exec";
         const token = new URLSearchParams(location.search).get("token") || "";
         let task = null;
@@ -164,7 +165,7 @@
                 const cash = parseCashAmount(task && task.cashCollected);
                 const payout = parseCashAmount(task && (task.driverPayout || task.payout));
                 const noteBtn = payout > 0 ? `<button type="button" onclick="showCashSettlementNote(${cash}, ${payout})" class="ml-2 rounded-full border border-[#EADDE8] bg-[#FBF7FA] px-2 py-0.5 text-[11px] font-bold text-[#7A6A82]">收現備註</button>` : "";
-                return `<span class="font-bold text-[#A33A4E]">${esc(value)}</span>${noteBtn}`;
+                return `<span class="font-bold text-[#553f62]">${esc(value)}</span>${noteBtn}`;
             }
             return esc(value);
         }
@@ -180,8 +181,8 @@
                 title: "收現備註",
                 html: `<div class="text-left text-sm leading-7 text-[#374151]">
                     <div class="rounded-xl border border-[#EADDE8] bg-[#FBF7FA] p-3 mb-3">
-                        <div class="flex justify-between gap-4"><span>此趟收現</span><b class="text-[#A33A4E]">$${cash.toLocaleString()}</b></div>
-                        <div class="flex justify-between gap-4"><span>回金</span><b class="text-[#A33A4E]">$${returnCash.toLocaleString()}</b></div>
+                        <div class="flex justify-between gap-4"><span>此趟收現</span><b class="text-[#553f62]">$${cash.toLocaleString()}</b></div>
+                        <div class="flex justify-between gap-4"><span>回金</span><b class="text-[#553f62]">$${returnCash.toLocaleString()}</b></div>
                     </div>
                     <div class="text-center text-[#7A6A82] font-bold my-2">✦ 回金方式 ✦</div>
                     <div>請優先使用 LINE Pay、街口轉帳</div>
@@ -201,7 +202,7 @@
         function mapLinkHtml(value) {
             const text = clean(value);
             if (!text) return "";
-            return `<a class="map-link" target="_blank" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(text)}"><span>${esc(text)}</span><span class="map-chip">MAP</span></a>`;
+            return `<a class="map-link" target="_blank" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(text)}"><span>${esc(text)}</span><span class="map-chip" aria-label="開啟地圖"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s6-5.3 6-11a6 6 0 0 0-12 0c0 5.7 6 11 6 11Z"></path><circle cx="12" cy="10" r="2"></circle></svg></span></a>`;
         }
         function openRentalForm() {
             if (!task) return;
