@@ -183,7 +183,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.14.49";
+        const APP_VERSION = "v1.14.50";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -813,7 +813,7 @@
                 let amtToCollect = paymentInfo.cashCollected;
                 const payoutAmount = paymentInfo.payoutAmount;
                 const cashNoteBtn = payoutAmount > 0 ? `<button type="button" onclick="showCashSettlementNote(${amtToCollect}, ${payoutAmount})" class="ml-2 rounded-full border border-[#EADDE8] bg-[#FBF7FA] px-2 py-0.5 text-[11px] font-bold text-[#7A6A82]">收現備註</button>` : '';
-                cashHtml = `<div class="flex justify-between items-center py-3 border-t-2 border-[#EADDE8] mt-2 font-bold"><span class="text-gray-700 mr-2">現場收現</span><div class="text-right"><div class="flex items-center justify-end"><div class="text-[#553f62] text-xl">$${amtToCollect.toLocaleString()}</div>${cashNoteBtn}</div>${cleanVal(t.cashCollectionNote) ? `<div class="text-xs text-gray-500 font-normal">${cleanVal(t.cashCollectionNote)}</div>` : ''}</div></div>`;
+                cashHtml = `<div class="flex justify-between items-center py-3 border-t-2 border-[#EADDE8] mt-2" style="font-weight:700;"><span class="text-gray-700 mr-2">現場收現</span><div class="text-right"><div class="flex items-center justify-end"><div class="text-[#553f62] text-xl" style="font-weight:700;">$${amtToCollect.toLocaleString()}</div>${cashNoteBtn}</div>${cleanVal(t.cashCollectionNote) ? `<div class="text-xs text-gray-500 font-normal">${cleanVal(t.cashCollectionNote)}</div>` : ''}</div></div>`;
             }
 
             let cNote = cleanVal(t.remarks) ? cleanVal(t.remarks).replace(/\n/g, '<br>') : '';
