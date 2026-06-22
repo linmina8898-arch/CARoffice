@@ -18,6 +18,11 @@
         .driver-field { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 8px; align-items: start; padding: 8px 0; border-bottom: 1px solid rgba(229,231,235,.8); }
         .driver-field-label { color: #6b7280; font-size: 12px; font-weight: 400; white-space: nowrap; }
         .driver-field-value { color: #1f2937; font-weight: 500; text-align: right; overflow-wrap: anywhere; }
+        .map-link { color: #1f2937; text-decoration: none; display: inline-flex; align-items: center; justify-content: flex-end; gap: 6px; }
+        .map-chip { font-size: 10px; line-height: 1; color: #7a6a82; background: #fbf7fa; border: 1px solid #eadde8; border-radius: 999px; padding: 2px 6px; white-space: nowrap; }
+        .cash-note-popup { border-radius: 16px !important; }
+        .cash-note-title { color: #1a0b3d !important; font-size: 28px !important; font-weight: 700 !important; }
+        .cash-note-confirm { background: #553f62 !important; color: #fff !important; border-radius: 10px !important; padding: 10px 28px !important; }
         .rental-sheet-box { position: relative; width: min(980px, calc(100vw - 24px)); margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,.22); background: #fff; -webkit-text-size-adjust: none; text-size-adjust: none; }
         .rental-sheet-box img { width: 100%; display: block; user-select: none; pointer-events: none; }
         .rental-field { position: absolute; color: #111; font-weight: 400; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 8px; -webkit-text-size-adjust: none; text-size-adjust: none; }
@@ -177,7 +182,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.14.47";
+        const APP_VERSION = "v1.14.48";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -806,8 +811,8 @@
             if (paymentInfo.cashCollected > 0) {
                 let amtToCollect = paymentInfo.cashCollected;
                 const payoutAmount = paymentInfo.payoutAmount;
-                const cashNoteBtn = payoutAmount > 0 ? `<button type="button" onclick="showCashSettlementNote(${amtToCollect}, ${payoutAmount})" class="ml-2 rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[11px] font-bold text-red-600">備註</button>` : '';
-                cashHtml = `<div class="flex justify-between items-center py-3 border-t-2 border-red-100 mt-2 font-bold"><span class="text-gray-700 mr-2">現場收現</span><div class="text-right"><div class="flex items-center justify-end"><div class="text-red-600 text-xl">$${amtToCollect.toLocaleString()}</div>${cashNoteBtn}</div>${cleanVal(t.cashCollectionNote) ? `<div class="text-xs text-gray-500 font-normal">${cleanVal(t.cashCollectionNote)}</div>` : ''}</div></div>`;
+                const cashNoteBtn = payoutAmount > 0 ? `<button type="button" onclick="showCashSettlementNote(${amtToCollect}, ${payoutAmount})" class="ml-2 rounded-full border border-[#EADDE8] bg-[#FBF7FA] px-2 py-0.5 text-[11px] font-bold text-[#7A6A82]">收現備註</button>` : '';
+                cashHtml = `<div class="flex justify-between items-center py-3 border-t-2 border-[#EADDE8] mt-2 font-bold"><span class="text-gray-700 mr-2">現場收現</span><div class="text-right"><div class="flex items-center justify-end"><div class="text-[#A33A4E] text-xl">$${amtToCollect.toLocaleString()}</div>${cashNoteBtn}</div>${cleanVal(t.cashCollectionNote) ? `<div class="text-xs text-gray-500 font-normal">${cleanVal(t.cashCollectionNote)}</div>` : ''}</div></div>`;
             }
 
             let cNote = cleanVal(t.remarks) ? cleanVal(t.remarks).replace(/\n/g, '<br>') : '';
@@ -822,8 +827,8 @@
                 if(sport) luggageText += (lug ? ' ' : '') + '(胖箱: ' + sport + ')';
             }
 
-            let addressHtml = cleanVal(t.address) ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cleanVal(t.address))}" target="_blank" class="text-blue-600 underline">${cleanVal(t.address)}</a>` : '';
-            let extraStopHtml = cleanVal(t.extraStop) ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cleanVal(t.extraStop))}" target="_blank" class="text-blue-600 underline">${cleanVal(t.extraStop)}</a>` : '';
+            let addressHtml = mapLinkHtml(t.address);
+            let extraStopHtml = mapLinkHtml(t.extraStop);
             const tripVehicleText = [cleanVal(t.tripCarNo), cleanVal(t.tripCarType), cleanVal(t.tripCarColor)].filter(Boolean).join(' / ');
             const tripVehicleHtml = tripVehicleText ? `<div class="driver-field bg-[#f8f5fa] -mx-3 px-3 border-y border-[#553f62]/10"><span class="driver-field-label text-[#553f62]">本趟車輛</span><span class="driver-field-value text-[#553f62]">${tripVehicleText}${cleanVal(t.tripVehicleNote) ? `<br><span class="text-xs text-gray-500">${cleanVal(t.tripVehicleNote)}</span>` : ''}</span></div>` : '';
 
@@ -885,14 +890,31 @@
             const returnCash = cash - payout;
             Swal.fire({
                 title: '收現備註',
-                html: `<div class="text-left text-sm leading-7 text-gray-700">
-                    <div>此趟收現 <b class="text-red-600">$${cash.toLocaleString()}</b></div>
-                    <div>回金 <b class="text-red-600">$${returnCash.toLocaleString()}</b></div>
-                    <div class="mt-2 text-xs text-gray-500">回金 = 收現金額 - 司機實拿車資</div>
+                html: `<div class="text-left text-sm leading-7 text-[#374151]">
+                    <div class="rounded-xl border border-[#EADDE8] bg-[#FBF7FA] p-3 mb-3">
+                        <div class="flex justify-between gap-4"><span>此趟收現</span><b class="text-[#A33A4E]">$${cash.toLocaleString()}</b></div>
+                        <div class="flex justify-between gap-4"><span>回金</span><b class="text-[#A33A4E]">$${returnCash.toLocaleString()}</b></div>
+                    </div>
+                    <div class="text-center text-[#7A6A82] font-bold my-2">✦ 回金方式 ✦</div>
+                    <div>請優先使用 LINE Pay、街口轉帳</div>
+                    <div class="mt-2">銀行代碼：822（中國信託）</div>
+                    <div>銀行帳號：299890035986</div>
+                    <div class="mt-2 text-[#5F5868]">匯款完成後，請提供帳號末五碼供我們核對，謝謝您</div>
                 </div>`,
                 confirmButtonText: '知道了',
-                confirmButtonColor: '#553f62'
+                buttonsStyling: false,
+                customClass: {
+                    popup: 'cash-note-popup',
+                    title: 'cash-note-title',
+                    confirmButton: 'cash-note-confirm'
+                }
             });
+        }
+
+        function mapLinkHtml(value) {
+            const text = cleanVal(value);
+            if (!text) return '';
+            return `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(text)}" target="_blank" class="map-link"><span>${text}</span><span class="map-chip">MAP</span></a>`;
         }
 
         function openRentalForm(orderId) {
