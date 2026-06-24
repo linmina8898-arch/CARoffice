@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>安興租車｜內部入口</title>
+  <style>
+    :root {
+      --ink: #1a0b3d;
+      --purple: #574266;
+      --muted: #7a6a82;
+      --line: #e7dde8;
+      --soft: #faf7fb;
+      --pink: #d85c8f;
+      --danger: #b63d55;
+      --shadow: 0 8px 24px rgba(26, 11, 61, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #f6f3f7;
+      color: var(--ink);
+      font-family: "Noto Sans TC", "Microsoft JhengHei", Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.5;
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(246, 243, 247, 0.96);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(12px);
+    }
+    .wrap {
+      width: min(1040px, 100%);
+      margin: 0 auto;
+      padding: 18px 14px 28px;
+    }
+    .topbar {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    h1 {
+      margin: 0;
+      color: var(--ink);
+      font-size: 24px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+    .sub {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .version {
+      flex: 0 0 auto;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 6px 10px;
+      background: #fff;
+      font-size: 12px;
+    }
+    .notice {
+      margin-top: 14px;
+      border: 1px solid #ead6df;
+      border-radius: 8px;
+      background: #fff8fb;
+      color: var(--purple);
+      padding: 10px 12px;
+      font-size: 13px;
+    }
+    .searchbar {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    input[type="search"] {
+      width: 100%;
+      min-height: 46px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+      padding: 0 14px;
+      font-size: 16px;
+      outline: none;
+    }
+    input[type="search"]:focus {
+      border-color: var(--purple);
+      box-shadow: 0 0 0 3px rgba(87, 66, 102, 0.12);
+    }
+    main {
+      width: min(1040px, 100%);
+      margin: 0 auto;
+      padding: 16px 14px 40px;
+    }
+    .section {
+      margin: 0 0 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .section-title {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 13px 14px;
+      border-bottom: 1px solid var(--line);
+      background: var(--soft);
+    }
+    .section-title h2 {
+      margin: 0;
+      font-size: 17px;
+      color: var(--purple);
+    }
+    .count {
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .links {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1px;
+      background: var(--line);
+    }
+    .item {
+      min-width: 0;
+      background: #fff;
+      padding: 14px;
+    }
+    .item-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .name {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+    .tag {
+      flex: 0 0 auto;
+      color: var(--pink);
+      border: 1px solid #efd3df;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 12px;
+      white-space: nowrap;
+      background: #fff7fa;
+    }
+    .desc {
+      margin: 6px 0 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .url {
+      display: block;
+      color: #6d5d75;
+      font-size: 12px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      border: 1px solid #eee7ef;
+      border-radius: 6px;
+      padding: 7px 8px;
+      background: #fbfafc;
+    }
+    .actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    a.btn, button.btn {
+      min-height: 38px;
+      border: 1px solid var(--purple);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: var(--purple);
+      background: #fff;
+      font: inherit;
+      font-size: 14px;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    a.btn.primary {
+      color: #fff;
+      background: var(--purple);
+    }
+    button.btn:active, a.btn:active { transform: translateY(1px); }
+    .hidden { display: none !important; }
+    .empty {
+      display: none;
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 20px;
+      color: var(--muted);
+      text-align: center;
+    }
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%) translateY(20px);
+      opacity: 0;
+      transition: 0.18s ease;
+      z-index: 20;
+      color: #fff;
+      background: var(--purple);
+      border-radius: 8px;
+      padding: 10px 14px;
+      box-shadow: var(--shadow);
+      pointer-events: none;
+      font-size: 14px;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    @media (max-width: 720px) {
+      h1 { font-size: 21px; }
+      .topbar { align-items: stretch; flex-direction: column; }
+      .version { width: fit-content; }
+      .links { grid-template-columns: 1fr; }
+      .item { padding: 13px; }
+      .actions { display: grid; grid-template-columns: 1fr 1fr; }
+      a.btn, button.btn { text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="topbar">
+        <div>
+          <h1>安興租車｜內部入口</h1>
+          <div class="sub">客服、調度、司機與客人入口快速連結</div>
+        </div>
+        <div class="version">links-v1.0.0</div>
+      </div>
+      <div class="notice">內部使用頁面，請勿直接傳給客人。需要給客人的連結，請使用下方「客人入口」或由中控台產生專屬連結。</div>
+      <div class="searchbar">
+        <input id="search" type="search" placeholder="搜尋：中控台、司機、問卷、AZ、報價..." autocomplete="off" />
+      </div>
+    </div>
+  </header>
+
+  <main id="app"></main>
+  <div id="empty" class="empty">找不到符合的入口。</div>
+  <div id="toast" class="toast">已複製連結</div>
+
+  <script>
+    const LINKS = [
+      {
+        group: "客人入口",
+        items: [
+          {
+            name: "AS 客人預約",
+            tag: "客人用",
+            desc: "安興主通路客人正式預約入口。",
+            url: "https://reserve.ansinglimo.com/?source=AS",
+            keywords: "AS 客人 預約 正式 reserve"
+          },
+          {
+            name: "AZ 客人預約",
+            tag: "客人用",
+            desc: "AZ / 安興竹北通路客人正式預約入口。",
+            url: "https://reserve.ansinglimo.com/?source=AZ",
+            keywords: "AZ 安興竹北 客人 預約 正式 reserve"
+          },
+          {
+            name: "AS LIFF 預約",
+            tag: "LINE",
+            desc: "AS 官方 LINE LIFF 入口，通常由 LINE 圖文選單使用。",
+            url: "https://liff.line.me/2009922945-KmKUgqbg?source=AS",
+            keywords: "AS LIFF LINE 預約"
+          },
+          {
+            name: "AZ LIFF 預約",
+            tag: "LINE",
+            desc: "AZ 官方 LINE LIFF 入口，通常由 LINE 圖文選單使用。",
+            url: "https://liff.line.me/2010218931-J293DdSb?source=AZ",
+            keywords: "AZ LIFF LINE 預約"
+          }
+        ]
+      },
+      {
+        group: "客服工具",
+        items: [
+          {
+            name: "客服快速預約",
+            tag: "客服用",
+            desc: "固定客、客服代填、手動車資、不套折扣。",
+            url: "https://booking.ansinglimo.com/manual-booking.html",
+            keywords: "客服 快速預約 manual booking 固定客 代填"
+          },
+          {
+            name: "快速報價",
+            tag: "客服用",
+            desc: "快速試算報價並產生可複製文字。",
+            url: "https://booking.ansinglimo.com/quote.html",
+            keywords: "快速報價 報價 quote 試算"
+          },
+          {
+            name: "客人確認頁",
+            tag: "需 token",
+            desc: "客服代填後給客人綁定 LINE 的確認頁，需帶 t 參數。",
+            url: "https://booking.ansinglimo.com/c.html",
+            keywords: "客人確認 綁定 LINE c bind token"
+          },
+          {
+            name: "滿意度問卷",
+            tag: "需 token",
+            desc: "搭乘回饋問卷，正式傳送時需帶 t 與 source 參數。",
+            url: "https://booking.ansinglimo.com/survey.html",
+            keywords: "問卷 滿意度 survey 回饋 折扣碼"
+          }
+        ]
+      },
+      {
+        group: "司機工具",
+        items: [
+          {
+            name: "司機端",
+            tag: "司機用",
+            desc: "正式司機登入、任務、回報、簽名與出租單。",
+            url: "https://booking.ansinglimo.com/driver.html",
+            keywords: "司機 司機端 driver 任務 回報 出租單"
+          },
+          {
+            name: "臨時司機",
+            tag: "需 token",
+            desc: "臨時派遣一次性連結頁，通常從中控台產生。",
+            url: "https://booking.ansinglimo.com/temp-driver.html",
+            keywords: "臨時司機 temp driver 一次性 連結"
+          },
+          {
+            name: "派車回報查詢",
+            tag: "內部查詢",
+            desc: "快速查詢今日、單號、客人或司機回報狀態。",
+            url: "https://booking.ansinglimo.com/report-check.html",
+            keywords: "派車回報 查詢 report check GPS 地圖 司機"
+          }
+        ]
+      },
+      {
+        group: "後台管理",
+        items: [
+          {
+            name: "中控台",
+            tag: "管理",
+            desc: "調度、派車、司機對帳、企業請款、資料分析。",
+            url: "https://script.google.com/macros/s/AKfycby9KWdatRfDZY5g2DkieUkAhyEJDDCnKcMb_l8o2_J4JCaOtKYfEEkvzk-1sW-oZWIF/exec",
+            keywords: "中控台 後台 管理 GAS 調度 派車 企業請款 司機對帳 資料分析"
+          },
+          {
+            name: "備用後台檔案",
+            tag: "維護",
+            desc: "靜態 admin.html 檔案檢視，正式後台仍以 GAS 網址為主。",
+            url: "https://booking.ansinglimo.com/admin.html",
+            keywords: "admin 備用 後台 靜態 維護"
+          }
+        ]
+      },
+      {
+        group: "維護與測試",
+        items: [
+          {
+            name: "booking 預約頁備用",
+            tag: "測試",
+            desc: "CARoffice 內的 index.html，正式客人預約仍以 reserve 網域為主。",
+            url: "https://booking.ansinglimo.com/index.html",
+            keywords: "index booking 備用 測試 預約頁"
+          },
+          {
+            name: "UI 測試頁",
+            tag: "測試",
+            desc: "客人預約 UI 流程預覽用。",
+            url: "https://booking.ansinglimo.com/customer-ui-flow-preview.html",
+            keywords: "UI 測試 預覽 customer flow"
+          }
+        ]
+      }
+    ];
+
+    const app = document.getElementById("app");
+    const empty = document.getElementById("empty");
+    const search = document.getElementById("search");
+    const toast = document.getElementById("toast");
+
+    function escapeHtml(value) {
+      return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function render() {
+      const keyword = search.value.trim().toLowerCase();
+      let visibleCount = 0;
+      app.innerHTML = LINKS.map(section => {
+        const items = section.items.filter(item => {
+          const haystack = [section.group, item.name, item.tag, item.desc, item.url, item.keywords]
+            .join(" ")
+            .toLowerCase();
+          return !keyword || haystack.includes(keyword);
+        });
+        visibleCount += items.length;
+        if (!items.length) return "";
+        return `
+          <section class="section">
+            <div class="section-title">
+              <h2>${escapeHtml(section.group)}</h2>
+              <span class="count">${items.length} 個入口</span>
+            </div>
+            <div class="links">
+              ${items.map(renderItem).join("")}
+            </div>
+          </section>
+        `;
+      }).join("");
+      empty.style.display = visibleCount ? "none" : "block";
+    }
+
+    function renderItem(item) {
+      return `
+        <article class="item">
+          <div class="item-head">
+            <h3 class="name">${escapeHtml(item.name)}</h3>
+            <span class="tag">${escapeHtml(item.tag)}</span>
+          </div>
+          <p class="desc">${escapeHtml(item.desc)}</p>
+          <span class="url" title="${escapeHtml(item.url)}">${escapeHtml(item.url)}</span>
+          <div class="actions">
+            <a class="btn primary" href="${escapeHtml(item.url)}" target="_blank" rel="noopener">開啟</a>
+            <button class="btn" type="button" data-url="${escapeHtml(item.url)}">複製</button>
+          </div>
+        </article>
+      `;
+    }
+
+    async function copyText(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch (error) {
+        const input = document.createElement("textarea");
+        input.value = text;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand("copy");
+        input.remove();
+      }
+      toast.classList.add("show");
+      window.clearTimeout(copyText.timer);
+      copyText.timer = window.setTimeout(() => toast.classList.remove("show"), 1400);
+    }
+
+    search.addEventListener("input", render);
+    app.addEventListener("click", event => {
+      const button = event.target.closest("button[data-url]");
+      if (!button) return;
+      copyText(button.dataset.url);
+    });
+
+    render();
+  </script>
+</body>
+</html>
