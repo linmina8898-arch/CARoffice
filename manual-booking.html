@@ -451,7 +451,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.32";
+    const APP_VERSION = "manual-booking-v1.0.33";
     const GAS_URL = "https://script.google.com/macros/s/AKfycby9KWdatRfDZY5g2DkieUkAhyEJDDCnKcMb_l8o2_J4JCaOtKYfEEkvzk-1sW-oZWIF/exec";
     let templates = [];
 
@@ -695,7 +695,21 @@
 
     function parseNameFromFreeText(text) {
       const match = String(text || "").match(/([\u4e00-\u9fa5]{1,4})(先生|小姐|女士|太太)/);
-      return match ? match[1] + match[2] : "";
+      if (match) return match[1] + match[2];
+      const lines = String(text || "").split(/\n+/).map(line => line.trim()).filter(Boolean);
+      const phoneRegex = /(?:\(|（)?\s*(09\d{2}[-\s]?\d{3}[-\s]?\d{3})\s*(?:\)|）)?/;
+      for (const line of lines) {
+        if (!phoneRegex.test(line)) continue;
+        let candidate = line.replace(phoneRegex, "");
+        candidate = candidate
+          .replace(/^(姓名|乘客|乘車人|乘車人員|聯絡人|客人)\s*[:：]?\s*/g, "")
+          .replace(/[()（）【】\[\]：:，,。]/g, " ")
+          .replace(/\s+/g, " ")
+          .trim();
+        if (/^[\u4e00-\u9fa5]{2,6}$/.test(candidate)) return candidate;
+        if (/^[A-Za-z][A-Za-z\s.'-]{1,30}$/.test(candidate)) return candidate;
+      }
+      return "";
     }
 
     function inferCustomerTitle(name) {
@@ -727,7 +741,16 @@
       const labeled = parseLabeledValue(lines, ["地址", "地點", "接送地址", "上車地址", "下車地址"]);
       if (labeled) return trimAddressTail(labeled);
       const free = String(text || "").match(/(?:來|到|地址在?|地點在?)\s*([\u4e00-\u9fa5\dA-Za-z０-９\-－之樓號巷弄段路街大道縣市區鄉鎮村里]+?)(?:\s*(?:載我|到|去|謝謝|$))/);
-      return free ? trimAddressTail(free[1]) : "";
+      if (free) return trimAddressTail(free[1]);
+      for (const line of lines) {
+        const compact = line.replace(/\s+/g, "");
+        if (/航班|航廈|航站|機場|接機|送機|預約|您好|謝謝|人數|行李|電話|車資|費用/.test(compact)) continue;
+        const looksLikeAddress =
+          /(縣|市|區|鄉|鎮).*(路|街|大道|巷|弄|段).*(\d|號|樓|室)/.test(compact) ||
+          /(路|街|大道|巷|弄).*\d+.*(號|樓|室)?/.test(compact);
+        if (looksLikeAddress) return trimAddressTail(compact);
+      }
+      return "";
     }
 
     function trimAddressTail(value) {
@@ -738,7 +761,7 @@
       const now = new Date();
       let date = "";
       let time = "";
-      const dateMatch = String(text || "").match(/(?:(20\d{2})[\/\-年])?\s*(\d{1,2})[\/\-月]\s*(\d{1,2})日?/);
+      const dateMatch = String(text || "").match(/(?:(20\d{2})\s*[\/\-年]\s*)?(\d{1,2})\s*(?:[\/\-／]|月)\s*(\d{1,2})\s*日?/);
       if (dateMatch) {
         const year = Number(dateMatch[1] || now.getFullYear());
         date = `${year}-${pad2(dateMatch[2])}-${pad2(dateMatch[3])}`;
