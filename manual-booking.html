@@ -451,7 +451,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.33";
+    const APP_VERSION = "manual-booking-v1.0.34";
     const GAS_URL = "https://script.google.com/macros/s/AKfycby9KWdatRfDZY5g2DkieUkAhyEJDDCnKcMb_l8o2_J4JCaOtKYfEEkvzk-1sW-oZWIF/exec";
     let templates = [];
 
@@ -681,7 +681,7 @@
     }
 
     function parseLabeledValue(lines, labels) {
-      const pattern = new RegExp(`^(${labels.join("|")})\\s*[:：]\\s*(.+)$`);
+      const pattern = new RegExp(`^(${labels.join("|")})\\s*(?:[:：]|\\s+)\\s*(.+)$`);
       for (const line of lines) {
         const match = line.match(pattern);
         if (match) return cleanParsedValue(match[2]);
@@ -697,6 +697,10 @@
       const match = String(text || "").match(/([\u4e00-\u9fa5]{1,4})(先生|小姐|女士|太太)/);
       if (match) return match[1] + match[2];
       const lines = String(text || "").split(/\n+/).map(line => line.trim()).filter(Boolean);
+      for (const line of lines) {
+        const labeled = line.match(/^(?:姓名|乘客|乘車人|乘車人員|聯絡人|客人)\s+([\u4e00-\u9fa5]{2,6}|[A-Za-z][A-Za-z\s.'-]{1,30})$/);
+        if (labeled) return labeled[1].trim();
+      }
       const phoneRegex = /(?:\(|（)?\s*(09\d{2}[-\s]?\d{3}[-\s]?\d{3})\s*(?:\)|）)?/;
       for (const line of lines) {
         if (!phoneRegex.test(line)) continue;
@@ -732,7 +736,7 @@
 
     function parseServiceType(text) {
       const value = String(text || "");
-      if (/接機|抵台|落地|到達|桃園機場\s*→|機場\s*→/.test(value)) return "接機";
+      if (/接機|回國|抵台|落地|抵達|到達|桃園機場\s*→|機場\s*→/.test(value)) return "接機";
       if (/送機|到.*機場|去.*機場|載.*到.*機場|出發|起飛/.test(value)) return "送機";
       return "";
     }
@@ -744,9 +748,10 @@
       if (free) return trimAddressTail(free[1]);
       for (const line of lines) {
         const compact = line.replace(/\s+/g, "");
-        if (/航班|航廈|航站|機場|接機|送機|預約|您好|謝謝|人數|行李|電話|車資|費用/.test(compact)) continue;
+        if (/航班|航廈|航站|機場|接機|送機|預約|您好|哈囉|謝謝|人數|行李|電話|車資|費用|抵達時間/.test(compact)) continue;
         const looksLikeAddress =
           /(縣|市|區|鄉|鎮).*(路|街|大道|巷|弄|段).*(\d|號|樓|室)/.test(compact) ||
+          /[\u4e00-\u9fa5]{2,}(路|街|大道|巷|弄|段)\d+/.test(compact) ||
           /(路|街|大道|巷|弄).*\d+.*(號|樓|室)?/.test(compact);
         if (looksLikeAddress) return trimAddressTail(compact);
       }
@@ -811,8 +816,8 @@
     function parseLuggageText(text) {
       const segment = (String(text || "").match(/(?:行李|行李件數|行李箱|去程)\s*[:：]?\s*([^\n，。]+)/) || [])[1] || "";
       const source = segment || text;
-      const large = (String(source).match(/(\d+)\s*(?:大箱|大行李|大件|大)/) || [])[1] || "0";
-      const carry = (String(source).match(/(\d+)\s*(?:小箱|小件|小|登機|手提)/) || [])[1] || "0";
+      const large = (String(source).match(/(\d+)\s*(?:個|件)?\s*(?:大的|大箱|大行李|大件|大)/) || [])[1] || "0";
+      const carry = (String(source).match(/(\d+)\s*(?:個|件)?\s*(?:小的|小箱|小件|小|登機|手提)/) || [])[1] || "0";
       if (Number(large) || Number(carry)) return `${large}大 ${carry}登機`;
       return "";
     }
