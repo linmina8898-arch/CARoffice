@@ -183,7 +183,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.14.50";
+        const APP_VERSION = "v1.14.51";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -590,6 +590,7 @@
         // Helper 函式：過濾掉空值或 "無" 的字串
         const cleanVal = (v) => (!v || v === '無' || v === '-' || v === 'undefined') ? '' : String(v).trim();
         const displayDriverName = (v) => cleanVal(v).replace(/（臨時）$/g, '').trim();
+        const displayDriverOrderId = (v) => cleanVal(v).replace(/-去程$/g, '-01').replace(/-回程$/g, '-02');
         const escapeHtml = (v) => String(v || '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
         const displayNote = (v) => escapeHtml(cleanVal(v)).replace(/\n/g, '<br>');
         function formatPassengerCount(v) {
@@ -757,7 +758,7 @@
                             <div class="flex flex-wrap justify-end gap-1 max-w-[54%]">${tagsHtml}</div>
                         </div>
                         <div class="task-route mt-2 text-sm text-gray-600 leading-snug">${summaryRoute}</div>
-                        <div class="mt-2 text-[10px] font-mono text-gray-400 flex justify-end items-center gap-1">${t.orderId} <span class="text-gray-300">❯</span></div>
+                        <div class="mt-2 text-[10px] font-mono text-gray-400 flex justify-end items-center gap-1">${displayDriverOrderId(t.orderId)} <span class="text-gray-300">❯</span></div>
                         ${actionArea}
                     </div>
                 </div>`;
@@ -836,7 +837,7 @@
             let html = `
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
                     <div class="flex justify-between items-baseline mb-2 border-b border-gray-100 pb-2">
-                        <span class="text-xs font-mono text-gray-400">${t.orderId}</span>
+                        <span class="text-xs font-mono text-gray-400">${displayDriverOrderId(t.orderId)}</span>
                         <span class="text-[10px] font-mono text-gray-300">任務明細</span>
                     </div>
                     <div class="flex items-baseline justify-between gap-3 mb-3">
@@ -925,8 +926,8 @@
             const driverCarType = cleanVal(driverData?.carType);
             const driverLicenseNo = cleanVal(driverData?.idNumber) || cleanVal(driverData?.driverIdNumber) || cleanVal(driverData?.driverLicenseNo) || cleanVal(driverData?.licenseNo) || cleanVal(t.driverLicenseNo);
             const driverAddress = cleanVal(driverData?.address) || cleanVal(t.driverAddress);
-            document.getElementById('rentalFormOrderText').innerText = cleanVal(t.orderId);
-            setRentalText('rentalOrderId', cleanVal(t.orderId));
+            document.getElementById('rentalFormOrderText').innerText = displayDriverOrderId(t.orderId);
+            setRentalText('rentalOrderId', displayDriverOrderId(t.orderId));
             setRentalText('rentalCustomerName', cleanVal(t.custName));
             setRentalText('rentalCustomerPhone', cleanVal(t.custPhone));
             setRentalText('rentalCustomerAddress', cleanVal(t.address));
@@ -1209,7 +1210,7 @@
             const task = tasks.find(x => x.orderId === orderId);
             const company = cleanVal(task?.companyName) || '月結簽單';
             const dateTime = task ? `${task.date} ${task.time}` : '';
-            document.getElementById('sigOrderInfo').innerText = `${company}｜${orderId}${dateTime ? '｜' + dateTime : ''}`;
+            document.getElementById('sigOrderInfo').innerText = `${company}｜${displayDriverOrderId(orderId)}${dateTime ? '｜' + dateTime : ''}`;
             document.getElementById('sigModal').classList.remove('hidden');
             setTimeout(initCanvas, 100); 
         }
