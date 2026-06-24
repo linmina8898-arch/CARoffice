@@ -451,7 +451,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.34";
+    const APP_VERSION = "manual-booking-v1.0.35";
     const GAS_URL = "https://script.google.com/macros/s/AKfycby9KWdatRfDZY5g2DkieUkAhyEJDDCnKcMb_l8o2_J4JCaOtKYfEEkvzk-1sW-oZWIF/exec";
     let templates = [];
 
@@ -627,9 +627,11 @@
       if (result.rideTime) { setTimeFields("ride", result.rideTime); applied.push("時間"); }
       if (result.flightNumber) { setValue("flightNumber", result.flightNumber); applied.push("航班"); }
       if (result.address) { setValue("address", result.address); applied.push("地址"); }
+      if (result.extraLocation) { setValue("extraLocation", result.extraLocation); applied.push("加點"); }
       if (result.customerName) { setValue("customerName", result.customerName); applied.push("姓名"); }
       if (result.customerTitle) { setValue("customerTitle", result.customerTitle); }
       if (result.phone) { setValue("phone", formatPhoneNumber(result.phone)); applied.push("電話"); }
+      if (result.carType) { setValue("carType", result.carType); applied.push("車型"); }
       if (result.paxCount) { setPaxFieldsFromText(result.paxCount); applied.push("人數"); }
       if (result.luggageCount) { setLuggageFieldsFromText(result.luggageCount); applied.push("行李"); }
       if (result.fare) { setValue("fare", result.fare); applied.push("車資"); }
@@ -648,6 +650,7 @@
       return String(value || "")
         .replace(/[Ａ-Ｚａ-ｚ０-９]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0))
         .replace(/[：]/g, ":")
+        .replace(/^[\s>]*[✔✓☑□■]\s*/gm, "")
         .replace(/[，。]/g, "\n")
         .replace(/\r\n/g, "\n")
         .replace(/[ \t]+/g, " ")
@@ -658,16 +661,18 @@
       const result = {};
       const lines = text.split(/\n+/).map(line => line.trim()).filter(Boolean);
       result.phone = firstMatch(text, /09\d{2}[-\s]?\d{3}[-\s]?\d{3}/);
-      result.customerName = parseLabeledValue(lines, ["姓名", "乘客", "乘車人", "乘車人員"]) || parseNameFromFreeText(text);
+      result.customerName = parseLabeledValue(lines, ["姓名", "乘客姓名", "乘客", "乘車人", "乘車人員", "聯絡人", "客人"]) || parseNameFromFreeText(text);
       result.customerTitle = inferCustomerTitle(result.customerName);
       result.customerName = stripCustomerTitle(result.customerName);
       result.flightNumber = (firstMatch(text.toUpperCase(), /\b[A-Z]{1,3}\s?\d{2,4}[A-Z]?\b/) || "").replace(/\s+/g, "");
       result.airport = parseAirport(text);
       result.serviceType = parseServiceType(text);
       result.address = parseAddress(lines, text);
+      result.extraLocation = parseExtraLocation(lines);
+      result.carType = parseCarType(text, lines);
       const parsedDateTime = parseDateTimeFromText(text);
-      result.rideDate = parsedDateTime.date;
-      result.rideTime = parsedDateTime.time;
+      result.rideDate = normalizeParsedDate(parseLabeledValue(lines, ["預約日期", "乘車日期", "用車日期", "日期"])) || parsedDateTime.date;
+      result.rideTime = normalizeParsedTime(parseLabeledValue(lines, ["預約時間", "乘車時間", "用車時間", "時間"])) || parsedDateTime.time;
       result.paxCount = parsePaxText(text);
       result.luggageCount = parseLuggageText(text);
       result.fare = parseFareText(text);
@@ -758,6 +763,39 @@
       return "";
     }
 
+    function parseExtraLocation(lines) {
+      const value = parseLabeledValue(lines, ["加點地址", "加點", "停靠點"]);
+      if (!value || /^(無|沒有|不用|否|N\/A|-)$/.test(value)) return "";
+      return trimAddressTail(value);
+    }
+
+    function parseCarType(text, lines) {
+      const value = parseLabeledValue(lines, ["接送車型", "預約車型", "乘車車型", "車型"]);
+      const source = `${value || ""} ${text || ""}`;
+      if (/Alphard|阿爾法|進口|商務|Benz|Sienna/i.test(source)) return "進口商務車";
+      if (/七人座|7人座|大車|廂型|九人座|9人座/i.test(source)) return "大車";
+      if (/小車|轎車|四人座|4人座/i.test(source)) return "小車";
+      return "";
+    }
+
+    function normalizeParsedDate(value) {
+      const match = String(value || "").match(/(?:(20\d{2})\s*[\/\-年]\s*)?(\d{1,2})\s*(?:[\/\-／]|月)\s*(\d{1,2})\s*日?/);
+      if (!match) return "";
+      const year = Number(match[1] || new Date().getFullYear());
+      return `${year}-${pad2(match[2])}-${pad2(match[3])}`;
+    }
+
+    function normalizeParsedTime(value) {
+      const match = String(value || "").match(/(上午|早上|下午|晚上|中午)?\s*(\d{1,2})(?::|：|點|時)\s*(\d{1,2})?\s*(AM|PM)?/i);
+      if (!match) return "";
+      let hour = Number(match[2]);
+      const minute = Number(match[3] || 0);
+      const period = String(match[1] || match[4] || "").toUpperCase();
+      if ((period === "下午" || period === "晚上" || period === "PM") && hour < 12) hour += 12;
+      if (period === "中午" && hour < 12) hour += 12;
+      return `${pad2(hour)}:${pad2(Math.min(55, Math.round(minute / 5) * 5))}`;
+    }
+
     function trimAddressTail(value) {
       return String(value || "").replace(/航廈|航站|謝謝|請|幫忙/g, "").trim();
     }
@@ -807,7 +845,7 @@
     function parsePaxText(text) {
       const range = String(text || "").match(/人數\s*[:：]?\s*(\d+)\s*[-~－]\s*(\d+)\s*人?/);
       if (range) return `${range[2]}大 0中 0小`;
-      const labeled = String(text || "").match(/人數(?:件數)?\s*[:：]?\s*(\d+)\s*(?:人|位)?/);
+      const labeled = String(text || "").match(/(?:搭車人數|乘車人數|人數)(?:件數)?\s*[:：]?\s*(\d+)\s*(?:人|位)?/);
       if (labeled) return `${labeled[1]}大 0中 0小`;
       const simple = String(text || "").match(/(\d+)\s*(?:人|位)/);
       return simple ? `${simple[1]}大 0中 0小` : "";
