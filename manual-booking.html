@@ -210,13 +210,13 @@
           <div>
             <label for="source">本次預約來源</label>
             <select id="source" name="source">
-              <option value="AS">AS</option>
-              <option value="AZ">AZ</option>
+              <option value="AS">AS 安興</option>
+              <option value="AZ">AZ 安興竹北</option>
               <option value="123">123</option>
               <option value="W">W</option>
-              <option value="ANNA">ANNA</option>
-              <option value="遠貿">遠貿</option>
-              <option value="大台灣">大台灣</option>
+              <option value="ANNA">ANNA NA</option>
+              <option value="遠貿">遠貿 UM</option>
+              <option value="大台灣">大台灣 TW</option>
               <option value="其他">其他</option>
             </select>
             <div class="hint">會寫入預約單，並用來判斷單號來源。</div>
@@ -451,7 +451,16 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.35";
+    const APP_VERSION = "manual-booking-v1.0.36";
+    const SOURCE_LABELS = {
+      AS: "AS 安興",
+      AZ: "AZ 安興竹北",
+      "123": "123",
+      W: "W",
+      ANNA: "ANNA NA",
+      "遠貿": "遠貿 UM",
+      "大台灣": "大台灣 TW"
+    };
     const GAS_URL = "https://script.google.com/macros/s/AKfycby9KWdatRfDZY5g2DkieUkAhyEJDDCnKcMb_l8o2_J4JCaOtKYfEEkvzk-1sW-oZWIF/exec";
     let templates = [];
 
@@ -686,10 +695,17 @@
     }
 
     function parseLabeledValue(lines, labels) {
-      const pattern = new RegExp(`^(${labels.join("|")})\\s*(?:[:：]|\\s+)\\s*(.+)$`);
-      for (const line of lines) {
-        const match = line.match(pattern);
-        if (match) return cleanParsedValue(match[2]);
+      const pattern = new RegExp(`^(${labels.join("|")})\\s*(?:[:：]|\\s+)?\\s*(.*)$`);
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const normalizedLine = line.replace(/^[\s．。・･▪︎▪•*●○\-—–＿▌]+/, "").trim();
+        const match = normalizedLine.match(pattern);
+        if (!match) continue;
+        if (match[2]) return cleanParsedValue(match[2]);
+        const nextLine = String(lines[i + 1] || "").replace(/^[\s．。・･▪︎▪•*●○\-—–＿▌]+/, "").trim();
+        if (nextLine && !/^(預約資訊|乘車資訊|費用資訊|注意事項|其他說明|[-─━▂]+)$/.test(nextLine)) {
+          return cleanParsedValue(nextLine);
+        }
       }
       return "";
     }
@@ -944,10 +960,15 @@
       return Array.from(new Set(["AS", "AZ", "123", "W", "ANNA", "遠貿", "大台灣", ...templates.map(t => t.source).filter(Boolean)]));
     }
 
+    function formatSourceLabel(source) {
+      const value = String(source || "").trim();
+      return SOURCE_LABELS[value] || value;
+    }
+
     function renderSourceOptions(items) {
       const current = $("source").value;
       const options = Array.from(new Set(["AS", "AZ", "123", "W", "ANNA", "遠貿", "大台灣", ...(items || []).map(t => t.source).filter(Boolean)]));
-      $("source").innerHTML = options.map(source => `<option value="${escapeHtml(source)}">${escapeHtml(source)}</option>`).join("") + '<option value="其他">其他</option>';
+      $("source").innerHTML = options.map(source => `<option value="${escapeHtml(source)}">${escapeHtml(formatSourceLabel(source))}</option>`).join("") + '<option value="其他">其他</option>';
       if (options.includes(current) || current === "其他") $("source").value = current;
     }
 
