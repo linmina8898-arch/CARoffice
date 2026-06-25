@@ -183,7 +183,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.14.51";
+        const APP_VERSION = "v1.14.52";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -593,6 +593,23 @@
         const displayDriverOrderId = (v) => cleanVal(v).replace(/-去程$/g, '-01').replace(/-回程$/g, '-02');
         const escapeHtml = (v) => String(v || '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
         const displayNote = (v) => escapeHtml(cleanVal(v)).replace(/\n/g, '<br>');
+        function maskCompletedAddress(value) {
+            let text = cleanVal(value).replace(/^\d{3,5}\s*/, '').replace(/\s+/g, '');
+            if (!text) return '';
+            const noIndex = text.search(/[0-9０-９一二三四五六七八九十\-之]+(?:號|号)/);
+            if (noIndex >= 0) text = text.slice(0, noIndex);
+            text = text.replace(/[0-9０-９].*$/g, '');
+            return text.length > 6 ? text.slice(0, 6) : text;
+        }
+        function formatCompletedRoute(t) {
+            const type = cleanVal(t.type);
+            const airport = cleanVal(t.airport);
+            const maskedAddress = maskCompletedAddress(t.address || t.mainLocation);
+            if (type && airport && maskedAddress) {
+                return type === '送機' ? `${maskedAddress} ➜ ${airport}` : `${airport} ➜ ${maskedAddress}`;
+            }
+            return cleanVal(t.routeDisplay).replace(/([^\s→]+(?:號|号))/g, (full) => maskCompletedAddress(full));
+        }
         function formatPassengerCount(v) {
             const text = cleanVal(v);
             if (!text || text === '0') return '請確認預約單';
@@ -1028,13 +1045,14 @@
                 const balanceHtml = settled
                     ? `<span class="inline-flex mt-1 px-1.5 py-0.5 rounded bg-[#553f62] text-white">已結清${settledDate}</span>`
                     : `<span class="inline-flex mt-1 px-1.5 py-0.5 rounded ${balance >= 0 ? 'bg-[#f5f1f7] text-[#553f62]' : 'bg-red-50 text-red-600'}">${balance >= 0 ? '公司應付' : '應繳回公司'} $${Math.abs(balance).toLocaleString()}</span>`;
+                const routeHtml = formatCompletedRoute(t);
                 return `
                 <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
                     <div class="flex justify-between mb-1">
                         <span class="text-xs text-gray-600">${t.date} ${t.time}</span>
                         ${isAdjustment ? `<span class="text-xs text-[#553f62]">補貼</span>` : (needsReport ? `<span class="text-xs text-red-500">未確實回報</span>` : '')}
                     </div>
-                    <div class="text-sm text-gray-600 whitespace-pre-line">${t.routeDisplay}</div>
+                    <div class="text-sm text-gray-600 whitespace-pre-line">${routeHtml}</div>
                     <div class="text-xs text-gray-400 mt-1">${t.custNameMasked}</div>
                     <div class="flex justify-between items-end border-t border-gray-200 mt-3 pt-2">
                         <div class="text-xs text-gray-500">${paymentHtml}<br>${balanceHtml}${o.payoutNote ? `<span class="inline-flex ml-1 px-1.5 py-0.5 rounded bg-gray-400 text-white">備註：${displayNote(o.payoutNote)}</span>` : ''}</div>
