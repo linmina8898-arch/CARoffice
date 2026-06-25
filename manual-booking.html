@@ -451,7 +451,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.36";
+    const APP_VERSION = "manual-booking-v1.0.37";
     const SOURCE_LABELS = {
       AS: "AS 安興",
       AZ: "AZ 安興竹北",
@@ -463,6 +463,7 @@
     };
     const GAS_URL = "https://script.google.com/macros/s/AKfycby9KWdatRfDZY5g2DkieUkAhyEJDDCnKcMb_l8o2_J4JCaOtKYfEEkvzk-1sW-oZWIF/exec";
     let templates = [];
+    let manualSources = [];
 
     const $ = id => document.getElementById(id);
     const money = v => Number(String(v || "").replace(/[^\d.-]/g, "")) || 0;
@@ -500,6 +501,7 @@
           }
         }
         templates = data.templates || [];
+        manualSources = data.sources || [];
         renderSourceOptions(templates);
         renderTemplateSourceFilter();
         renderTemplateOptions();
@@ -562,11 +564,11 @@
           return an.localeCompare(bn, "zh-Hant");
         });
       $("templateSelect").innerHTML = '<option value="">手動填寫，或選擇固定客戶</option>' + matched.map(({ tpl, idx }) => {
-        const label = [tpl.source, tpl.code, tpl.name, tpl.phone].filter(Boolean).join(" / ");
+        const label = [formatSourceLabel(tpl.source), tpl.code, tpl.name, tpl.phone].filter(Boolean).join(" / ");
         return `<option value="${idx}">${escapeHtml(label)}</option>`;
       }).join("");
       $("templateHint").textContent = keyword || sourceFilter
-        ? `符合${sourceFilter ? `「${sourceFilter}」來源` : ""}${keyword ? `「${$("templateSearch").value}」` : ""}的固定客戶：${matched.length} 筆`
+        ? `符合${sourceFilter ? `「${formatSourceLabel(sourceFilter)}」來源` : ""}${keyword ? `「${$("templateSearch").value}」` : ""}的固定客戶：${matched.length} 筆`
         : templates.length
         ? `已載入 ${templates.length} 筆固定客戶範本。`
         : $("templateHint").textContent;
@@ -576,7 +578,7 @@
       const current = $("templateSourceFilter").value;
       const sources = Array.from(new Set(templates.map(t => t.source).filter(Boolean)))
         .sort((a, b) => String(a).localeCompare(String(b), "zh-Hant"));
-      $("templateSourceFilter").innerHTML = '<option value="">全部來源</option>' + sources.map(source => `<option value="${escapeHtml(source)}">${escapeHtml(source)}</option>`).join("");
+      $("templateSourceFilter").innerHTML = '<option value="">全部來源</option>' + sources.map(source => `<option value="${escapeHtml(source)}">${escapeHtml(formatSourceLabel(source))}</option>`).join("");
       if (sources.includes(current)) $("templateSourceFilter").value = current;
     }
 
@@ -957,17 +959,21 @@
     }
 
     function knownSources() {
-      return Array.from(new Set(["AS", "AZ", "123", "W", "ANNA", "遠貿", "大台灣", ...templates.map(t => t.source).filter(Boolean)]));
+      const configured = manualSources.map(item => item.code).filter(Boolean);
+      const fallback = ["AS", "AZ", "123", "W", "ANNA", "遠貿", "大台灣"];
+      return Array.from(new Set([...(configured.length ? configured : fallback), ...templates.map(t => t.source).filter(Boolean)]));
     }
 
     function formatSourceLabel(source) {
       const value = String(source || "").trim();
+      const found = manualSources.find(item => String(item.code || "").trim() === value);
+      if (found) return found.displayName || [found.code, found.label].filter(Boolean).join(" ");
       return SOURCE_LABELS[value] || value;
     }
 
     function renderSourceOptions(items) {
       const current = $("source").value;
-      const options = Array.from(new Set(["AS", "AZ", "123", "W", "ANNA", "遠貿", "大台灣", ...(items || []).map(t => t.source).filter(Boolean)]));
+      const options = Array.from(new Set([...knownSources(), ...(items || []).map(t => t.source).filter(Boolean)]));
       $("source").innerHTML = options.map(source => `<option value="${escapeHtml(source)}">${escapeHtml(formatSourceLabel(source))}</option>`).join("") + '<option value="其他">其他</option>';
       if (options.includes(current) || current === "其他") $("source").value = current;
     }
