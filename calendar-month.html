@@ -34,7 +34,7 @@
     .wrap {
       width: min(980px, 100%);
       margin: 0 auto;
-      padding: 14px;
+      padding: 12px 10px;
     }
     .topbar {
       display: flex;
@@ -95,12 +95,12 @@
     main {
       width: min(980px, 100%);
       margin: 0 auto;
-      padding: 14px;
+      padding: 8px 0 32px;
     }
     .weekdays, .calendar {
       display: grid;
       grid-template-columns: repeat(7, minmax(0, 1fr));
-      gap: 6px;
+      gap: 0;
     }
     .weekday {
       text-align: center;
@@ -108,18 +108,22 @@
       font-size: 12px;
       font-weight: 700;
       padding: 4px 0;
+      border-right: 1px solid var(--line);
     }
+    .weekday:last-child { border-right: 0; }
     .day {
-      min-height: 104px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
+      min-height: 118px;
+      border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      border-radius: 0;
       background: #fff;
-      box-shadow: var(--shadow);
-      padding: 7px 6px;
-      overflow: hidden;
+      box-shadow: none;
+      padding: 4px 4px 6px;
+      overflow: visible;
     }
+    .day:nth-child(7n) { border-right: 0; }
     .day.muted {
-      background: #fbfafc;
+      background: #f7f4f8;
       color: #b7adbd;
       box-shadow: none;
     }
@@ -132,11 +136,13 @@
       align-items: center;
       justify-content: space-between;
       gap: 4px;
-      margin-bottom: 5px;
+      margin-bottom: 2px;
     }
     .date-num {
       font-weight: 700;
       color: var(--purple);
+      font-size: 18px;
+      line-height: 1.1;
     }
     .count {
       color: var(--muted);
@@ -145,21 +151,21 @@
     .event {
       display: block;
       width: 100%;
-      margin-top: 4px;
-      border: 1px solid #eadde9;
-      border-radius: 6px;
-      background: var(--soft);
+      margin-top: 1px;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
       color: var(--ink);
-      padding: 3px 5px;
-      font-size: 12px;
-      line-height: 1.25;
+      padding: 0;
+      font-size: 11px;
+      line-height: 1.22;
       text-align: left;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
     .more {
-      margin-top: 4px;
+      margin-top: 2px;
       color: var(--pink);
       font-size: 11px;
       text-align: right;
@@ -201,15 +207,19 @@
     }
     @media (max-width: 640px) {
       h1 { font-size: 19px; }
-      .weekdays, .calendar { gap: 3px; }
+      .wrap { padding: 10px 8px; }
+      main { padding-left: 0; padding-right: 0; }
+      .weekdays, .calendar { gap: 0; }
       .weekday { font-size: 11px; }
       .day {
-        min-height: 82px;
-        padding: 5px 4px;
+        min-height: 112px;
+        padding: 3px 2px 5px;
       }
+      .date-num { font-size: 17px; }
       .event {
-        font-size: 10px;
-        padding: 2px 4px;
+        font-size: 9px;
+        line-height: 1.18;
+        padding: 0;
       }
       .count { display: none; }
     }
@@ -220,26 +230,26 @@
     <div class="wrap">
       <div class="topbar">
         <h1>CAR 行事曆月檢視</h1>
-        <div class="version" id="versionText">calendar-month-v1.0.0</div>
+        <div class="version" id="versionText">calendar-month-v1.0.1</div>
       </div>
       <div class="controls">
         <button type="button" onclick="moveMonth(-1)">‹</button>
         <div class="month-title" id="monthTitle">--</div>
         <button type="button" onclick="moveMonth(1)">›</button>
       </div>
-      <div class="hint">每一天會顯示 Google CAR 行事曆主旨前 8 個字；點日期可看完整主旨。</div>
+      <div class="hint">每一天直接顯示 Google CAR 行事曆主旨；點日期可放大查看。</div>
     </div>
   </header>
 
   <main>
     <div class="weekdays">
-      <div class="weekday">日</div>
       <div class="weekday">一</div>
       <div class="weekday">二</div>
       <div class="weekday">三</div>
       <div class="weekday">四</div>
       <div class="weekday">五</div>
       <div class="weekday">六</div>
+      <div class="weekday">日</div>
     </div>
     <div id="status" class="status">讀取中...</div>
     <div id="calendar" class="calendar"></div>
@@ -300,7 +310,8 @@
       const year = state.current.getFullYear();
       const month = state.current.getMonth();
       const first = new Date(year, month, 1);
-      const start = new Date(year, month, 1 - first.getDay());
+      const mondayOffset = (first.getDay() + 6) % 7;
+      const start = new Date(year, month, 1 - mondayOffset);
       const today = dateKey(new Date());
       const cells = [];
 
@@ -310,15 +321,13 @@
         const key = dateKey(d);
         const events = state.eventsByDate[key] || [];
         const inMonth = d.getMonth() === month;
-        const visible = events.slice(0, 4);
         cells.push(`
           <div class="day ${inMonth ? "" : "muted"} ${key === today ? "today" : ""}" onclick="openDay('${key}')">
             <div class="date-row">
               <span class="date-num">${d.getDate()}</span>
               ${events.length ? `<span class="count">${events.length}筆</span>` : ""}
             </div>
-            ${visible.map(ev => `<span class="event" title="${escapeHtml(ev.title)}">${escapeHtml(ev.shortTitle || ev.title.slice(0, 8))}</span>`).join("")}
-            ${events.length > visible.length ? `<div class="more">+${events.length - visible.length}</div>` : ""}
+            ${events.map(ev => `<span class="event" title="${escapeHtml(ev.title)}">${escapeHtml(ev.title)}</span>`).join("")}
           </div>
         `);
       }
