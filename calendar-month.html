@@ -256,26 +256,60 @@
       flex: 1;
       overflow: hidden;
     }
+    
+    /* 事件基礎樣式 (移除寫死的背景色與邊框) */
     .event {
       display: block;
       width: 100%;
-      background: rgba(87, 66, 102, 0.06);
-      border-left: 3px solid var(--purple);
-      color: var(--ink);
       padding: 3px 6px;
       font-size: 11px;
       font-weight: 500;
       line-height: 1.3;
       text-align: left;
       border-radius: 4px;
+      border-left-width: 3px;
+      border-left-style: solid;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       transition: all 0.15s ease;
     }
-    .day.interactive:hover .event {
-      background: rgba(87, 66, 102, 0.1);
+
+    /* === 自定義事件狀態顏色 (透過 JS 智慧判斷套用) === */
+    /* 預設行程 */
+    .ev-default {
+      background: rgba(87, 66, 102, 0.06);
+      border-left-color: var(--purple);
+      color: var(--ink);
     }
+    /* 重要行程 (桃紅色) */
+    .ev-important {
+      background: #fce7f3;
+      border-left-color: #db2777;
+      color: #9d174d;
+      font-weight: 700;
+    }
+    /* 已完成行程 (藍色) */
+    .ev-completed {
+      background: #dbeafe;
+      border-left-color: #2563eb;
+      color: #1e3a8a;
+    }
+    /* 已取消行程 */
+    .ev-cancelled {
+      background: #f3f4f6;
+      border-left-color: #9ca3af;
+      color: #6b7280;
+      text-decoration: line-through;
+      opacity: 0.8;
+    }
+
+    /* 針對滑鼠懸停效果加深 */
+    .day.interactive:hover .ev-default { background: rgba(87, 66, 102, 0.12); }
+    .day.interactive:hover .ev-important { background: #fbcfe8; }
+    .day.interactive:hover .ev-completed { background: #bfdbfe; }
+    .day.interactive:hover .ev-cancelled { background: #e5e7eb; }
+
     .more {
       margin-top: auto;
       color: var(--pink);
@@ -412,12 +446,17 @@
       padding: 2px 8px;
       border-radius: 20px;
     }
+    /* 在 Dialog 中套用狀態顏色的輔助樣式 */
     .modal-event-title {
       font-weight: 700;
       color: var(--ink);
       font-size: 15px;
       line-height: 1.4;
+      padding: 4px 8px;
+      border-radius: 4px;
+      border-left: 3px solid transparent;
     }
+    
     .modal-actions {
       padding: 16px 20px;
       background: var(--soft);
@@ -458,17 +497,17 @@
       }
       
       .event {
-        /* 2. 終極 CSS 縮放黑科技：打破手機瀏覽器字體大小下限 */
+        /* 2. 終極 CSS 縮放黑科技：進一步極限壓縮 (增加 2~3 個字元) */
         font-size: 10px; /* 給予標準排版大小，避免瀏覽器誤判 */
-        width: 142.8%; /* 撐大 42.8% 的寬度來容納更多字 (100% / 0.7) */
-        transform: scale(0.7); /* 再將整個色塊視覺縮小到 70% 放回格子內 */
+        width: 153.8%; /* 撐大 53.8% 的寬度來容納更多字 (100% / 0.65) */
+        transform: scale(0.65); /* 再將整個色塊視覺縮小到 65% 放回格子內 */
         transform-origin: top left; /* 對齊左上角 */
         margin-bottom: -3px; /* 扣除縮小後多出來的排版高度空隙 */
         
-        letter-spacing: -0.2px;
+        letter-spacing: -0.3px; /* 進一步縮減字元間距 */
         line-height: 1.15;
         padding: 1px 2px 1px 2px;
-        border-left-width: 2.5px; /* 縮小後視覺約 1.7px */
+        border-left-width: 3px; /* 縮小後視覺約 1.95px */
         border-radius: 2px;
         
         white-space: nowrap;
@@ -485,7 +524,7 @@
     <div class="wrap">
       <div class="topbar">
         <h1>CAR 行事曆月檢視</h1>
-        <div class="version" id="versionText">calendar-month-v1.1.0</div>
+        <div class="version" id="versionText">calendar-month-v1.2.0</div>
       </div>
       <div class="controls">
         <button type="button" class="icon-btn" onclick="goToToday()" title="回到今天">
@@ -554,6 +593,27 @@
 
     function formatMonth(date) {
       return `${date.getFullYear()}年 ${pad(date.getMonth() + 1)}月`;
+    }
+
+    // === 智慧判斷行程狀態顏色的邏輯 ===
+    function getEventStatusClass(title) {
+      if (!title) return 'ev-default';
+      const t = title.toLowerCase();
+      
+      // 取消狀態 (灰色、刪除線)
+      if (t.includes('取消') || t.includes('x取消') || t.includes('❌')) {
+        return 'ev-cancelled';
+      }
+      // 完成狀態 (藍色)
+      if (t.includes('完成') || t.includes('✅') || t.includes('done')) {
+        return 'ev-completed';
+      }
+      // 重要狀態 (桃紅色)
+      if (t.includes('重要') || t.includes('🔴') || t.includes('⚠️') || t.includes('!')) {
+        return 'ev-important';
+      }
+      // 預設狀態
+      return 'ev-default';
     }
 
     // 顯示骨架屏
@@ -636,7 +696,6 @@
         const visibleEvents = events.slice(0, limit);
         const remaining = events.length - limit;
 
-        // JS 渲染時「不」切斷字串，交由 CSS 的 text-overflow: ellipsis; 負責裁切
         cells.push(`
           <div class="day ${inMonth ? "" : "muted"} ${key === today ? "today" : ""} ${hasEvents ? "interactive" : ""}" 
                ${hasEvents ? `onclick="openDay('${key}')"` : ""}>
@@ -645,11 +704,15 @@
               ${hasEvents ? `<span class="count">${events.length} 筆</span>` : ""}
             </div>
             <div class="event-container">
-              ${visibleEvents.map(ev => `
-                <div class="event" title="${escapeHtml(ev.title)}">
-                  ${escapeHtml(ev.title)}
-                </div>
-              `).join("")}
+              ${visibleEvents.map(ev => {
+                // 根據標題動態取得樣式 Class
+                const statusClass = getEventStatusClass(ev.title);
+                return `
+                  <div class="event ${statusClass}" title="${escapeHtml(ev.title)}">
+                    ${escapeHtml(ev.title)}
+                  </div>
+                `;
+              }).join("")}
               ${remaining > 0 ? `<div class="more">+${remaining} 筆...</div>` : ""}
             </div>
           </div>
@@ -669,13 +732,16 @@
       document.getElementById("dialogTitle").textContent = `${formattedTitle} (${events.length} 筆)`;
       document.getElementById("dialogBody").innerHTML = events.map(ev => {
         const timeDisplay = ev.time ? ev.time : "整天";
+        // 在彈出對話框中也套用相同的狀態顏色
+        const statusClass = getEventStatusClass(ev.title);
+        
         return `
           <div class="modal-event">
             <div class="modal-time">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline; vertical-align:middle;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
               <span>${escapeHtml(timeDisplay)}</span>
             </div>
-            <div class="modal-event-title">${escapeHtml(ev.title || "無標題")}</div>
+            <div class="modal-event-title ${statusClass}">${escapeHtml(ev.title || "無標題")}</div>
           </div>
         `;
       }).join("");
