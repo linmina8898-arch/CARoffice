@@ -3,7 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AS｜CAR 月檢視</title>
+  <title>AS｜CAR 月檢視儀表板</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons (Premium SVGs) -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
   <style>
     :root {
       --ink: #1a0b3d;
@@ -16,584 +22,574 @@
       --pink-soft: #fff0f6;
       --shadow-sm: 0 2px 8px rgba(26, 11, 61, 0.04);
       --shadow-md: 0 8px 24px rgba(26, 11, 61, 0.08);
-      --radius: 12px;
+      --shadow-lg: 0 16px 32px rgba(26, 11, 61, 0.12);
+      --radius: 16px;
     }
-    * { box-sizing: border-box; }
+
     body {
-      margin: 0;
-      background: #f6f3f7;
+      background-color: #f6f3f7;
       color: var(--ink);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans TC", "Microsoft JhengHei", Arial, sans-serif;
-      font-size: 14px;
-      line-height: 1.45;
       -webkit-font-smoothing: antialiased;
     }
-    header {
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      background: rgba(246, 243, 247, 0.96);
-      border-bottom: 1px solid var(--line);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-    }
-    .wrap {
-      width: min(1000px, 100%);
-      margin: 0 auto;
-      padding: 16px 12px;
-    }
-    .topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-    }
-    h1 {
-      margin: 0;
-      color: var(--ink);
-      font-size: 24px;
-      font-weight: 800;
-      letter-spacing: -0.5px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    h1::before {
-      content: '';
-      display: inline-block;
+
+    /* 關鍵字分類精美樣式 */
+    .ev-tag-maintenance { background: #ffebeb; border-left: 3px solid #ef4444; color: #991b1b; } /* 紅: 保養/維修 */
+    .ev-tag-meeting { background: #e0f2fe; border-left: 3px solid #0ea5e9; color: #075985; }     /* 藍: 會議/報告 */
+    .ev-tag-booking { background: #f0fdf4; border-left: 3px solid #22c55e; color: #166534; }     /* 綠: 預約/交車 */
+    .ev-tag-marketing { background: #fdf2f8; border-left: 3px solid #ec4899; color: #9d174d; }   /* 粉: 銷量/行銷 */
+    .ev-tag-default { background: rgba(87, 66, 102, 0.06); border-left: 3px solid var(--purple); color: var(--ink); }
+
+    /* 捲軸美化 */
+    ::-webkit-scrollbar {
       width: 6px;
-      height: 24px;
-      background: var(--pink);
-      border-radius: 3px;
+      height: 6px;
     }
-    .version {
-      color: var(--muted);
-      font-size: 11px;
-      background: var(--purple-light);
-      padding: 2px 8px;
-      border-radius: 20px;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-    }
-    .controls {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      margin-top: 16px;
-    }
-    .month-selector {
-      flex: 1;
-      display: grid;
-      grid-template-columns: 44px 1fr 44px;
-      gap: 4px;
-    }
-    button {
-      min-height: 42px;
-      padding: 0 12px;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      background: #fff;
-      color: var(--purple);
-      font: inherit;
-      font-weight: 700;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-      box-shadow: var(--shadow-sm);
-    }
-    button:hover {
+    ::-webkit-scrollbar-track {
       background: var(--soft);
-      border-color: var(--purple);
-      transform: translateY(-1px);
     }
-    button:active {
-      transform: translateY(1px);
-    }
-    button.primary {
-      border-color: var(--purple);
-      background: var(--purple);
-      color: #fff;
-    }
-    button.primary:hover {
-      background: #443250;
-      border-color: #443250;
-    }
-    button.icon-btn {
-      width: 42px;
-      padding: 0;
-    }
-    .month-title {
-      min-height: 42px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      background: #fff;
-      color: var(--ink);
-      font-size: 18px;
-      font-weight: 800;
-      box-shadow: var(--shadow-sm);
-    }
-    .hint {
-      margin-top: 10px;
-      color: var(--muted);
-      font-size: 12px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .hint::before {
-      content: '💡';
-    }
-    main {
-      width: min(1000px, 100%);
-      margin: 0 auto;
-      padding: 8px 12px 48px;
-    }
-    .weekdays, .calendar {
-      display: grid;
-      grid-template-columns: repeat(7, minmax(0, 1fr));
+    ::-webkit-scrollbar-thumb {
       background: var(--line);
-      gap: 1px;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      overflow: hidden;
-      box-shadow: var(--shadow-md);
-    }
-    .weekdays {
-      border-bottom: none;
-      border-bottom-left-radius: 0;
-      border-bottom-right-radius: 0;
-      background: #fff;
-    }
-    .weekday {
-      text-align: center;
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 800;
-      padding: 10px 0;
-      background: var(--soft);
-    }
-    .calendar {
-      border-top-left-radius: 0;
-      border-top-right-radius: 0;
-    }
-    .day {
-      min-height: 128px;
-      background: #fff;
-      padding: 6px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      transition: background 0.15s ease;
-      position: relative;
-    }
-    .day.interactive {
-      cursor: pointer;
-    }
-    .day.interactive:hover {
-      background: var(--soft);
-    }
-    .day.muted {
-      background: #fcfbfd;
-      color: #ccc4d0;
-    }
-    .day.muted .date-num {
-      color: #b7adbd;
-      opacity: 0.6;
-    }
-    .day.today {
-      background: #fffbfd;
-    }
-    .day.today::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: var(--pink);
-    }
-    .date-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 4px;
-      margin-bottom: 2px;
-    }
-    .date-num {
-      font-weight: 800;
-      color: var(--purple);
-      font-size: 18px;
-      line-height: 1;
-      width: 24px;
-      height: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .day.today .date-num {
-      background: var(--pink);
-      color: #fff;
-      border-radius: 50%;
-      font-size: 14px;
-    }
-    .count {
-      color: var(--pink);
-      font-size: 11px;
-      font-weight: 700;
-      background: var(--pink-soft);
-      padding: 1px 6px;
-      border-radius: 10px;
-    }
-    .event-container {
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-      flex: 1;
-      overflow: hidden;
-    }
-    .event {
-      display: block;
-      width: 100%;
-      background: rgba(87, 66, 102, 0.06);
-      border-left: 3px solid var(--purple);
-      color: var(--ink);
-      padding: 3px 6px;
-      font-size: 11px;
-      font-weight: 500;
-      line-height: 1.3;
-      text-align: left;
       border-radius: 4px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      transition: all 0.15s ease;
     }
-    .day.interactive:hover .event {
-      background: rgba(87, 66, 102, 0.1);
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--muted);
     }
-    .more {
-      margin-top: auto;
-      color: var(--pink);
-      font-size: 11px;
-      font-weight: 700;
-      text-align: right;
+
+    /* 磨砂玻璃效果 */
+    .glass {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+
+    /* 滑動與縮放動畫 */
+    .transition-all-custom {
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     }
     
-    /* 載入狀態 */
-    .status-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 40px 0;
-      text-align: center;
-    }
-    .spinner {
-      width: 32px;
-      height: 32px;
-      border: 3px solid var(--line);
-      border-top-color: var(--pink);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin-bottom: 12px;
-    }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-    .status-text {
-      font-weight: 600;
-      color: var(--muted);
-    }
-
-    /* 骨架屏載入效果 */
-    .skeleton-grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 1px;
-      background: var(--line);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      overflow: hidden;
-    }
-    .skeleton-day {
-      height: 128px;
-      background: #fff;
-      padding: 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .skeleton-num {
-      width: 24px;
-      height: 24px;
-      background: #f0ebf2;
-      border-radius: 50%;
-      animation: pulse 1.5s infinite ease-in-out;
-    }
-    .skeleton-line {
-      height: 18px;
-      background: #f5f0f7;
-      border-radius: 4px;
-      animation: pulse 1.5s infinite ease-in-out;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 0.6; }
-      50% { opacity: 1; }
-    }
-
-    /* 對話框樣式 */
-    dialog {
-      width: min(520px, calc(100% - 24px));
-      border: 0;
-      border-radius: 16px;
-      padding: 0;
-      box-shadow: 0 24px 60px rgba(26, 11, 61, 0.25);
-      animation: dialogScale 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-      overflow: hidden;
-    }
-    @keyframes dialogScale {
-      from { transform: scale(0.92); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
-    }
-    dialog::backdrop {
-      background: rgba(26, 11, 61, 0.45);
-      backdrop-filter: blur(4px);
-    }
-    .modal-head {
-      background: var(--purple);
-      color: #fff;
-      padding: 16px 20px;
-      font-weight: 800;
-      font-size: 18px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .modal-close-btn {
-      background: transparent;
-      border: none;
-      color: rgba(255, 255, 255, 0.8);
-      font-size: 24px;
-      width: 32px;
-      height: 32px;
-      min-height: auto;
-      padding: 0;
-      box-shadow: none;
-      border-radius: 50%;
-    }
-    .modal-close-btn:hover {
-      background: rgba(255, 255, 255, 0.1);
-      color: #fff;
-    }
-    .modal-body {
-      padding: 8px 20px;
-      max-height: 400px;
-      overflow-y: auto;
-    }
-    .modal-event {
-      padding: 14px 0;
-      border-bottom: 1px solid var(--line);
-    }
-    .modal-event:last-child { border-bottom: 0; }
-    .modal-time {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      color: var(--pink);
-      font-weight: 700;
-      font-size: 12px;
-      margin-bottom: 6px;
-      background: var(--pink-soft);
-      padding: 2px 8px;
-      border-radius: 20px;
-    }
-    .modal-event-title {
-      font-weight: 700;
-      color: var(--ink);
-      font-size: 15px;
-      line-height: 1.4;
-    }
-    .modal-actions {
-      padding: 16px 20px;
-      background: var(--soft);
-      border-top: 1px solid var(--line);
-      text-align: right;
+    .day-cell {
+      min-height: 120px;
     }
 
     @media (max-width: 640px) {
-      h1 { font-size: 20px; }
-      .wrap { padding: 12px 8px; }
-      main { padding-left: 4px; padding-right: 4px; }
-      .weekday { font-size: 11px; padding: 6px 0; }
-      .day {
-        min-height: 90px;
-        padding: 3px;
-        gap: 2px;
+      .day-cell {
+        min-height: 80px;
       }
-      .date-num { 
-        font-size: 13px; 
-        width: 18px; 
-        height: 18px; 
-      }
-      .day.today .date-num { 
-        font-size: 10px; 
-      }
-      .event {
-        font-size: 8.5px;
-        line-height: 1.15;
-        padding: 1px 3px;
-        border-left-width: 2px;
-        margin-bottom: 1px;
-        border-radius: 2px;
-      }
-      .count { display: none; }
     }
   </style>
 </head>
-<body>
-  <header>
-    <div class="wrap">
-      <div class="topbar">
-        <h1>CAR 行事曆月檢視</h1>
-        <div class="version" id="versionText">calendar-month-v1.1.0</div>
-      </div>
-      <div class="controls">
-        <button type="button" class="icon-btn" onclick="goToToday()" title="回到今天">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-        </button>
-        <button type="button" class="icon-btn" onclick="loadMonth()" title="重新整理">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
-        </button>
-        <div class="month-selector">
-          <button type="button" onclick="moveMonth(-1)">‹</button>
-          <div class="month-title" id="monthTitle">--</div>
-          <button type="button" onclick="moveMonth(1)">›</button>
+<body class="min-h-screen flex flex-col pb-12">
+
+  <!-- 頂部導覽列 (Sticky Header with Glassmorphism) -->
+  <header class="sticky top-0 z-40 glass border-b border-[var(--line)] shadow-sm">
+    <div class="max-w-6xl mx-auto px-4 py-3">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        
+        <!-- Logo/Title -->
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-1.5 h-7 bg-[var(--pink)] rounded-full"></div>
+            <div>
+              <h1 class="text-xl md:text-2xl font-extrabold tracking-tight flex items-center gap-2">
+                AS｜CAR <span class="text-[var(--pink)] font-semibold text-lg md:text-xl">行事曆中心</span>
+              </h1>
+              <p class="text-xs text-[var(--muted)]">高效掌控車輛調度、保養與會議行程</p>
+            </div>
+          </div>
+          <span class="version text-xs text-[var(--muted)] bg-[var(--purple-light)] px-2.5 py-1 rounded-full font-bold ml-2">v2.0.0-interactive</span>
         </div>
+
+        <!-- 搜尋與同步操作列 -->
+        <div class="flex flex-wrap items-center gap-2">
+          <!-- 搜尋框 -->
+          <div class="relative flex-1 min-w-[200px] md:flex-initial">
+            <i data-lucide="search" class="absolute left-3 top-2.5 w-4 h-4 text-[var(--muted)]"></i>
+            <input type="text" id="searchBar" oninput="handleSearch()" placeholder="搜尋行程、保養、人員..." 
+              class="w-full pl-9 pr-4 py-2 text-sm bg-white border border-[var(--line)] rounded-full focus:outline-none focus:border-[var(--pink)] focus:ring-1 focus:ring-[var(--pink)] transition-all">
+          </div>
+
+          <!-- 功能按鈕組 -->
+          <div class="flex items-center gap-1.5">
+            <button onclick="toggleView()" class="p-2 bg-white border border-[var(--line)] rounded-full hover:bg-[var(--soft)] text-[var(--purple)] transition-all" title="切換檢視模式">
+              <i id="viewIcon" data-lucide="calendar-range" class="w-4 h-4"></i>
+            </button>
+            <button onclick="goToToday()" class="p-2 bg-white border border-[var(--line)] rounded-full hover:bg-[var(--soft)] text-[var(--purple)] transition-all" title="回到今天">
+              <i data-lucide="home" class="w-4 h-4"></i>
+            </button>
+            <button onclick="toggleSyncMode()" id="syncModeBtn" class="px-3 py-1.5 bg-pink-100 hover:bg-pink-200 text-[var(--pink)] border border-pink-200 rounded-full text-xs font-bold transition-all flex items-center gap-1" title="切換線上/離線">
+              <span class="w-2 h-2 rounded-full bg-pink-500 animate-pulse"></span>
+              <span>連線：自動</span>
+            </button>
+            <button onclick="loadMonth()" class="p-2 bg-[var(--purple)] text-white rounded-full hover:bg-opacity-90 transition-all shadow-md" title="重新載入">
+              <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
       </div>
-      <div class="hint">直接顯示 Google CAR 每日行程，點擊有行程的日期可放大檢視詳情。</div>
     </div>
   </header>
 
-  <main>
-    <div class="weekdays">
-      <div class="weekday">一</div>
-      <div class="weekday">二</div>
-      <div class="weekday">三</div>
-      <div class="weekday">四</div>
-      <div class="weekday">五</div>
-      <div class="weekday">六</div>
-      <div class="weekday">日</div>
-    </div>
-    
-    <!-- 載入與行事曆容器 -->
-    <div id="calendarContainer">
-      <div id="status" class="status-container">
-        <div class="spinner"></div>
-        <div class="status-text">正在同步 Google 行事曆資料...</div>
+  <!-- 主內容區 -->
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 mt-6">
+
+    <!-- 本月份導覽與統計指標 -->
+    <div class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+      
+      <!-- 月份切換核心區 -->
+      <div class="bg-white p-4 rounded-[var(--radius)] shadow-sm border border-[var(--line)] flex items-center justify-between">
+        <button onclick="moveMonth(-1)" class="w-10 h-10 flex items-center justify-center border border-[var(--line)] rounded-full hover:bg-[var(--soft)] transition-all text-lg font-bold">‹</button>
+        <div class="text-center">
+          <h2 class="text-xl font-black text-[var(--ink)]" id="monthTitle">--</h2>
+          <p class="text-xs text-[var(--muted)]" id="subDateRange">2026 / 01</p>
+        </div>
+        <button onclick="moveMonth(1)" class="w-10 h-10 flex items-center justify-center border border-[var(--line)] rounded-full hover:bg-[var(--soft)] transition-all text-lg font-bold">›</button>
       </div>
-      <div id="calendar" class="calendar" style="display: none;"></div>
+
+      <!-- 統計數據 1 -->
+      <div class="bg-white p-4 rounded-[var(--radius)] shadow-sm border border-[var(--line)] flex items-center gap-4">
+        <div class="w-12 h-12 rounded-full bg-[var(--pink-soft)] text-[var(--pink)] flex items-center justify-center">
+          <i data-lucide="calendar-check" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <p class="text-xs text-[var(--muted)] font-semibold">當月行程總數</p>
+          <div class="flex items-baseline gap-1.5">
+            <span class="text-2xl font-black" id="totalEventsCount">0</span>
+            <span class="text-xs text-[var(--muted)]">筆排程</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 統計數據 2 -->
+      <div class="bg-white p-4 rounded-[var(--radius)] shadow-sm border border-[var(--line)] flex items-center gap-4">
+        <div class="w-12 h-12 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center">
+          <i data-lucide="sliders" class="w-6 h-6"></i>
+        </div>
+        <div class="flex-1">
+          <p class="text-xs text-[var(--muted)] font-semibold">主要類別占比</p>
+          <div class="flex flex-wrap gap-1.5 mt-1.5" id="categoryStats">
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500">無數據</span>
+          </div>
+        </div>
+      </div>
+
     </div>
+
+    <!-- 離線編輯提醒 -->
+    <div id="offlineNotice" class="hidden mb-4 p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl text-xs flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i data-lucide="wifi-off" class="w-4 h-4"></i>
+        <span><strong>離線模擬模式已啟用：</strong> 無法連接 Google APPS。您現在可以點擊任何日期進行<strong>「新增行程」</strong>模擬，資料將暫存於此瀏覽器中。</span>
+      </div>
+      <button onclick="clearLocalEvents()" class="underline font-bold text-amber-900 hover:text-amber-700">清除自訂行程</button>
+    </div>
+
+    <!-- 日曆與清單容器 (加上滑動偵測區) -->
+    <div id="calendarAndSwipeZone" class="relative">
+      
+      <!-- 星期欄位標題 (僅在月曆檢視下顯示) -->
+      <div id="weekdayHeader" class="grid grid-cols-7 gap-1 border-b border-[var(--line)] mb-1">
+        <div class="text-center py-2 text-xs font-bold text-[var(--muted)] bg-[var(--soft)] rounded-t-lg">一</div>
+        <div class="text-center py-2 text-xs font-bold text-[var(--muted)] bg-[var(--soft)] rounded-t-lg">二</div>
+        <div class="text-center py-2 text-xs font-bold text-[var(--muted)] bg-[var(--soft)] rounded-t-lg">三</div>
+        <div class="text-center py-2 text-xs font-bold text-[var(--muted)] bg-[var(--soft)] rounded-t-lg">四</div>
+        <div class="text-center py-2 text-xs font-bold text-[var(--muted)] bg-[var(--soft)] rounded-t-lg">五</div>
+        <div class="text-center py-2 text-xs font-bold text-[var(--muted)] bg-[var(--soft)] rounded-t-lg">六</div>
+        <div class="text-center py-2 text-xs font-bold text-[var(--muted)] bg-[var(--soft)] rounded-t-lg">日</div>
+      </div>
+
+      <!-- 行事曆主體 (月曆 / 清單) -->
+      <div id="mainViewContainer">
+        
+        <!-- 骨架屏載入畫面 -->
+        <div id="status" class="bg-white border border-[var(--line)] rounded-[var(--radius)] p-12 text-center shadow-md">
+          <div class="inline-block w-10 h-10 border-4 border-[var(--line)] border-t-[var(--pink)] rounded-full animate-spin mb-4"></div>
+          <p class="text-[var(--muted)] font-semibold">正在自 Google 雲端同步行事曆...</p>
+        </div>
+
+        <!-- 月曆格檢視 (CSS Grid) -->
+        <div id="calendarGrid" class="grid grid-cols-7 gap-1 bg-[var(--line)] border border-[var(--line)] rounded-b-[var(--radius)] overflow-hidden shadow-md" style="display: none;">
+          <!-- 核心 JS 渲染點 -->
+        </div>
+
+        <!-- 清單檢視 (Agenda List) -->
+        <div id="calendarList" class="flex flex-col gap-3" style="display: none;">
+          <!-- 核心 JS 渲染點 -->
+        </div>
+
+      </div>
+    </div>
+
   </main>
 
-  <!-- 行程詳細 Dialog -->
-  <dialog id="dayDialog">
-    <div class="modal-head">
-      <span id="dialogTitle">行程</span>
-      <button type="button" class="modal-close-btn" onclick="closeDialog()">&times;</button>
-    </div>
-    <div class="modal-body" id="dialogBody"></div>
-    <div class="modal-actions">
-      <button type="button" class="primary" onclick="closeDialog()">關閉</button>
+  <!-- 行程詳細與新增行程 Dialog -->
+  <dialog id="dayDialog" class="rounded-2xl overflow-hidden shadow-2xl max-w-lg w-full border-0 focus:outline-none">
+    <div class="flex flex-col h-full max-h-[90vh]">
+      <!-- Modal Header -->
+      <div class="bg-[var(--purple)] text-white p-4 flex justify-between items-center shadow">
+        <div>
+          <h3 id="dialogTitle" class="text-lg font-bold">行程詳情</h3>
+          <p id="dialogSubDate" class="text-xs text-purple-200">2026年06月30日</p>
+        </div>
+        <button onclick="closeDialog()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white hover:bg-opacity-20 text-white transition-all text-xl">&times;</button>
+      </div>
+
+      <!-- Modal Body (包含現有行程與新增區塊) -->
+      <div class="p-6 overflow-y-auto flex-1 flex flex-col gap-6">
+        
+        <!-- 行程展示清單 -->
+        <div>
+          <h4 class="text-xs font-bold text-[var(--muted)] uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <i data-lucide="list-todo" class="w-3.5 h-3.5 text-[var(--pink)]"></i> 當日行程表
+          </h4>
+          <div id="dialogBody" class="divide-y divide-[var(--line)] max-h-[250px] overflow-y-auto pr-2">
+            <!-- 渲染點 -->
+          </div>
+        </div>
+
+        <!-- 離線模式新增行程區 -->
+        <div class="bg-[var(--soft)] p-4 rounded-xl border border-[var(--line)]">
+          <h4 class="text-xs font-bold text-[var(--purple)] uppercase tracking-wider mb-3 flex items-center gap-1.5">
+            <i data-lucide="plus-circle" class="w-3.5 h-3.5 text-[var(--pink)]"></i> 模擬新增行程
+          </h4>
+          <div class="space-y-3">
+            <div>
+              <label class="block text-[11px] font-bold text-[var(--muted)] mb-1">行程標題</label>
+              <input type="text" id="newEventTitle" placeholder="例如：車輛保養 - AUDI A4 / 業務週會" 
+                class="w-full px-3 py-1.5 text-sm bg-white border border-[var(--line)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--pink)]">
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[11px] font-bold text-[var(--muted)] mb-1">時間描述</label>
+                <input type="text" id="newEventTime" placeholder="例如：10:30 或 整天" 
+                  class="w-full px-3 py-1.5 text-sm bg-white border border-[var(--line)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--pink)]">
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-[var(--muted)] mb-1">主分類</label>
+                <select id="newEventCategory" class="w-full px-3 py-1.5 text-sm bg-white border border-[var(--line)] rounded-lg focus:outline-none">
+                  <option value="default">一般事項</option>
+                  <option value="maintenance">保養 / 維修</option>
+                  <option value="meeting">會議 / 報告</option>
+                  <option value="booking">預約 / 交車</option>
+                  <option value="marketing">行銷 / 銷量</option>
+                </select>
+              </div>
+            </div>
+            <button onclick="addNewMockEvent()" class="w-full py-2 bg-[var(--pink)] hover:bg-opacity-90 text-white rounded-lg text-xs font-bold transition-all shadow">
+              儲存至離線快取
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Actions Footer -->
+      <div class="bg-[var(--soft)] px-6 py-4 border-t border-[var(--line)] text-right">
+        <button onclick="closeDialog()" class="px-5 py-2 bg-white hover:bg-[var(--soft)] border border-[var(--line)] text-[var(--purple)] rounded-xl font-bold transition-all text-sm">
+          關閉視窗
+        </button>
+      </div>
     </div>
   </dialog>
 
+  <!-- 提示浮動通知 (Toast Notification Container) -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2"></div>
+
   <script>
+    // 預設 Google Apps Script URL
     const GAS_URL = "https://script.google.com/macros/s/AKfycby9KWdatRfDZY5g2DkieUkAhyEJDDCnKcMb_l8o2_J4JCaOtKYfEEkvzk-1sW-oZWIF/exec";
+    
+    // 行事曆核心狀態
     const state = {
-      current: new Date(),
-      eventsByDate: {}
+      current: new Date(),       // 當前月曆主焦點
+      eventsByDate: {},         // 線上抓到的原始行程
+      localEvents: {},          // 離線自訂新增行程 (保存在 LocalStorage 中)
+      searchQuery: "",          // 即時搜尋字串
+      currentView: "grid",      // 檢視模式: 'grid' 或 'list'
+      syncMode: "auto"          // 線上模式: 'auto' (先連線，若失敗走模擬), 'offline' (強迫離線模擬)
     };
 
-    function pad(n) {
-      return String(n).padStart(2, "0");
-    }
+    // 擬真的 CAR 車務演示模擬數據 (當 GAS 連不上或為離線模式時自動載入)
+    const mockDemoEvents = [
+      { date: "2026-06-01", title: "車輛季度大保養 - AUDI A4", time: "09:00", type: "maintenance" },
+      { date: "2026-06-02", title: "台北總部營運週會", time: "10:00", type: "meeting" },
+      { date: "2026-06-05", title: "車主預約交車 - TESLA Model Y", time: "14:00", type: "booking" },
+      { date: "2026-06-10", title: "道路救援模擬演練", time: "15:30", type: "default" },
+      { date: "2026-06-12", title: "車體烤漆美化工程 - BMW 320i", time: "整天", type: "maintenance" },
+      { date: "2026-06-15", title: "跨部門行銷業務專案報告", time: "11:00", type: "marketing" },
+      { date: "2026-06-15", title: "中古車估價諮詢 - 許先生", time: "16:00", type: "booking" },
+      { date: "2026-06-18", title: "新進車載科技系統教學", time: "09:30", type: "meeting" },
+      { date: "2026-06-20", title: "展示車輛清潔消毒維護", time: "08:00", type: "maintenance" },
+      { date: "2026-06-25", title: "AS | CAR 仲夏夜車主線上限時祭", time: "19:00", type: "marketing" },
+      { date: "2026-06-30", title: "行事曆系統自動同步測試", time: "10:00", type: "meeting" },
+      { date: "2026-06-30", title: "交車驗收儀式 - TOYOTA Altis", time: "14:30", type: "booking" },
+      { date: "2026-07-02", title: "例行車隊安全檢查與胎壓校正", time: "09:00", type: "maintenance" },
+    ];
 
-    function dateKey(date) {
-      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-    }
-
-    function formatMonth(date) {
-      return `${date.getFullYear()}年 ${pad(date.getMonth() + 1)}月`;
-    }
-
-    // 顯示骨架屏
-    function showSkeletons() {
-      const container = document.getElementById("calendarContainer");
-      document.getElementById("status").style.display = "flex";
-      document.getElementById("calendar").style.display = "none";
-      
-      let skeletonsHtml = `<div class="skeleton-grid">`;
-      for (let i = 0; i < 35; i++) {
-        skeletonsHtml += `
-          <div class="skeleton-day">
-            <div class="skeleton-num"></div>
-            <div class="skeleton-line" style="width: 80%"></div>
-            ${i % 3 === 0 ? `<div class="skeleton-line" style="width: 60%"></div>` : ''}
-          </div>`;
+    // 初始化與綁定
+    window.onload = function() {
+      // 讀取 LocalStorage 中的使用者自訂行程
+      const stored = localStorage.getItem("as_car_local_events");
+      if (stored) {
+        state.localEvents = JSON.parse(stored);
       }
-      skeletonsHtml += `</div>`;
       
-      // 更新狀態展示為骨架屏與載入文字的精緻組合
-      document.getElementById("status").innerHTML = `
-        <div class="spinner"></div>
-        <div class="status-text" style="margin-bottom: 24px;">正在自 Google 雲端同步行事曆...</div>
-        ${skeletonsHtml}
-      `;
+      // 初始化圖標
+      lucide.createIcons();
+
+      // 移動手勢檢測
+      setupSwipeGestures();
+
+      // 開始讀取
+      loadMonth();
+    };
+
+    // 工具函式
+    function pad(n) { return String(n).padStart(2, "0"); }
+    function dateKey(date) { return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`; }
+    function formatMonth(date) { return `${date.getFullYear()}年 ${pad(date.getMonth() + 1)}月`; }
+    function escapeHtml(text) {
+      return String(text || "").replace(/[&<>"']/g, s => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[s]));
     }
 
+    // 發送 Toast 微通知
+    function showToast(message, type = "info") {
+      const container = document.getElementById("toastContainer");
+      const toast = document.createElement("div");
+      toast.className = `flex items-center gap-2 px-4 py-3 bg-white border rounded-xl shadow-lg transition-all transform translate-y-2 opacity-0 text-xs font-bold text-[var(--ink)]`;
+      
+      let icon = "info";
+      if (type === "success") { icon = "check-circle"; toast.style.borderColor = "#22c55e"; }
+      else if (type === "warning") { icon = "alert-triangle"; toast.style.borderColor = "#f59e0b"; }
+      else if (type === "error") { icon = "x-circle"; toast.style.borderColor = "#ef4444"; }
+
+      toast.innerHTML = `<i data-lucide="${icon}" class="w-4 h-4"></i> <span>${message}</span>`;
+      container.appendChild(toast);
+      lucide.createIcons();
+
+      setTimeout(() => {
+        toast.classList.remove("translate-y-2", "opacity-0");
+      }, 50);
+
+      setTimeout(() => {
+        toast.classList.add("translate-y-2", "opacity-0");
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    // 關鍵字智慧分類器
+    function getKeywordCategory(title) {
+      const lower = (title || "").toLowerCase();
+      if (lower.includes("保養") || lower.includes("維修") || lower.includes("車檢") || lower.includes("檢測") || lower.includes("烤漆") || lower.includes("消毒")) {
+        return "maintenance";
+      }
+      if (lower.includes("會") || lower.includes("報告") || lower.includes("教學") || lower.includes("研討") || lower.includes("專案")) {
+        return "meeting";
+      }
+      if (lower.includes("預約") || lower.includes("交車") || lower.includes("估價") || lower.includes("諮詢") || lower.includes("驗收")) {
+        return "booking";
+      }
+      if (lower.includes("行銷") || lower.includes("活動") || lower.includes("祭") || lower.includes("業務") || lower.includes("銷量")) {
+        return "marketing";
+      }
+      return "default";
+    }
+
+    // 取得指定日期的所有合併行程 (線上 + 離線模擬)
+    function getMergedEvents(key) {
+      let merged = [];
+      
+      // 1. 本地離線自訂行程
+      if (state.localEvents[key]) {
+        merged = merged.concat(state.localEvents[key]);
+      }
+      
+      // 2. 核心數據來源：若是離線模式，載入預設的展示 Demo 行程
+      if (state.syncMode === "offline") {
+        const matchingDemo = mockDemoEvents.filter(ev => ev.date === key);
+        merged = merged.concat(matchingDemo);
+      } else {
+        // 線上模式來源
+        if (state.eventsByDate[key]) {
+          merged = merged.concat(state.eventsByDate[key]);
+        }
+      }
+
+      // 替所有行程加上自動分類標記
+      return merged.map(ev => {
+        if (!ev.type) ev.type = getKeywordCategory(ev.title);
+        return ev;
+      });
+    }
+
+    // 主資料讀取入口 (含骨架屏)
     async function loadMonth() {
       const year = state.current.getFullYear();
       const month = state.current.getMonth() + 1;
-      document.getElementById("monthTitle").textContent = formatMonth(state.current);
       
-      showSkeletons();
+      // 更新介面標題
+      document.getElementById("monthTitle").textContent = formatMonth(state.current);
+      document.getElementById("subDateRange").textContent = `${year} / ${pad(month)}`;
 
+      showLoadingSkeletons();
+
+      if (state.syncMode === "offline") {
+        // 直接走模擬離線展示
+        setTimeout(() => {
+          document.getElementById("offlineNotice").classList.remove("hidden");
+          renderView();
+          showToast("已載入離線展示日程", "info");
+        }, 300);
+        return;
+      }
+
+      // 線上載入嘗試
       try {
         const url = `${GAS_URL}?action=getCalendarMonthEvents&year=${year}&month=${month}&t=${Date.now()}`;
-        const res = await fetch(url).then(r => r.json());
+        // 使用 4 秒逾時設定，防止 GAS 伺服器冷啟動過久卡死
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+        const res = await fetch(url, { signal: controller.signal }).then(r => r.json());
+        clearTimeout(timeoutId);
+
         if (!res.success) throw new Error(res.error || "讀取失敗");
-        
+
         state.eventsByDate = (res.events || []).reduce((acc, item) => {
           if (!acc[item.date]) acc[item.date] = [];
           acc[item.date].push(item);
           return acc;
         }, {});
-        
-        renderCalendar();
-        
-        // 隱藏載入，顯示行事曆
-        document.getElementById("status").style.display = "none";
-        document.getElementById("calendar").style.display = "grid";
+
+        document.getElementById("offlineNotice").classList.add("hidden");
+        showToast("同步 Google 雲端行事曆成功", "success");
+        renderView();
+
       } catch (err) {
-        document.getElementById("status").innerHTML = `
-          <div style="color: var(--pink); font-size: 28px; margin-bottom: 8px;">⚠️</div>
-          <div class="status-text" style="color: var(--pink)">無法讀取行事曆：${err.message || err}</div>
-          <button type="button" onclick="loadMonth()" style="margin-top: 16px;" class="primary">重新嘗試</button>
-        `;
+        console.warn("GAS Connection failed. Fallback to Demo Mode.", err);
+        // 自動降級為離線展示模式
+        state.syncMode = "offline";
+        document.getElementById("syncModeBtn").className = "px-3 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-700 border border-amber-200 rounded-full text-xs font-bold transition-all flex items-center gap-1";
+        document.getElementById("syncModeBtn").innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500"></span><span>離線模擬</span>`;
+        document.getElementById("offlineNotice").classList.remove("hidden");
+        
+        showToast("自動切換為離線展示模式(數據擬真)", "warning");
+        renderView();
       }
     }
 
-    function renderCalendar() {
-      const grid = document.getElementById("calendar");
+    // 骨架屏炫目載入效果
+    function showLoadingSkeletons() {
+      document.getElementById("status").style.display = "block";
+      document.getElementById("calendarGrid").style.display = "none";
+      document.getElementById("calendarList").style.display = "none";
+      
+      let skeletonsHtml = `<div class="grid grid-cols-7 gap-1 mt-4">`;
+      for (let i = 0; i < 35; i++) {
+        skeletonsHtml += `
+          <div class="bg-white p-3 h-24 md:h-32 flex flex-col gap-2 rounded-lg animate-pulse">
+            <div class="w-6 h-6 bg-gray-100 rounded-full"></div>
+            <div class="w-4/5 h-4 bg-gray-100 rounded"></div>
+            ${i % 4 === 0 ? `<div class="w-3/5 h-4 bg-gray-100 rounded"></div>` : ''}
+          </div>`;
+      }
+      skeletonsHtml += `</div>`;
+      
+      document.getElementById("status").innerHTML = `
+        <div class="inline-block w-8 h-8 border-4 border-gray-200 border-t-[var(--pink)] rounded-full animate-spin mb-3"></div>
+        <div class="text-sm font-bold text-[var(--purple)]">AS｜CAR 正在載入與解析車務行程...</div>
+        ${skeletonsHtml}
+      `;
+    }
+
+    // 渲染排程核心（決定呈現月曆格還是 Agenda 清單）
+    function renderView() {
+      // 隱藏載入提示
+      document.getElementById("status").style.display = "none";
+      
+      // 計算並更新上方儀表板統計指標
+      updateMetrics();
+
+      if (state.currentView === "grid") {
+        document.getElementById("weekdayHeader").style.display = "grid";
+        document.getElementById("calendarGrid").style.display = "grid";
+        document.getElementById("calendarList").style.display = "none";
+        renderCalendarGrid();
+      } else {
+        document.getElementById("weekdayHeader").style.display = "none";
+        document.getElementById("calendarGrid").style.display = "none";
+        document.getElementById("calendarList").style.display = "flex";
+        renderCalendarList();
+      }
+    }
+
+    // 統計當月指標
+    function updateMetrics() {
+      let total = 0;
+      const categories = { maintenance: 0, meeting: 0, booking: 0, marketing: 0, default: 0 };
+
+      // 遍歷當月所有日期
       const year = state.current.getFullYear();
       const month = state.current.getMonth();
       const first = new Date(year, month, 1);
-      const mondayOffset = (first.getDay() + 6) % 7;
+      const totalDays = new Date(year, month + 1, 0).getDate();
+
+      for (let i = 1; i <= totalDays; i++) {
+        const d = new Date(year, month, i);
+        const key = dateKey(d);
+        const evs = getMergedEvents(key);
+        
+        // 搜尋篩選加乘
+        const filtered = evs.filter(ev => {
+          if (!state.searchQuery) return true;
+          return ev.title.toLowerCase().includes(state.searchQuery.toLowerCase());
+        });
+
+        total += filtered.length;
+        filtered.forEach(ev => {
+          const type = ev.type || "default";
+          categories[type] = (categories[type] || 0) + 1;
+        });
+      }
+
+      document.getElementById("totalEventsCount").textContent = total;
+
+      // 產生統計占比小徽章
+      const statContainer = document.getElementById("categoryStats");
+      if (total === 0) {
+        statContainer.innerHTML = `<span class="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">無任何行程資料</span>`;
+        return;
+      }
+
+      const badgeNames = {
+        maintenance: { name: "保養維修", class: "ev-tag-maintenance" },
+        meeting: { name: "營運會議", class: "ev-tag-meeting" },
+        booking: { name: "預約交車", class: "ev-tag-booking" },
+        marketing: { name: "行銷推廣", class: "ev-tag-marketing" },
+        default: { name: "一般事務", class: "ev-tag-default" }
+      };
+
+      let badgesHtml = "";
+      for (const [key, val] of Object.entries(categories)) {
+        if (val > 0) {
+          const pct = Math.round((val / total) * 100);
+          badgesHtml += `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${badgeNames[key].class}">${badgeNames[key].name} ${val}筆 (${pct}%)</span>`;
+        }
+      }
+      statContainer.innerHTML = badgesHtml;
+    }
+
+    // 1. 渲染：經典月曆 Grid 檢視
+    function renderCalendarGrid() {
+      const grid = document.getElementById("calendarGrid");
+      const year = state.current.getFullYear();
+      const month = state.current.getMonth();
+      const first = new Date(year, month, 1);
+      const mondayOffset = (first.getDay() + 6) % 7; // 週一開頭對齊
       const start = new Date(year, month, 1 - mondayOffset);
       const today = dateKey(new Date());
       const cells = [];
@@ -602,94 +598,364 @@
         const d = new Date(start);
         d.setDate(start.getDate() + i);
         const key = dateKey(d);
-        const events = state.eventsByDate[key] || [];
+        const events = getMergedEvents(key);
         const inMonth = d.getMonth() === month;
-        const hasEvents = events.length > 0;
         
-        // 限制手機畫面與桌面畫面上最多呈現的行程筆數，調整為 10 筆
-        const limit = 10;
-        const visibleEvents = events.slice(0, limit);
-        const remaining = events.length - limit;
+        // 搜尋篩選過濾
+        const filteredEvents = events.filter(ev => {
+          if (!state.searchQuery) return true;
+          return ev.title.toLowerCase().includes(state.searchQuery.toLowerCase());
+        });
 
+        const hasEvents = filteredEvents.length > 0;
+        const limit = window.innerWidth < 640 ? 2 : 4; // 手機板與電腦版顯示上限
+        const visibleEvents = filteredEvents.slice(0, limit);
+        const remaining = filteredEvents.length - limit;
+
+        // 手機與電腦版的點擊對待：全區域點選打開當日視窗
         cells.push(`
-          <div class="day ${inMonth ? "" : "muted"} ${key === today ? "today" : ""} ${hasEvents ? "interactive" : ""}" 
-               ${hasEvents ? `onclick="openDay('${key}')"` : ""}>
-            <div class="date-row">
-              <span class="date-num">${d.getDate()}</span>
-              ${hasEvents ? `<span class="count">${events.length} 筆</span>` : ""}
+          <div class="day-cell bg-white p-2 flex flex-col gap-1 transition-all-custom relative group ${inMonth ? "" : "opacity-40 bg-[var(--soft)]"} ${key === today ? "bg-amber-50" : ""} hover:bg-[var(--soft)] cursor-pointer"
+               onclick="openDay('${key}')">
+            
+            <!-- 日期頭部 -->
+            <div class="flex items-center justify-between mb-1">
+              <span class="w-6 h-6 flex items-center justify-center font-bold text-sm rounded-full transition-all ${key === today ? "bg-[var(--pink)] text-white" : "text-[var(--purple)]"}">
+                ${d.getDate()}
+              </span>
+              ${hasEvents ? `<span class="text-[9px] font-black bg-[var(--pink-soft)] text-[var(--pink)] px-1.5 py-0.5 rounded-full">${filteredEvents.length}筆</span>` : ""}
             </div>
-            <div class="event-container">
-              ${visibleEvents.map(ev => `
-                <div class="event" title="${escapeHtml(ev.title)}">
-                  ${escapeHtml(ev.title)}
-                </div>
-              `).join("")}
-              ${remaining > 0 ? `<div class="more">+${remaining} 筆...</div>` : ""}
+
+            <!-- 行程堆疊區 -->
+            <div class="flex-1 flex flex-col gap-1 overflow-hidden">
+              ${visibleEvents.map(ev => {
+                let catClass = `ev-tag-${ev.type || 'default'}`;
+                // 若搜尋列有相符字串，則高亮外框
+                const isMatchHighlight = state.searchQuery && ev.title.toLowerCase().includes(state.searchQuery.toLowerCase()) ? "ring-2 ring-amber-400" : "";
+                
+                // 限制最多顯示 8 個字元，超過則加上省略號
+                const titleText = ev.title || "";
+                const displayTitle = titleText.length > 8 ? titleText.substring(0, 8) + "..." : titleText;
+
+                return `
+                  <div class="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded font-semibold break-all leading-tight ${catClass} ${isMatchHighlight}" title="${escapeHtml(ev.title)}">
+                    ${ev.time ? `<span class="opacity-75 mr-1 font-bold">${escapeHtml(ev.time)}</span>` : ""}${escapeHtml(displayTitle)}
+                  </div>
+                `;
+              }).join("")}
+              ${remaining > 0 ? `<div class="text-[9px] text-[var(--pink)] font-bold mt-auto text-right">+${remaining} 筆更多...</div>` : ""}
             </div>
+
+            <!-- 滑過提示點亮底邊 -->
+            <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--pink)] transform scale-x-0 group-hover:scale-x-100 transition-all"></div>
           </div>
         `);
       }
       grid.innerHTML = cells.join("");
     }
 
-    function openDay(key) {
-      const events = state.eventsByDate[key] || [];
-      if (!events.length) return;
-      
-      // 格式化日期標題 (例如：2026-06-30 改成 2026年06月30日)
-      const parts = key.split('-');
-      const formattedTitle = `${parts[0]}年${parts[1]}月${parts[2]}日 行程`;
+    // 2. 渲染：行動友善清單 Agenda 檢視
+    function renderCalendarList() {
+      const listContainer = document.getElementById("calendarList");
+      const year = state.current.getFullYear();
+      const month = state.current.getMonth();
+      const totalDays = new Date(year, month + 1, 0).getDate();
+      let agendaHtml = "";
+      let foundAny = false;
 
-      document.getElementById("dialogTitle").textContent = `${formattedTitle} (${events.length} 筆)`;
-      document.getElementById("dialogBody").innerHTML = events.map(ev => {
-        const timeDisplay = ev.time ? ev.time : "整天";
-        return `
-          <div class="modal-event">
-            <div class="modal-time">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline; vertical-align:middle;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-              <span>${escapeHtml(timeDisplay)}</span>
+      // 遍歷當月每天，彙整有行程的日子
+      for (let i = 1; i <= totalDays; i++) {
+        const d = new Date(year, month, i);
+        const key = dateKey(d);
+        const events = getMergedEvents(key);
+        
+        // 即時搜尋字篩選
+        const filteredEvents = events.filter(ev => {
+          if (!state.searchQuery) return true;
+          return ev.title.toLowerCase().includes(state.searchQuery.toLowerCase());
+        });
+
+        if (filteredEvents.length > 0) {
+          foundAny = true;
+          const weekdayNames = ["日", "一", "二", "三", "四", "五", "六"];
+          const wName = weekdayNames[d.getDay()];
+
+          agendaHtml += `
+            <div class="bg-white rounded-xl p-4 shadow-sm border border-[var(--line)] flex gap-4 hover:shadow-md transition-all cursor-pointer" onclick="openDay('${key}')">
+              <!-- 左方日期區塊 -->
+              <div class="flex flex-col items-center justify-center border-r border-[var(--line)] pr-4 min-w-[64px]">
+                <span class="text-xs text-[var(--muted)] font-bold">週${wName}</span>
+                <span class="text-2xl font-black text-[var(--purple)]">${d.getDate()}</span>
+                <span class="text-[10px] text-[var(--muted)]">${pad(month + 1)}月</span>
+              </div>
+              
+              <!-- 右方日程表 -->
+              <div class="flex-1 flex flex-col gap-2 justify-center">
+                ${filteredEvents.map(ev => {
+                  let catClass = `ev-tag-${ev.type || 'default'}`;
+                  return `
+                    <div class="flex items-center justify-between p-2 rounded-lg ${catClass}">
+                      <div class="flex items-center gap-2">
+                        <i data-lucide="clock" class="w-3.5 h-3.5 opacity-60"></i>
+                        <span class="text-xs font-black mr-2">${ev.time || "整天"}</span>
+                        <span class="text-sm font-bold">${escapeHtml(ev.title)}</span>
+                      </div>
+                      <span class="text-[10px] opacity-75 font-bold uppercase">${ev.type === 'maintenance' ? '保養' : ev.type === 'meeting' ? '會議' : ev.type === 'booking' ? '預約' : ev.type === 'marketing' ? '行銷' : '一般'}</span>
+                    </div>
+                  `;
+                }).join("")}
+              </div>
             </div>
-            <div class="modal-event-title">${escapeHtml(ev.title || "無標題")}</div>
+          `;
+        }
+      }
+
+      if (!foundAny) {
+        agendaHtml = `
+          <div class="bg-white border border-[var(--line)] rounded-[var(--radius)] p-12 text-center text-gray-400">
+            <i data-lucide="calendar-x" class="w-12 h-12 mx-auto text-gray-300 mb-2"></i>
+            <p class="font-bold text-sm">本月此搜尋條件下無任何行程排班</p>
+          </div>
+        `;
+      }
+
+      listContainer.innerHTML = agendaHtml;
+      lucide.createIcons();
+    }
+
+    // 手勢操作支援 (左右滑動切換月份)
+    function setupSwipeGestures() {
+      let touchStartX = 0;
+      let touchEndX = 0;
+      const zone = document.getElementById("calendarAndSwipeZone");
+
+      zone.addEventListener("touchstart", function(e) {
+        touchStartX = e.changedTouches[0].screenX;
+      }, { passive: true });
+
+      zone.addEventListener("touchend", function(e) {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+      }, { passive: true });
+
+      function handleSwipe() {
+        const threshold = 70; // 滑動臨界像素值
+        if (touchEndX < touchStartX - threshold) {
+          // 向左滑 -> 下一個月
+          moveMonth(1);
+          showToast("滑動切換：下個月", "info");
+        } else if (touchEndX > touchStartX + threshold) {
+          // 向右滑 -> 上一個月
+          moveMonth(-1);
+          showToast("滑動切換：上個月", "info");
+        }
+      }
+    }
+
+    // 搜尋輸入事件控制
+    function handleSearch() {
+      state.searchQuery = document.getElementById("searchBar").value.trim();
+      renderView();
+    }
+
+    // 切換檢視樣式
+    function toggleView() {
+      state.currentView = state.currentView === "grid" ? "list" : "grid";
+      const icon = document.getElementById("viewIcon");
+      if (state.currentView === "grid") {
+        icon.setAttribute("data-lucide", "calendar-range");
+        showToast("切換為：月曆格檢視", "info");
+      } else {
+        icon.setAttribute("data-lucide", "list-todo");
+        showToast("切換為：行動清單檢視", "info");
+      }
+      lucide.createIcons();
+      renderView();
+    }
+
+    // 切換連線模式 (連線 vs 離線模擬)
+    function toggleSyncMode() {
+      const btn = document.getElementById("syncModeBtn");
+      if (state.syncMode === "auto") {
+        state.syncMode = "offline";
+        btn.className = "px-3 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-700 border border-amber-200 rounded-full text-xs font-bold transition-all flex items-center gap-1";
+        btn.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500"></span><span>離線模擬</span>`;
+        showToast("已手動切換至「離線模擬模式」", "warning");
+      } else {
+        state.syncMode = "auto";
+        btn.className = "px-3 py-1.5 bg-pink-100 hover:bg-pink-200 text-[var(--pink)] border border-pink-200 rounded-full text-xs font-bold transition-all flex items-center gap-1";
+        btn.innerHTML = `<span class="w-2 h-2 rounded-full bg-pink-500 animate-pulse"></span><span>連線：自動</span>`;
+        showToast("已恢復「線上同步模式」", "success");
+      }
+      loadMonth();
+    }
+
+    // 打開單日詳情對話框 (支援新增行程)
+    function openDay(key) {
+      const dialog = document.getElementById("dayDialog");
+      const parts = key.split('-');
+      const formattedTitle = `${parts[0]}年${parts[1]}月${parts[2]}日`;
+      
+      // 保存目前正在操作的日期 Key 到 Dialog 的資料屬性中
+      dialog.setAttribute("data-current-date", key);
+      
+      document.getElementById("dialogTitle").textContent = "當日行程與交辦";
+      document.getElementById("dialogSubDate").textContent = `${formattedTitle}`;
+
+      renderDialogEvents(key);
+      dialog.showModal();
+    }
+
+    // 渲染 Dialog 內部的行程子表
+    function renderDialogEvents(key) {
+      const events = getMergedEvents(key);
+      const listDiv = document.getElementById("dialogBody");
+
+      if (!events.length) {
+        listDiv.innerHTML = `
+          <div class="py-8 text-center text-gray-400 text-xs">
+            <p>目前尚無安排行程。</p>
+          </div>
+        `;
+        return;
+      }
+
+      const badgeNames = {
+        maintenance: "保養/維修",
+        meeting: "會議/報告",
+        booking: "預約/交車",
+        marketing: "行銷/活動",
+        default: "一般事項"
+      };
+
+      listDiv.innerHTML = events.map((ev, index) => {
+        const catClass = `ev-tag-${ev.type || 'default'}`;
+        // 如果是離線手動新增的，提供「刪除」按鈕
+        const isLocal = ev.isLocal ? true : false;
+        const deleteButton = isLocal 
+          ? `<button onclick="deleteLocalEvent('${key}', ${index})" class="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-all ml-2" title="刪除此模擬行程">
+               <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+             </button>`
+          : "";
+
+        return `
+          <div class="py-3 flex items-start justify-between gap-2">
+            <div class="flex-1">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full ${catClass}">
+                  ${badgeNames[ev.type] || "一般"}
+                </span>
+                <span class="text-xs font-bold text-[var(--pink)]">${escapeHtml(ev.time || "整天")}</span>
+              </div>
+              <p class="text-sm font-bold text-[var(--ink)] leading-snug">${escapeHtml(ev.title || "無標題")}</p>
+            </div>
+            ${deleteButton}
           </div>
         `;
       }).join("");
-      document.getElementById("dayDialog").showModal();
+
+      lucide.createIcons();
     }
 
+    // 新增本地離線模擬排程
+    function addNewMockEvent() {
+      const dialog = document.getElementById("dayDialog");
+      const key = dialog.getAttribute("data-current-date");
+      if (!key) return;
+
+      const titleInput = document.getElementById("newEventTitle");
+      const timeInput = document.getElementById("newEventTime");
+      const catSelect = document.getElementById("newEventCategory");
+
+      const title = titleInput.value.trim();
+      const time = timeInput.value.trim() || "整天";
+      const type = catSelect.value;
+
+      if (!title) {
+        showToast("請輸入行程標題！", "warning");
+        return;
+      }
+
+      // 初始化結構
+      if (!state.localEvents[key]) {
+        state.localEvents[key] = [];
+      }
+
+      // 新增自訂事件
+      state.localEvents[key].push({
+        title: title,
+        time: time,
+        type: type,
+        isLocal: true // 註記為本地新增
+      });
+
+      // 儲存至本地快取
+      localStorage.setItem("as_car_local_events", JSON.stringify(state.localEvents));
+
+      // 重置欄位
+      titleInput.value = "";
+      timeInput.value = "";
+      catSelect.value = "default";
+
+      showToast("模擬排程儲存成功", "success");
+      
+      // 即時重新渲染
+      renderDialogEvents(key);
+      renderView();
+    }
+
+    // 刪除本地自訂行程
+    function deleteLocalEvent(key, index) {
+      if (!state.localEvents[key]) return;
+      
+      // 依索引移除
+      state.localEvents[key].splice(index, 1);
+      
+      // 如果空了就清除該 Key
+      if (state.localEvents[key].length === 0) {
+        delete state.localEvents[key];
+      }
+
+      localStorage.setItem("as_car_local_events", JSON.stringify(state.localEvents));
+      showToast("模擬行程已刪除", "info");
+
+      // 重新渲染
+      renderDialogEvents(key);
+      renderView();
+    }
+
+    // 清除所有本地快取
+    function clearLocalEvents() {
+      if (confirm("確定要清除所有您手動新增的模擬行程嗎？")) {
+        state.localEvents = {};
+        localStorage.removeItem("as_car_local_events");
+        showToast("已重置所有模擬行程", "success");
+        renderView();
+      }
+    }
+
+    // 關閉對話框
     function closeDialog() {
       document.getElementById("dayDialog").close();
     }
 
+    // 月份切換
     function moveMonth(delta) {
       state.current = new Date(state.current.getFullYear(), state.current.getMonth() + delta, 1);
       loadMonth();
     }
 
+    // 回到今日
     function goToToday() {
       state.current = new Date();
       loadMonth();
     }
 
-    function escapeHtml(text) {
-      return String(text || "").replace(/[&<>"']/g, s => ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#39;"
-      }[s]));
-    }
-
-    // 點擊 Modal 外部背景時自動關閉
+    // 點擊對話框背景關閉
     document.getElementById("dayDialog").addEventListener("click", function(e) {
       if (e.target === this) {
         closeDialog();
       }
     });
-
-    // 初始化載入
-    state.current = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-    loadMonth();
   </script>
 </body>
 </html>
