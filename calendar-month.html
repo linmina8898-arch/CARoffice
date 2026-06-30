@@ -425,46 +425,55 @@
       text-align: right;
     }
 
-    /* 極限空間壓榨：手機版 CSS */
+    /* 極限空間壓榨與縮放黑科技：手機版 CSS */
     @media (max-width: 640px) {
-      h1 { font-size: 20px; }
-      /* 縮小最外層左右留白 */
-      .wrap { padding: 12px 4px; }
-      main { padding-left: 2px; padding-right: 2px; }
+      h1 { font-size: 18px; }
+      
+      /* 1. 消除所有邊界，讓行事曆 100% 貼齊手機螢幕邊緣 */
+      .wrap { padding: 12px 0; width: 100%; max-width: 100%; }
+      main { padding-left: 0; padding-right: 0; }
+      .weekdays, .calendar { border-left: 0; border-right: 0; border-radius: 0; }
       
       .weekday { font-size: 11px; padding: 4px 0; }
       .day {
         min-height: 85px;
-        /* 將格內的留白縮到極致 1px，讓寬度全部給文字 */
-        padding: 1px;
-        gap: 1px;
+        padding: 0 0 1px 0;
+        gap: 0;
       }
+      .date-row { margin-bottom: 1px; }
       .date-num { 
-        font-size: 11px; 
-        width: 16px; 
-        height: 16px; 
+        font-size: 10px; 
+        width: 14px; 
+        height: 14px; 
         margin-left: 2px;
-        margin-top: 2px;
+        margin-top: 1px;
       }
       .day.today .date-num { 
         font-size: 9px; 
       }
+      
+      .event-container {
+        gap: 0;
+        width: 100%;
+      }
+      
       .event {
-        /* 將字體縮小到極限 7.5px */
-        font-size: 7.5px;
-        /* 稍微縮減字距，讓一行可以擠進更多字 */
+        /* 2. 終極 CSS 縮放黑科技：打破手機瀏覽器字體大小下限 */
+        font-size: 10px; /* 給予標準排版大小，避免瀏覽器誤判 */
+        width: 142.8%; /* 撐大 42.8% 的寬度來容納更多字 (100% / 0.7) */
+        transform: scale(0.7); /* 再將整個色塊視覺縮小到 70% 放回格子內 */
+        transform-origin: top left; /* 對齊左上角 */
+        margin-bottom: -3px; /* 扣除縮小後多出來的排版高度空隙 */
+        
         letter-spacing: -0.2px;
-        line-height: 1.25;
-        /* 將色塊內的留白壓到最小 (上下1px, 左右1.5px) */
-        padding: 1px 1.5px;
-        border-left-width: 2px;
-        margin-bottom: 1px;
+        line-height: 1.15;
+        padding: 1px 2px 1px 2px;
+        border-left-width: 2.5px; /* 縮小後視覺約 1.7px */
         border-radius: 2px;
-        /* 強制單行與省略號 (不可斷行) */
+        
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        /* 防止手機瀏覽器自動把字體放大 */
         -webkit-text-size-adjust: none;
       }
       .count { display: none; }
