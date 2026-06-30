@@ -183,7 +183,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.14.52";
+        const APP_VERSION = "v1.14.53";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -203,6 +203,8 @@
         let historyOnlyUnsettled = false;
         let tasksLoading = false;
         let historyLoadedMonth = "";
+        const DRIVER_AUTH_CACHE_KEY = "asDriverAuthCacheV1";
+        const DRIVER_AUTH_CACHE_TTL_MS = 12 * 60 * 60 * 1000;
         
         // 簽名板邏輯
         const canvas = document.getElementById('signaturePad');
@@ -325,6 +327,49 @@
             }
         }
 
+        function getCachedDriverAuth(lineId) {
+            try {
+                const raw = localStorage.getItem(DRIVER_AUTH_CACHE_KEY);
+                if (!raw) return null;
+                const cached = JSON.parse(raw);
+                if (!cached || cached.lineId !== lineId || !cached.driver) return null;
+                if (Date.now() - Number(cached.savedAt || 0) > DRIVER_AUTH_CACHE_TTL_MS) return null;
+                return cached.driver;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function saveCachedDriverAuth(lineId, driver) {
+            try {
+                if (!lineId || !driver) return;
+                localStorage.setItem(DRIVER_AUTH_CACHE_KEY, JSON.stringify({
+                    lineId,
+                    driver,
+                    savedAt: Date.now()
+                }));
+            } catch (e) {
+                console.warn("driver auth cache skipped", e);
+            }
+        }
+
+        function clearCachedDriverAuth() {
+            try { localStorage.removeItem(DRIVER_AUTH_CACHE_KEY); } catch (e) {}
+        }
+
+        function updateDriverProfileUi() {
+            if (!driverData) return;
+            document.getElementById('profName').innerText = driverData.name || '-';
+            document.getElementById('profPhone').innerText = driverData.phone || '-';
+            document.getElementById('profCarNo').innerText = driverData.carNo || '-';
+            document.getElementById('profCarColor').innerText = driverData.carColor || '-';
+            document.getElementById('profCarType').innerText = driverData.carType || '-';
+            document.getElementById('profBankCode').innerText = driverData.bankCode || '-';
+            document.getElementById('profBankAcc').innerText = driverData.bankAcc || '-';
+            document.getElementById('profLicense').innerText = driverData.license || '-';
+            document.getElementById('profInsurance').innerText = driverData.insurance || '-';
+        }
+
         // --- 初始化與登入 (包含強迫加好友) ---
         async function init() {
             document.querySelectorAll('.app-version-display').forEach(el => el.innerText = APP_VERSION);
@@ -334,7 +379,7 @@
                 if (!mainHidden || !bindHidden) return;
                 document.getElementById('authSpinner').classList.add('hidden');
                 document.getElementById('authMsg').innerHTML = '登入逾時，請確認網路後重新整理。<br><button onclick="window.location.reload()" class="mt-3 bg-[#553f62] text-white px-4 py-2 rounded-lg text-sm font-bold">重新登入</button>';
-            }, 25000);
+            }, 35000);
 
             try {
                 if(window !== window.parent) { 
@@ -413,9 +458,19 @@
 
                 const proceedLogin = async () => {
                     const profile = await withTimeout(liff.getProfile(), 5000, 'LINE 資料讀取逾時');
-                    const checkRes = await apiCall('driverCheckAuth', { lineId: profile.userId }, 15000);
+                    const cachedDriver = getCachedDriverAuth(profile.userId);
+                    if (cachedDriver) {
+                        driverData = cachedDriver;
+                        loginSuccess({ fromCache: true });
+                        refreshDriverAuthInBackground(profile.userId);
+                        return;
+                    }
+
+                    document.getElementById('authMsg').innerText = "正在確認司機身分...";
+                    const checkRes = await apiCall('driverCheckAuth', { lineId: profile.userId }, 30000);
                     if(checkRes.isBound) {
                         driverData = checkRes.driver;
+                        saveCachedDriverAuth(profile.userId, driverData);
                         loginSuccess();
                     } else {
                         clearAuthTimeout();
@@ -439,25 +494,34 @@
             initCanvas();
         }
 
-        function loginSuccess() {
+        async function refreshDriverAuthInBackground(lineId) {
+            try {
+                const checkRes = await apiCall('driverCheckAuth', { lineId }, 20000);
+                if (checkRes && checkRes.isBound && checkRes.driver) {
+                    driverData = checkRes.driver;
+                    saveCachedDriverAuth(lineId, driverData);
+                    updateDriverProfileUi();
+                    return;
+                }
+                clearCachedDriverAuth();
+                Swal.fire('司機身分需重新確認', '目前查不到您的司機綁定資料，請重新登入或聯絡調度。', 'warning')
+                    .then(() => window.location.reload());
+            } catch (e) {
+                console.warn('driver background auth refresh failed', e);
+            }
+        }
+
+        function loginSuccess(options = {}) {
             clearAuthTimeout();
             document.getElementById('authScreen').classList.add('hidden');
             document.getElementById('mainContent').classList.remove('hidden');
             document.getElementById('bottomNav').classList.remove('hidden');
             
             // 寫入個人中心資料
-            document.getElementById('profName').innerText = driverData.name || '-';
-            document.getElementById('profPhone').innerText = driverData.phone || '-';
-            document.getElementById('profCarNo').innerText = driverData.carNo || '-';
-            document.getElementById('profCarColor').innerText = driverData.carColor || '-';
-            document.getElementById('profCarType').innerText = driverData.carType || '-';
-            document.getElementById('profBankCode').innerText = driverData.bankCode || '-';
-            document.getElementById('profBankAcc').innerText = driverData.bankAcc || '-';
-            document.getElementById('profLicense').innerText = driverData.license || '-';
-            document.getElementById('profInsurance').innerText = driverData.insurance || '-';
+            updateDriverProfileUi();
             
             restoreCachedTasks();
-            loadTasks();
+            setTimeout(() => loadTasks({ silentError: !!options.fromCache }), 80);
         }
 
         function driverTaskCacheKey() {
@@ -502,6 +566,7 @@
                     name: document.getElementById('bindName').value.trim(),
                     phone: document.getElementById('bindPhone').value.trim()
                 });
+                if (res && res.driver) saveCachedDriverAuth(lineId, res.driver);
                 Swal.fire('綁定成功', '歡迎加入AS派車！', 'success').then(() => window.location.reload());
             } catch (err) {
                 Swal.fire('綁定失敗', err.message, 'error');
@@ -537,7 +602,7 @@
             return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
         }
 
-        async function loadTasks() {
+        async function loadTasks(options = {}) {
             if (tasksLoading) return;
             tasksLoading = true;
             const taskContainer = document.getElementById('task-list');
@@ -564,7 +629,9 @@
                     const msg = e.message || '無法載入任務';
                     taskContainer.innerHTML = `<div class="text-center text-gray-500 mt-16 text-sm leading-relaxed">${msg}<br><button onclick="loadTasks()" class="mt-3 bg-[#553f62] text-white px-4 py-2 rounded-lg font-bold">重新載入</button></div>`;
                 }
-                Swal.fire('錯誤', e.message || '無法載入任務', 'error');
+                if (!options.silentError) {
+                    Swal.fire('錯誤', e.message || '無法載入任務', 'error');
+                }
             } finally {
                 tasksLoading = false;
             }
