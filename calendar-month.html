@@ -8,33 +8,39 @@
     :root {
       --ink: #1a0b3d;
       --purple: #574266;
+      --purple-light: #f3eff5;
       --muted: #7a6a82;
       --line: #e7dde8;
       --soft: #faf7fb;
       --pink: #d85c8f;
-      --shadow: 0 8px 24px rgba(26, 11, 61, 0.08);
+      --pink-soft: #fff0f6;
+      --shadow-sm: 0 2px 8px rgba(26, 11, 61, 0.04);
+      --shadow-md: 0 8px 24px rgba(26, 11, 61, 0.08);
+      --radius: 12px;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
       background: #f6f3f7;
       color: var(--ink);
-      font-family: "Noto Sans TC", "Microsoft JhengHei", Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans TC", "Microsoft JhengHei", Arial, sans-serif;
       font-size: 14px;
       line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
     }
     header {
       position: sticky;
       top: 0;
-      z-index: 5;
+      z-index: 50;
       background: rgba(246, 243, 247, 0.96);
       border-bottom: 1px solid var(--line);
-      backdrop-filter: blur(10px);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
     }
     .wrap {
-      width: min(980px, 100%);
+      width: min(1000px, 100%);
       margin: 0 auto;
-      padding: 12px 10px;
+      padding: 16px 12px;
     }
     .topbar {
       display: flex;
@@ -45,35 +51,78 @@
     h1 {
       margin: 0;
       color: var(--ink);
-      font-size: 22px;
-      line-height: 1.2;
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    h1::before {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 24px;
+      background: var(--pink);
+      border-radius: 3px;
     }
     .version {
       color: var(--muted);
-      font-size: 12px;
-      white-space: nowrap;
+      font-size: 11px;
+      background: var(--purple-light);
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
     }
     .controls {
-      display: grid;
-      grid-template-columns: 44px 1fr 44px;
+      display: flex;
       gap: 8px;
       align-items: center;
-      margin-top: 14px;
+      margin-top: 16px;
+    }
+    .month-selector {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 44px 1fr 44px;
+      gap: 4px;
     }
     button {
       min-height: 42px;
+      padding: 0 12px;
       border: 1px solid var(--line);
-      border-radius: 8px;
+      border-radius: var(--radius);
       background: #fff;
       color: var(--purple);
       font: inherit;
       font-weight: 700;
       cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: var(--shadow-sm);
+    }
+    button:hover {
+      background: var(--soft);
+      border-color: var(--purple);
+      transform: translateY(-1px);
+    }
+    button:active {
+      transform: translateY(1px);
     }
     button.primary {
       border-color: var(--purple);
       background: var(--purple);
       color: #fff;
+    }
+    button.primary:hover {
+      background: #443250;
+      border-color: #443250;
+    }
+    button.icon-btn {
+      width: 42px;
+      padding: 0;
     }
     .month-title {
       min-height: 42px;
@@ -81,55 +130,92 @@
       align-items: center;
       justify-content: center;
       border: 1px solid var(--line);
-      border-radius: 8px;
+      border-radius: var(--radius);
       background: #fff;
       color: var(--ink);
       font-size: 18px;
-      font-weight: 700;
+      font-weight: 800;
+      box-shadow: var(--shadow-sm);
     }
     .hint {
-      margin-top: 8px;
+      margin-top: 10px;
       color: var(--muted);
       font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .hint::before {
+      content: '💡';
     }
     main {
-      width: min(980px, 100%);
+      width: min(1000px, 100%);
       margin: 0 auto;
-      padding: 8px 0 32px;
+      padding: 8px 12px 48px;
     }
     .weekdays, .calendar {
       display: grid;
       grid-template-columns: repeat(7, minmax(0, 1fr));
-      gap: 0;
+      background: var(--line);
+      gap: 1px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
+    }
+    .weekdays {
+      border-bottom: none;
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+      background: #fff;
     }
     .weekday {
       text-align: center;
       color: var(--muted);
       font-size: 12px;
-      font-weight: 700;
-      padding: 4px 0;
-      border-right: 1px solid var(--line);
+      font-weight: 800;
+      padding: 10px 0;
+      background: var(--soft);
     }
-    .weekday:last-child { border-right: 0; }
+    .calendar {
+      border-top-left-radius: 0;
+      border-top-right-radius: 0;
+    }
     .day {
-      min-height: 118px;
-      border-right: 1px solid var(--line);
-      border-bottom: 1px solid var(--line);
-      border-radius: 0;
+      min-height: 128px;
       background: #fff;
-      box-shadow: none;
-      padding: 4px 4px 6px;
-      overflow: visible;
+      padding: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      transition: background 0.15s ease;
+      position: relative;
     }
-    .day:nth-child(7n) { border-right: 0; }
+    .day.interactive {
+      cursor: pointer;
+    }
+    .day.interactive:hover {
+      background: var(--soft);
+    }
     .day.muted {
-      background: #f7f4f8;
+      background: #fcfbfd;
+      color: #ccc4d0;
+    }
+    .day.muted .date-num {
       color: #b7adbd;
-      box-shadow: none;
+      opacity: 0.6;
     }
     .day.today {
-      border-color: #e8bfd1;
-      background: #fff8fb;
+      background: #fffbfd;
+    }
+    .day.today::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--pink);
     }
     .date-row {
       display: flex;
@@ -139,87 +225,231 @@
       margin-bottom: 2px;
     }
     .date-num {
-      font-weight: 700;
+      font-weight: 800;
       color: var(--purple);
       font-size: 18px;
-      line-height: 1.1;
+      line-height: 1;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .day.today .date-num {
+      background: var(--pink);
+      color: #fff;
+      border-radius: 50%;
+      font-size: 14px;
     }
     .count {
-      color: var(--muted);
+      color: var(--pink);
       font-size: 11px;
+      font-weight: 700;
+      background: var(--pink-soft);
+      padding: 1px 6px;
+      border-radius: 10px;
+    }
+    .event-container {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      flex: 1;
+      overflow: hidden;
     }
     .event {
       display: block;
       width: 100%;
-      margin-top: 1px;
-      border: 0;
-      border-radius: 0;
-      background: transparent;
+      background: rgba(87, 66, 102, 0.06);
+      border-left: 3px solid var(--purple);
       color: var(--ink);
-      padding: 0;
+      padding: 3px 6px;
       font-size: 11px;
-      line-height: 1.22;
+      font-weight: 500;
+      line-height: 1.3;
       text-align: left;
-      white-space: normal;
-      overflow-wrap: anywhere;
-      word-break: break-word;
+      border-radius: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: all 0.15s ease;
+    }
+    .day.interactive:hover .event {
+      background: rgba(87, 66, 102, 0.1);
     }
     .more {
-      margin-top: 2px;
+      margin-top: auto;
       color: var(--pink);
       font-size: 11px;
+      font-weight: 700;
       text-align: right;
     }
-    .status {
-      margin: 18px 0;
-      color: var(--muted);
+    
+    /* 載入狀態 */
+    .status-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 0;
       text-align: center;
     }
-    dialog {
-      width: min(520px, calc(100% - 28px));
-      border: 0;
-      border-radius: 10px;
-      padding: 0;
-      box-shadow: 0 18px 40px rgba(26, 11, 61, 0.22);
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid var(--line);
+      border-top-color: var(--pink);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 12px;
     }
-    dialog::backdrop { background: rgba(26, 11, 61, 0.38); }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .status-text {
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    /* 骨架屏載入效果 */
+    .skeleton-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 1px;
+      background: var(--line);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .skeleton-day {
+      height: 128px;
+      background: #fff;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .skeleton-num {
+      width: 24px;
+      height: 24px;
+      background: #f0ebf2;
+      border-radius: 50%;
+      animation: pulse 1.5s infinite ease-in-out;
+    }
+    .skeleton-line {
+      height: 18px;
+      background: #f5f0f7;
+      border-radius: 4px;
+      animation: pulse 1.5s infinite ease-in-out;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 1; }
+    }
+
+    /* 對話框樣式 */
+    dialog {
+      width: min(520px, calc(100% - 24px));
+      border: 0;
+      border-radius: 16px;
+      padding: 0;
+      box-shadow: 0 24px 60px rgba(26, 11, 61, 0.25);
+      animation: dialogScale 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      overflow: hidden;
+    }
+    @keyframes dialogScale {
+      from { transform: scale(0.92); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    dialog::backdrop {
+      background: rgba(26, 11, 61, 0.45);
+      backdrop-filter: blur(4px);
+    }
     .modal-head {
       background: var(--purple);
       color: #fff;
-      padding: 14px 16px;
-      font-weight: 700;
-      font-size: 17px;
+      padding: 16px 20px;
+      font-weight: 800;
+      font-size: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
-    .modal-body { padding: 14px 16px; }
+    .modal-close-btn {
+      background: transparent;
+      border: none;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 24px;
+      width: 32px;
+      height: 32px;
+      min-height: auto;
+      padding: 0;
+      box-shadow: none;
+      border-radius: 50%;
+    }
+    .modal-close-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+    .modal-body {
+      padding: 8px 20px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
     .modal-event {
-      padding: 10px 0;
+      padding: 14px 0;
       border-bottom: 1px solid var(--line);
     }
     .modal-event:last-child { border-bottom: 0; }
     .modal-time {
-      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--pink);
+      font-weight: 700;
       font-size: 12px;
-      margin-bottom: 2px;
+      margin-bottom: 6px;
+      background: var(--pink-soft);
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+    .modal-event-title {
+      font-weight: 700;
+      color: var(--ink);
+      font-size: 15px;
+      line-height: 1.4;
     }
     .modal-actions {
-      padding: 0 16px 16px;
+      padding: 16px 20px;
+      background: var(--soft);
+      border-top: 1px solid var(--line);
       text-align: right;
     }
+
     @media (max-width: 640px) {
-      h1 { font-size: 19px; }
-      .wrap { padding: 10px 8px; }
-      main { padding-left: 0; padding-right: 0; }
-      .weekdays, .calendar { gap: 0; }
-      .weekday { font-size: 11px; }
+      h1 { font-size: 20px; }
+      .wrap { padding: 12px 8px; }
+      main { padding-left: 4px; padding-right: 4px; }
+      .weekday { font-size: 11px; padding: 6px 0; }
       .day {
-        min-height: 112px;
-        padding: 3px 2px 5px;
+        min-height: 90px;
+        padding: 3px;
+        gap: 2px;
       }
-      .date-num { font-size: 17px; }
+      .date-num { 
+        font-size: 13px; 
+        width: 18px; 
+        height: 18px; 
+      }
+      .day.today .date-num { 
+        font-size: 10px; 
+      }
       .event {
-        font-size: 9px;
-        line-height: 1.18;
-        padding: 0;
+        font-size: 8.5px;
+        line-height: 1.15;
+        padding: 1px 3px;
+        border-left-width: 2px;
+        margin-bottom: 1px;
+        border-radius: 2px;
       }
       .count { display: none; }
     }
@@ -230,14 +460,22 @@
     <div class="wrap">
       <div class="topbar">
         <h1>CAR 行事曆月檢視</h1>
-        <div class="version" id="versionText">calendar-month-v1.0.1</div>
+        <div class="version" id="versionText">calendar-month-v1.1.0</div>
       </div>
       <div class="controls">
-        <button type="button" onclick="moveMonth(-1)">‹</button>
-        <div class="month-title" id="monthTitle">--</div>
-        <button type="button" onclick="moveMonth(1)">›</button>
+        <button type="button" class="icon-btn" onclick="goToToday()" title="回到今天">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+        </button>
+        <button type="button" class="icon-btn" onclick="loadMonth()" title="重新整理">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
+        </button>
+        <div class="month-selector">
+          <button type="button" onclick="moveMonth(-1)">‹</button>
+          <div class="month-title" id="monthTitle">--</div>
+          <button type="button" onclick="moveMonth(1)">›</button>
+        </div>
       </div>
-      <div class="hint">每一天直接顯示 Google CAR 行事曆主旨；點日期可放大查看。</div>
+      <div class="hint">直接顯示 Google CAR 每日行程，點擊有行程的日期可放大檢視詳情。</div>
     </div>
   </header>
 
@@ -251,12 +489,23 @@
       <div class="weekday">六</div>
       <div class="weekday">日</div>
     </div>
-    <div id="status" class="status">讀取中...</div>
-    <div id="calendar" class="calendar"></div>
+    
+    <!-- 載入與行事曆容器 -->
+    <div id="calendarContainer">
+      <div id="status" class="status-container">
+        <div class="spinner"></div>
+        <div class="status-text">正在同步 Google 行事曆資料...</div>
+      </div>
+      <div id="calendar" class="calendar" style="display: none;"></div>
+    </div>
   </main>
 
+  <!-- 行程詳細 Dialog -->
   <dialog id="dayDialog">
-    <div class="modal-head" id="dialogTitle">行程</div>
+    <div class="modal-head">
+      <span id="dialogTitle">行程</span>
+      <button type="button" class="modal-close-btn" onclick="closeDialog()">&times;</button>
+    </div>
     <div class="modal-body" id="dialogBody"></div>
     <div class="modal-actions">
       <button type="button" class="primary" onclick="closeDialog()">關閉</button>
@@ -282,26 +531,60 @@
       return `${date.getFullYear()}年 ${pad(date.getMonth() + 1)}月`;
     }
 
+    // 顯示骨架屏
+    function showSkeletons() {
+      const container = document.getElementById("calendarContainer");
+      document.getElementById("status").style.display = "flex";
+      document.getElementById("calendar").style.display = "none";
+      
+      let skeletonsHtml = `<div class="skeleton-grid">`;
+      for (let i = 0; i < 35; i++) {
+        skeletonsHtml += `
+          <div class="skeleton-day">
+            <div class="skeleton-num"></div>
+            <div class="skeleton-line" style="width: 80%"></div>
+            ${i % 3 === 0 ? `<div class="skeleton-line" style="width: 60%"></div>` : ''}
+          </div>`;
+      }
+      skeletonsHtml += `</div>`;
+      
+      // 更新狀態展示為骨架屏與載入文字的精緻組合
+      document.getElementById("status").innerHTML = `
+        <div class="spinner"></div>
+        <div class="status-text" style="margin-bottom: 24px;">正在自 Google 雲端同步行事曆...</div>
+        ${skeletonsHtml}
+      `;
+    }
+
     async function loadMonth() {
       const year = state.current.getFullYear();
       const month = state.current.getMonth() + 1;
       document.getElementById("monthTitle").textContent = formatMonth(state.current);
-      document.getElementById("status").textContent = "讀取中...";
-      document.getElementById("calendar").innerHTML = "";
+      
+      showSkeletons();
 
       try {
         const url = `${GAS_URL}?action=getCalendarMonthEvents&year=${year}&month=${month}&t=${Date.now()}`;
         const res = await fetch(url).then(r => r.json());
         if (!res.success) throw new Error(res.error || "讀取失敗");
+        
         state.eventsByDate = (res.events || []).reduce((acc, item) => {
           if (!acc[item.date]) acc[item.date] = [];
           acc[item.date].push(item);
           return acc;
         }, {});
+        
         renderCalendar();
-        document.getElementById("status").textContent = "";
+        
+        // 隱藏載入，顯示行事曆
+        document.getElementById("status").style.display = "none";
+        document.getElementById("calendar").style.display = "grid";
       } catch (err) {
-        document.getElementById("status").textContent = `無法讀取行事曆：${err.message || err}`;
+        document.getElementById("status").innerHTML = `
+          <div style="color: var(--pink); font-size: 28px; margin-bottom: 8px;">⚠️</div>
+          <div class="status-text" style="color: var(--pink)">無法讀取行事曆：${err.message || err}</div>
+          <button type="button" onclick="loadMonth()" style="margin-top: 16px;" class="primary">重新嘗試</button>
+        `;
       }
     }
 
@@ -321,13 +604,28 @@
         const key = dateKey(d);
         const events = state.eventsByDate[key] || [];
         const inMonth = d.getMonth() === month;
+        const hasEvents = events.length > 0;
+        
+        // 限制手機畫面與桌面畫面上最多呈現的行程筆數，調整為 10 筆
+        const limit = 10;
+        const visibleEvents = events.slice(0, limit);
+        const remaining = events.length - limit;
+
         cells.push(`
-          <div class="day ${inMonth ? "" : "muted"} ${key === today ? "today" : ""}" onclick="openDay('${key}')">
+          <div class="day ${inMonth ? "" : "muted"} ${key === today ? "today" : ""} ${hasEvents ? "interactive" : ""}" 
+               ${hasEvents ? `onclick="openDay('${key}')"` : ""}>
             <div class="date-row">
               <span class="date-num">${d.getDate()}</span>
-              ${events.length ? `<span class="count">${events.length}筆</span>` : ""}
+              ${hasEvents ? `<span class="count">${events.length} 筆</span>` : ""}
             </div>
-            ${events.map(ev => `<span class="event" title="${escapeHtml(ev.title)}">${escapeHtml(ev.title)}</span>`).join("")}
+            <div class="event-container">
+              ${visibleEvents.map(ev => `
+                <div class="event" title="${escapeHtml(ev.title)}">
+                  ${escapeHtml(ev.title)}
+                </div>
+              `).join("")}
+              ${remaining > 0 ? `<div class="more">+${remaining} 筆...</div>` : ""}
+            </div>
           </div>
         `);
       }
@@ -337,13 +635,24 @@
     function openDay(key) {
       const events = state.eventsByDate[key] || [];
       if (!events.length) return;
-      document.getElementById("dialogTitle").textContent = `${key}｜${events.length} 筆`;
-      document.getElementById("dialogBody").innerHTML = events.map(ev => `
-        <div class="modal-event">
-          <div class="modal-time">${escapeHtml(ev.time || "")}</div>
-          <div>${escapeHtml(ev.title || "")}</div>
-        </div>
-      `).join("");
+      
+      // 格式化日期標題 (例如：2026-06-30 改成 2026年06月30日)
+      const parts = key.split('-');
+      const formattedTitle = `${parts[0]}年${parts[1]}月${parts[2]}日 行程`;
+
+      document.getElementById("dialogTitle").textContent = `${formattedTitle} (${events.length} 筆)`;
+      document.getElementById("dialogBody").innerHTML = events.map(ev => {
+        const timeDisplay = ev.time ? ev.time : "整天";
+        return `
+          <div class="modal-event">
+            <div class="modal-time">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline; vertical-align:middle;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              <span>${escapeHtml(timeDisplay)}</span>
+            </div>
+            <div class="modal-event-title">${escapeHtml(ev.title || "無標題")}</div>
+          </div>
+        `;
+      }).join("");
       document.getElementById("dayDialog").showModal();
     }
 
@@ -353,6 +662,11 @@
 
     function moveMonth(delta) {
       state.current = new Date(state.current.getFullYear(), state.current.getMonth() + delta, 1);
+      loadMonth();
+    }
+
+    function goToToday() {
+      state.current = new Date();
       loadMonth();
     }
 
@@ -366,6 +680,14 @@
       }[s]));
     }
 
+    // 點擊 Modal 外部背景時自動關閉
+    document.getElementById("dayDialog").addEventListener("click", function(e) {
+      if (e.target === this) {
+        closeDialog();
+      }
+    });
+
+    // 初始化載入
     state.current = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
     loadMonth();
   </script>
