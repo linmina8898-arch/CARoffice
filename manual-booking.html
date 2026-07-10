@@ -288,6 +288,22 @@
             <label for="fare">車資金額</label>
             <input id="fare" name="fare" type="number" inputmode="numeric" min="0" required placeholder="由客服手動輸入">
           </div>
+          <div>
+            <label for="manualDiscountAmount">客服折讓金額</label>
+            <input id="manualDiscountAmount" name="manualDiscountAmount" type="number" inputmode="numeric" min="0" placeholder="沒有折讓可留空">
+          </div>
+          <div>
+            <label for="manualDiscountLabel">折讓名稱</label>
+            <input id="manualDiscountLabel" name="manualDiscountLabel" placeholder="例如 客服折讓、熟客優惠">
+          </div>
+          <div>
+            <label for="manualDiscountTarget">折讓套用</label>
+            <select id="manualDiscountTarget" name="manualDiscountTarget">
+              <option value="outbound">去程</option>
+              <option value="return">回程</option>
+              <option value="both">去回程各折一次</option>
+            </select>
+          </div>
           <div class="full">
             <label for="address">接送地址</label>
             <input id="address" name="address" required placeholder="完整地址">
@@ -451,7 +467,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.39";
+    const APP_VERSION = "manual-booking-v1.0.41";
     const SOURCE_LABELS = {
       AS: "AS 安興",
       AZ: "AZ 安興竹北",
@@ -480,7 +496,7 @@
       $("templateSourceFilter").addEventListener("change", renderTemplateOptions);
       ["flightNumber", "returnFlightNumber"].forEach(id => $(id).addEventListener("input", forceUppercase));
       $("phone").addEventListener("input", formatPhoneInput);
-      ["source", "customSource", "serviceType", "rideDate", "rideHour", "rideMinute", "fare", "hasReturn", "returnHour", "returnMinute", "returnFare"].forEach(id => {
+      ["source", "customSource", "serviceType", "rideDate", "rideHour", "rideMinute", "fare", "manualDiscountAmount", "manualDiscountTarget", "hasReturn", "returnHour", "returnMinute", "returnFare"].forEach(id => {
         const el = $(id);
         if (el) el.addEventListener("input", updateSummary);
         if (el) el.addEventListener("change", updateSummary);
@@ -939,6 +955,9 @@
         address: $("address").value.trim(),
         extraLocation: $("extraLocation").value.trim(),
         fare: $("fare").value,
+        manualDiscountAmount: $("manualDiscountAmount").value,
+        manualDiscountLabel: $("manualDiscountLabel").value.trim(),
+        manualDiscountTarget: $("manualDiscountTarget").value,
         hasReturn: $("hasReturn").checked,
         returnServiceType: $("returnServiceType").value,
         returnDate: $("returnDate").value,
@@ -1004,6 +1023,20 @@
       return `${$("checkedLuggageCount").value}大 ${$("carryLuggageCount").value}登機`;
     }
 
+    function getManualDiscountForLeg(p, leg) {
+      const amount = money(p.manualDiscountAmount);
+      if (!amount) return 0;
+      const target = p.manualDiscountTarget || "outbound";
+      if (target === "both") return amount;
+      if (target === "return") return leg === "return" ? amount : 0;
+      return leg === "outbound" ? amount : 0;
+    }
+
+    function getManualTripFare(p, leg) {
+      const rawFare = leg === "return" ? money(p.returnFare || p.fare) : money(p.fare);
+      return Math.max(0, rawFare - getManualDiscountForLeg(p, leg));
+    }
+
     function buildTime(prefix) {
       return `${$(prefix + "Hour").value}:${$(prefix + "Minute").value}`;
     }
@@ -1046,6 +1079,7 @@
       if (!money(p.fare)) errors.push("車資金額");
       if (!p.paxCount) errors.push("人數");
       if (!p.luggageCount) errors.push("行李");
+      if (money(p.manualDiscountAmount) > 0 && p.manualDiscountTarget === "return" && !p.hasReturn) errors.push("折讓套用回程時需勾選同時預約回程");
       if (p.hasReturn) {
         if (!p.returnDate) errors.push("回程日期");
         if (!p.returnTime) errors.push("回程時間");
@@ -1060,7 +1094,7 @@
         Swal.fire("資料未填完整", errors.join("、"), "warning");
         return;
       }
-      const confirmText = `${payload.source}｜${payload.rideDate} ${payload.rideTime} ${payload.serviceType}\n${payload.customerName} / ${payload.phone}\n車資 $${money(payload.fare).toLocaleString()}${payload.hasReturn ? `\n回程 $${money(payload.returnFare || payload.fare).toLocaleString()}` : ""}`;
+      const confirmText = `${payload.source}｜${payload.rideDate} ${payload.rideTime} ${payload.serviceType}\n${payload.customerName} / ${payload.phone}\n車資 $${getManualTripFare(payload, "outbound").toLocaleString()}${payload.hasReturn ? `\n回程 $${getManualTripFare(payload, "return").toLocaleString()}` : ""}${money(payload.manualDiscountAmount) ? `\n客服折讓：${payload.manualDiscountLabel || "客服折讓"} -$${money(payload.manualDiscountAmount).toLocaleString()}` : ""}`;
       const ok = await Swal.fire({
         title: "確認建立預約？",
         text: confirmText,
@@ -1118,7 +1152,8 @@
         $("summaryText").textContent = doneText;
         return;
       }
-      const total = money($("fare").value) + ($("hasReturn").checked ? money($("returnFare").value || $("fare").value) : 0);
+      const p = collectPayload();
+      const total = getManualTripFare(p, "outbound") + (p.hasReturn ? getManualTripFare(p, "return") : 0);
       $("summaryText").textContent = `${currentSource() || "未選來源"}｜${$("serviceType").value || "行程"}｜總車資 $${total.toLocaleString()}`;
     }
 
@@ -1130,7 +1165,7 @@
         rideDate: p.rideDate,
         rideTime: p.rideTime,
         flightNumber: p.flightNumber,
-        fare: p.fare
+        fare: getManualTripFare(p, "outbound")
         }),
         reservationId: reservationIds[0] || ""
       }];
@@ -1142,7 +1177,7 @@
           rideDate: p.returnDate,
           rideTime: p.returnTime,
           flightNumber: p.returnFlightNumber,
-          fare: p.returnFare || p.fare
+          fare: getManualTripFare(p, "return")
           }),
           reservationId: reservationIds[1] || ""
         });
