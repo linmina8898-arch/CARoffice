@@ -80,7 +80,7 @@
         </div>
     </div>
     <script>
-        const APP_VERSION = "v1.0.30";
+        const APP_VERSION = "v1.0.32";
         const GAS_URL = "https://script.google.com/macros/s/AKfycbzMLYBvdbo4mkkEUVFcjST44oh7VUXhx7gZjWejm2R8XX549ITaReot0pRAN3mbwA8n/exec";
         const token = new URLSearchParams(location.search).get("token") || "";
         let task = null;
@@ -95,6 +95,21 @@
         const clean = value => (!value || value === "無") ? "" : String(value);
         const displayDriverName = value => clean(value).replace(/（臨時）$/g, "").trim();
         const displayDriverOrderId = value => clean(value).replace(/-去程$/g, "-01").replace(/-回程$/g, "-02");
+        function formatSportLuggageSuffix(value) {
+            const text = clean(value);
+            if (!text || text === "0") return "";
+            const qtyMatch = text.match(/(\d+)\s*件/);
+            const sizeMatch = text.match(/有\s*[（(]\s*\d+\s*件\s*[,，]\s*([^）)]+)[）)]/) || text.match(/(\d{2})\s*吋?/);
+            const qty = qtyMatch ? qtyMatch[1] : "1";
+            const size = sizeMatch ? clean(sizeMatch[1]).replace(/吋/g, "") : "";
+            if (size) return `( 含胖胖箱${size}*${qty})`;
+            return `( 含胖胖箱${text.replace(/^有/, "").replace(/[()（）]/g, "").replace(/\s+/g, "")})`;
+        }
+        function formatLuggageWithSport(luggage, sport) {
+            const base = clean(luggage);
+            const suffix = formatSportLuggageSuffix(sport);
+            return suffix ? `${base || "無"}${suffix}` : base;
+        }
 
         async function loadTask() {
             if (!token) return showClosed("無法開啟任務", "此臨時派遣網址不完整，請向調度重新索取。");
@@ -131,7 +146,7 @@
                 ["接送地址", task.address],
                 ["加點地址", task.extraStop],
                 ["乘車人數", task.paxCount],
-                ["行李件數", task.luggage],
+                ["行李件數", formatLuggageWithSport(task.luggage, task.sportLuggage)],
                 ["預約車型", task.car],
                 ["兒童座椅", task.seats],
                 ["舉牌內容", task.signboard],
