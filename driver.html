@@ -183,7 +183,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.14.53";
+        const APP_VERSION = "v1.14.55";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -708,6 +708,21 @@
             if (!text) return '';
             return text.replace(/(\d+)\s*小/g, '$1登機').replace(/(\d+大)(?=\d)/g, '$1 ');
         }
+        function formatSportLuggageSuffix(v) {
+            const text = cleanVal(v);
+            if (!text || text === '0') return '';
+            const qtyMatch = text.match(/(\d+)\s*件/);
+            const sizeMatch = text.match(/有\s*[（(]\s*\d+\s*件\s*[,，]\s*([^）)]+)[）)]/) || text.match(/(\d{2})\s*吋?/);
+            const qty = qtyMatch ? qtyMatch[1] : '1';
+            const size = sizeMatch ? cleanVal(sizeMatch[1]).replace(/吋/g, '') : '';
+            if (size) return `( 含胖胖箱${size}*${qty})`;
+            return `( 含胖胖箱${text.replace(/^有/, '').replace(/[()（）]/g, '').replace(/\s+/g, '')})`;
+        }
+        function formatLuggageWithSport(luggage, sport) {
+            const base = cleanVal(luggage) === '0' ? '' : formatLuggageCount(luggage);
+            const suffix = formatSportLuggageSuffix(sport);
+            return suffix ? `${base || '無'}${suffix}` : base;
+        }
         function displayPayoutStatus(v) {
             return cleanVal(v) === '已付款' ? '已結清' : (cleanVal(v) || '待確認');
         }
@@ -905,13 +920,7 @@
             let dNote = cleanVal(t.driverNote) ? cleanVal(t.driverNote).replace(/\n/g, '<br>') : '';
             let companyHtml = '';
             
-            let lug = cleanVal(t.luggage) === '0' ? '' : formatLuggageCount(t.luggage);
-            let sport = cleanVal(t.sportLuggage);
-            let luggageText = '';
-            if(lug || sport) {
-                luggageText = lug;
-                if(sport) luggageText += (lug ? ' ' : '') + '(胖箱: ' + sport + ')';
-            }
+            let luggageText = formatLuggageWithSport(t.luggage, t.sportLuggage);
 
             let addressHtml = mapLinkHtml(t.address);
             let extraStopHtml = mapLinkHtml(t.extraStop);
