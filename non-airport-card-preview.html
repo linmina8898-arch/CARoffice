@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>非機場接送卡片預覽</title>
+  <style>
+    :root {
+      --purple: #574266;
+      --deep: #1a0b3d;
+      --muted: #7a6a82;
+      --line: #ece7ef;
+      --soft: #fbf8fb;
+      --pink: #d95f91;
+      --text: #273142;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #eef5fb;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+      color: var(--text);
+      display: grid;
+      place-items: start center;
+      padding: 28px 12px;
+    }
+    .phone {
+      width: min(420px, 100%);
+      display: grid;
+      gap: 14px;
+    }
+    .hint {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+      padding: 0 8px;
+    }
+    .loading {
+      background: #fff;
+      border: 1px solid #ded4e3;
+      border-radius: 14px;
+      padding: 18px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    .card {
+      overflow: hidden;
+      border: 1px solid #ded4e3;
+      border-radius: 18px;
+      background: #fff;
+      box-shadow: 0 10px 28px rgba(48, 36, 62, .12);
+    }
+    .header {
+      background: var(--purple);
+      color: #fff;
+      padding: 17px 20px;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+    .body { padding: 18px 20px 20px; }
+    .hero {
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 14px;
+    }
+    .hero-title {
+      color: var(--deep);
+      font-size: 22px;
+      font-weight: 700;
+      line-height: 1.35;
+      margin: 0 0 8px;
+    }
+    .section-title {
+      color: var(--muted);
+      font-size: 17px;
+      font-weight: 700;
+      margin: 15px 0 8px;
+    }
+    .rows {
+      display: grid;
+      gap: 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 74px minmax(0, 1fr);
+      gap: 10px;
+      min-height: 27px;
+      padding: 3px 0;
+      border-top: 1px solid #f2eef4;
+      font-size: 15px;
+      line-height: 1.45;
+    }
+    .label { color: #9a91a1; }
+    .value { color: var(--text); }
+    .notice {
+      margin-top: 16px;
+      padding: 12px 14px;
+      background: var(--soft);
+      border: 1px solid #eaddea;
+      border-radius: 10px;
+      color: #62566a;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .notice.plain {
+      background: #fff;
+      border-color: var(--line);
+    }
+    .service-card {
+      margin-top: 12px;
+      padding: 14px;
+      background: var(--soft);
+      border: 1px solid #eaddea;
+      border-radius: 10px;
+    }
+    .service-card .section-title {
+      margin-top: 0;
+    }
+    .trip-check {
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+      color: #62566a;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .trip-title {
+      margin-bottom: 4px;
+      color: var(--deep);
+      font-weight: 700;
+    }
+    .trip-line {
+      display: block;
+      margin: 2px 0;
+      color: #273142;
+      word-break: break-word;
+    }
+    .buttons {
+      display: grid;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    .button {
+      border-radius: 8px;
+      padding: 13px 14px;
+      text-align: center;
+      font-size: 16px;
+      font-weight: 700;
+      border: 1px solid transparent;
+    }
+    .button.primary { background: var(--purple); color: #fff; }
+    .button.secondary { background: #edf0f5; color: #283143; }
+  </style>
+</head>
+<body>
+  <main class="phone" id="app">
+    <div class="hint">正在從 Google 預約單讀取：AS-20260714S9oQ-去程 / 回程</div>
+    <div class="loading">資料載入中...</div>
+  </main>
+
+  <script>
+    const GAS_URL = "https://script.google.com/macros/s/AKfycby9KWdatRfDZY5g2DkieUkAhyEJDDCnKcMb_l8o2_J4JCaOtKYfEEkvzk-1sW-oZWIF/exec";
+    const PREVIEW_ID = "AS-20260714S9oQ-去程";
+    const PREVIEW_VERSION = "non-airport-preview-v1.0.3";
+
+    const app = document.getElementById("app");
+
+    function esc(value) {
+      return String(value ?? "").replace(/[&<>"']/g, s => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[s]));
+    }
+
+    function money(value) {
+      const raw = String(value || "").replace(/[^\d.-]/g, "");
+      const n = Number(raw);
+      return Number.isFinite(n) && raw ? "$" + n.toLocaleString("zh-TW") : esc(value || "依客服確認");
+    }
+
+    function numeric(value) {
+      const raw = String(value || "").replace(/[^\d.-]/g, "");
+      const n = Number(raw);
+      return Number.isFinite(n) && raw ? n : 0;
+    }
+
+    function dateTitle(order) {
+      const date = String(order.rideDate || "").replace(/-/g, "/");
+      const time = order.rideTime || "";
+      return `${date} ${time} 一般接送`;
+    }
+
+    function isAirportTrip(order) {
+      return /(接機|送機)/.test(order.serviceType || "") && /機場/.test(order.airport || "");
+    }
+
+    function startPoint(order) {
+      if (isAirportTrip(order) && order.serviceType === "接機") return order.airport || "";
+      return order.address || "";
+    }
+
+    function endPoint(order) {
+      if (isAirportTrip(order) && order.serviceType === "接機") return order.address || "";
+      return order.airport || "";
+    }
+
+    function splitStops(value) {
+      return String(value || "")
+        .split(/\r?\n|[；;]/)
+        .map(s => s.replace(/^\s*\d+[.、]\s*/, "").trim())
+        .map(s => s.replace(/\s+[\u4e00-\u9fa5A-Za-z·．\s]{1,16}\s*0\d{8,10}.*$/, "").trim())
+        .filter(s => s && s !== "無")
+        .filter(s => /[縣市區鄉鎮路街大道段巷弄號]|機場|高鐵|碼頭|車站/.test(s));
+    }
+
+    function buildTripRouteHtml(order) {
+      const stops = [startPoint(order), ...splitStops(order.extraLocation), endPoint(order)]
+        .map(s => String(s || "").trim())
+        .filter(Boolean);
+      if (!stops.length) return `<div class="trip-title">本次行程：</div><span class="trip-line">依客服確認</span>`;
+      return `<div class="trip-title">本次行程：</div>` + stops.map((stop, index) => {
+        const prefix = index === stops.length - 1 ? "→ " : `${index + 1}.`;
+        return `<span class="trip-line">${prefix}${esc(stop)}</span>`;
+      }).join("");
+    }
+
+    function paymentText(order) {
+      const method = String(order.paymentMethod || "").trim();
+      const cash = numeric(order.manualCashCollected);
+      const total = numeric(order.grandTotal || order.fare);
+      const nonCash = Math.max(total - cash, 0);
+      if (cash > 0 && /(轉帳|簽單|月結|不簽不收)/.test(method)) {
+        const label = /轉帳/.test(method) ? "轉帳" : (/簽單|月結/.test(method) ? "簽單" : "非現金");
+        const parts = [];
+        if (nonCash > 0) parts.push(`${label} ${money(nonCash)}`);
+        parts.push(`現金 ${money(cash)}`);
+        return parts.join(" + ");
+      }
+      return method || "依客服確認";
+    }
+
+    function buildPaymentDetailRows(order) {
+      const total = numeric(order.grandTotal || order.fare);
+      const cash = numeric(order.manualCashCollected);
+      const nonCash = Math.max(total - cash, 0);
+      const method = String(order.paymentMethod || "").trim();
+
+      if (cash > 0 && /(轉帳|簽單|月結|不簽不收)/.test(method)) {
+        const label = /轉帳/.test(method) ? "轉帳" : (/簽單|月結|不簽不收/.test(method) ? "簽單" : "非現金");
+        return `
+          <div class="row"><div class="label">${label}</div><div class="value">${money(nonCash)}</div></div>
+          <div class="row"><div class="label">現場收現</div><div class="value"><strong>${money(cash)}</strong></div></div>
+          <div class="row"><div class="label">總額</div><div class="value"><strong>${money(total || order.grandTotal || order.fare)}</strong></div></div>
+        `;
+      }
+
+      return `
+        <div class="row"><div class="label">基本車資</div><div class="value">${money(order.fare || order.grandTotal)}</div></div>
+        <div class="row"><div class="label">總額</div><div class="value"><strong>${money(order.grandTotal || order.fare)}</strong></div></div>
+      `;
+    }
+
+    function row(label, value) {
+      return `<div class="row"><div class="label">${esc(label)}</div><div class="value">${esc(value || "無")}</div></div>`;
+    }
+
+    function buildReservationCard(order) {
+      const title = dateTitle(order);
+      return `<article class="card">
+        <div class="header">安興租車｜預約明細</div>
+        <div class="body">
+          <section class="hero">
+            <h1 class="hero-title">${esc(title)}</h1>
+          </section>
+
+          <div class="section-title">預約資訊</div>
+          <div class="rows">
+            ${row("單號", order.reservationId)}
+            ${row("姓名", order.customerName)}
+            ${row("電話", order.phone)}
+            ${row("車型", order.carType)}
+            ${row("人數", order.paxCount)}
+            ${row("行李", order.luggageCount)}
+            ${row("上車", startPoint(order))}
+            ${row("下車", endPoint(order))}
+            ${row("加點", order.extraLocation)}
+            ${row("付款", paymentText(order))}
+            ${row("備註", order.remarks)}
+          </div>
+
+          <div class="section-title">費用明細</div>
+          <div class="rows">
+            ${buildPaymentDetailRows(order)}
+          </div>
+
+          <div class="notice">請再次確認預約日期、時間、上車地點、下車地點與乘車資訊是否正確。行程調整與相關諮詢，統一由客服為您服務。</div>
+
+          <div class="buttons">
+            <div class="button primary">確認資訊正確</div>
+            <div class="button secondary">聯絡客服</div>
+          </div>
+        </div>
+      </article>`;
+    }
+
+    function buildServiceCard(order) {
+      const title = dateTitle(order);
+      return `<article class="card">
+        <div class="header">安興租車｜接送資訊通知</div>
+        <div class="body">
+          <section class="hero">
+            <h1 class="hero-title">${esc(title)}</h1>
+          </section>
+
+          <div class="service-card">
+            <div class="section-title">接送服務資訊</div>
+            <div class="rows">
+              ${row("單號", order.reservationId)}
+              ${row("司機", "依客服通知")}
+              ${row("車號", "依客服通知")}
+              ${row("車款", "依客服通知")}
+            </div>
+          </div>
+
+          <div class="trip-check">${buildTripRouteHtml(order)}</div>
+
+          <div class="notice plain">司機將依預約時間抵達，請保持電話暢通。行程調整與相關諮詢，統一由客服為您服務。</div>
+
+          <div class="buttons">
+            <div class="button primary">確認資訊正確</div>
+            <div class="button secondary">聯絡客服</div>
+          </div>
+        </div>
+      </article>`;
+    }
+
+    async function loadData() {
+      const url = `${GAS_URL}?action=getManualBookingTextData&reservationId=${encodeURIComponent(PREVIEW_ID)}&t=${Date.now()}`;
+      try {
+        const res = await fetch(url, { cache: "no-store" });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || "後端查無資料");
+        const orders = Array.isArray(data.orders) ? data.orders : [];
+        if (!orders.length) throw new Error("後端沒有回傳預約資料");
+        const outbound = orders.find(o => String(o.reservationId || "").includes("去程")) || orders[0];
+        const inbound = orders.find(o => String(o.reservationId || "").includes("回程")) || orders[1] || outbound;
+        app.innerHTML = `
+          <div class="hint">已從 Google 預約單讀取：${esc(data.baseId || PREVIEW_ID)}｜後端 ${esc(data.backendVersion || "")}｜${PREVIEW_VERSION}</div>
+          ${orders.map(buildReservationCard).join("")}
+          ${buildServiceCard(inbound)}
+        `;
+      } catch (err) {
+        app.innerHTML = `
+          <div class="hint">非機場接送卡片預覽</div>
+          <div class="loading">讀取 Google 預約單失敗：${esc(err.message || err)}<br>請確認 GAS 網址與部署版本是否正確。</div>
+        `;
+      }
+    }
+
+    loadData();
+  </script>
+</body>
+</html>
