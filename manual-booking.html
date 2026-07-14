@@ -390,6 +390,14 @@
               <option value="轉帳+收現">轉帳+收現</option>
             </select>
           </div>
+          <div id="manualCashWrap" class="full hidden">
+            <label>現場收現金額</label>
+            <div class="mini-grid two">
+              <input id="manualCashCollected" inputmode="numeric" placeholder="去程現收，例如 500">
+              <input id="returnManualCashCollected" inputmode="numeric" placeholder="回程現收，例如 500">
+            </div>
+            <div class="hint">選擇「轉帳+收現」或「簽單+收現」時填寫；此金額會直接寫入預約單，司機端會顯示現場需收多少。</div>
+          </div>
           <div class="full">
             <label>人數</label>
             <div class="mini-grid">
@@ -467,7 +475,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.41";
+    const APP_VERSION = "manual-booking-v1.0.43";
     const SOURCE_LABELS = {
       AS: "AS 安興",
       AZ: "AZ 安興竹北",
@@ -477,7 +485,7 @@
       "遠貿": "遠貿 UM",
       "大台灣": "大台灣 TW"
     };
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbzMLYBvdbo4mkkEUVFcjST44oh7VUXhx7gZjWejm2R8XX549ITaReot0pRAN3mbwA8n/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycby9KWdatRfDZY5g2DkieUkAhyEJDDCnKcMb_l8o2_J4JCaOtKYfEEkvzk-1sW-oZWIF/exec";
     let templates = [];
     let manualSources = [];
 
@@ -491,17 +499,19 @@
       $("source").addEventListener("change", handleSourceChange);
       $("hasReturn").addEventListener("change", handleReturnToggle);
       $("serviceType").addEventListener("change", syncReturnType);
+      $("paymentMethod").addEventListener("change", toggleManualCashFields);
       $("templateSelect").addEventListener("change", applyTemplate);
       $("templateSearch").addEventListener("input", renderTemplateOptions);
       $("templateSourceFilter").addEventListener("change", renderTemplateOptions);
       ["flightNumber", "returnFlightNumber"].forEach(id => $(id).addEventListener("input", forceUppercase));
       $("phone").addEventListener("input", formatPhoneInput);
-      ["source", "customSource", "serviceType", "rideDate", "rideHour", "rideMinute", "fare", "manualDiscountAmount", "manualDiscountTarget", "hasReturn", "returnHour", "returnMinute", "returnFare"].forEach(id => {
+      ["source", "customSource", "serviceType", "rideDate", "rideHour", "rideMinute", "fare", "manualCashCollected", "returnManualCashCollected", "manualDiscountAmount", "manualDiscountTarget", "hasReturn", "returnHour", "returnMinute", "returnFare"].forEach(id => {
         const el = $(id);
         if (el) el.addEventListener("input", updateSummary);
         if (el) el.addEventListener("change", updateSummary);
       });
       loadTemplates();
+      toggleManualCashFields();
       updateSummary();
     });
 
@@ -930,7 +940,28 @@
       $("returnPanel").classList.toggle("hidden", !enabled);
       $("returnDate").required = enabled;
       syncReturnType();
+      toggleManualCashFields();
       updateSummary();
+    }
+
+    function needsManualCash(paymentMethod) {
+      const text = String(paymentMethod || "");
+      return text.includes("收現") && !text.includes("現金");
+    }
+
+    function toggleManualCashFields() {
+      const enabled = needsManualCash($("paymentMethod").value);
+      const hasReturn = $("hasReturn").checked;
+      $("manualCashWrap").classList.toggle("hidden", !enabled);
+      $("manualCashCollected").required = enabled;
+      $("returnManualCashCollected").required = enabled && hasReturn;
+      $("returnManualCashCollected").classList.toggle("hidden", !hasReturn);
+      if (!enabled) {
+        $("manualCashCollected").value = "";
+        $("returnManualCashCollected").value = "";
+      } else if (!hasReturn) {
+        $("returnManualCashCollected").value = "";
+      }
     }
 
     function syncReturnType() {
@@ -964,6 +995,8 @@
         returnTime: buildTime("return"),
         returnFlightNumber: $("returnFlightNumber").value.trim().toUpperCase(),
         returnFare: $("returnFare").value,
+        manualCashCollected: $("manualCashCollected").value,
+        returnManualCashCollected: $("returnManualCashCollected").value,
         customerName: $("customerName").value.trim(),
         customerTitle: $("customerTitle").value,
         phone: formatPhoneNumber($("phone").value),
@@ -1079,6 +1112,12 @@
       if (!money(p.fare)) errors.push("車資金額");
       if (!p.paxCount) errors.push("人數");
       if (!p.luggageCount) errors.push("行李");
+      if (needsManualCash(p.paymentMethod)) {
+        if (!money(p.manualCashCollected)) errors.push("去程現場收現金額");
+        if (p.hasReturn && !money(p.returnManualCashCollected)) errors.push("回程現場收現金額");
+        if (money(p.manualCashCollected) > getManualTripFare(p, "outbound")) errors.push("去程現收不可大於去程車資");
+        if (p.hasReturn && money(p.returnManualCashCollected) > getManualTripFare(p, "return")) errors.push("回程現收不可大於回程車資");
+      }
       if (money(p.manualDiscountAmount) > 0 && p.manualDiscountTarget === "return" && !p.hasReturn) errors.push("折讓套用回程時需勾選同時預約回程");
       if (p.hasReturn) {
         if (!p.returnDate) errors.push("回程日期");
@@ -1416,7 +1455,18 @@
     }
 
     function formatCustomerFareWithManualCash(paymentMethod, fare, manualCashCollected) {
+      const total = money(fare);
       const cash = money(manualCashCollected);
+      const payment = String(paymentMethod || "");
+      const hasNonCashPart = payment.includes("轉帳") || payment.includes("簽單") || payment.includes("月結") || payment.includes("不簽不收");
+      if (cash > 0 && hasNonCashPart) {
+        const nonCash = Math.max(total - cash, 0);
+        const label = payment.includes("轉帳") ? "轉帳" : "月結簽單";
+        const parts = [];
+        if (nonCash > 0) parts.push(`$${nonCash.toLocaleString()} 元 (${label})`);
+        parts.push(`$${cash.toLocaleString()} 元 (車上付現)`);
+        return parts.join(" + ");
+      }
       if (cash > 0) return `$${cash.toLocaleString()} 元 (車上付現)`;
       return formatCustomerFare(paymentMethod, fare);
     }
