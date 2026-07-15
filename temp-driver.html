@@ -80,7 +80,7 @@
         </div>
     </div>
     <script>
-        const APP_VERSION = "v1.0.33";
+        const APP_VERSION = "v1.0.34";
         const GAS_URL = "https://script.google.com/macros/s/AKfycby9KWdatRfDZY5g2DkieUkAhyEJDDCnKcMb_l8o2_J4JCaOtKYfEEkvzk-1sW-oZWIF/exec";
         const token = new URLSearchParams(location.search).get("token") || "";
         let task = null;
@@ -150,6 +150,7 @@
                 ["預約車型", task.car],
                 ["兒童座椅", task.seats],
                 ["舉牌內容", task.signboard],
+                ["司機提醒", task.driverAlert],
                 ["客戶備註", task.remarks],
                 ["付款方式", payment]
             ].filter(item => clean(item[1]));
