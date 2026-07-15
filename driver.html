@@ -183,7 +183,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.14.55";
+        const APP_VERSION = "v1.14.56";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -657,7 +657,7 @@
         // Helper 函式：過濾掉空值或 "無" 的字串
         const cleanVal = (v) => (!v || v === '無' || v === '-' || v === 'undefined') ? '' : String(v).trim();
         const displayDriverName = (v) => cleanVal(v).replace(/（臨時）$/g, '').trim();
-        const displayDriverOrderId = (v) => cleanVal(v).replace(/-去程$/g, '-01').replace(/-回程$/g, '-02');
+        const displayDriverOrderId = (v) => cleanVal(v).replace(/-去程$/g, '-A').replace(/-回程$/g, '-B').replace(/-01$/g, '-A').replace(/-02$/g, '-B');
         const escapeHtml = (v) => String(v || '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
         const displayNote = (v) => escapeHtml(cleanVal(v)).replace(/\n/g, '<br>');
         function maskCompletedAddress(value) {
