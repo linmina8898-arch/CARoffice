@@ -183,7 +183,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.14.56";
+        const APP_VERSION = "v1.14.57";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -816,7 +816,7 @@
                 }
                 if (paymentInfo.hasSeparateCash) tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#f07cad] text-white">現場收現 $${paymentInfo.cashCollected.toLocaleString()}</span>`);
                 if (hasSign) tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded border border-[#f07cad] text-[#f07cad]">舉牌</span>`);
-                if (cleanVal(t.remarks) || cleanVal(t.driverNote)) tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-500 text-white">有備註</span>`);
+                if (cleanVal(t.remarks) || cleanVal(t.driverNote) || cleanVal(t.driverAlert)) tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-500 text-white">有備註</span>`);
                 const payoutAmount = parseMoney(t.driverPayout);
                 tags.push(payoutAmount > 0
                     ? `<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#f5f1f7] text-[#553f62] border border-[#553f62]/20">司機實拿車資 $${payoutAmount.toLocaleString()}</span>`
@@ -918,6 +918,8 @@
 
             let cNote = cleanVal(t.remarks) ? cleanVal(t.remarks).replace(/\n/g, '<br>') : '';
             let dNote = cleanVal(t.driverNote) ? cleanVal(t.driverNote).replace(/\n/g, '<br>') : '';
+            let driverAlert = cleanVal(t.driverAlert) ? cleanVal(t.driverAlert).replace(/\n/g, '<br>') : '';
+            const driverAlertHtml = driverAlert ? `<div class="driver-field bg-[#fff5f8] -mx-3 px-3 border-y border-[#f07cad]/20"><span class="driver-field-label text-[#b63c6b]">司機提醒</span><span class="driver-field-value text-[#b63c6b]" style="font-weight:700;">${driverAlert}</span></div>` : '';
             let companyHtml = '';
             
             let luggageText = formatLuggageWithSport(t.luggage, t.sportLuggage);
@@ -956,6 +958,7 @@
                         ${tripVehicleHtml}
                         <div class="driver-field"><span class="driver-field-label">兒童座椅</span><span class="driver-field-value">${cleanVal(t.seats)}</span></div>
                         <div class="driver-field"><span class="driver-field-label">舉牌內容</span><span class="driver-field-value">${signContent}</span></div>
+                        ${driverAlertHtml}
                         <div class="driver-field"><span class="driver-field-label">客戶備註</span><span class="driver-field-value text-[#553f62]">${cNote}</span></div>
                         <div class="driver-field !border-b-0"><span class="driver-field-label">車商備註</span><span class="driver-field-value text-yellow-800">${dNote}</span></div>
                         ${paymentGuideHtml}
