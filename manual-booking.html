@@ -475,7 +475,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.44";
+    const APP_VERSION = "manual-booking-v1.0.45";
     const SOURCE_LABELS = {
       AS: "AS 安興",
       AZ: "AZ 安興竹北",
@@ -590,7 +590,7 @@
           return an.localeCompare(bn, "zh-Hant");
         });
       $("templateSelect").innerHTML = '<option value="">手動填寫，或選擇固定客戶</option>' + matched.map(({ tpl, idx }) => {
-        const label = [formatSourceLabel(tpl.source), tpl.code, tpl.name, tpl.phone].filter(Boolean).join(" / ");
+        const label = [formatTemplateSourceLabel(tpl.source), tpl.name, tpl.phone, tpl.address].filter(Boolean).join(" / ");
         return `<option value="${idx}">${escapeHtml(label)}</option>`;
       }).join("");
       $("templateHint").textContent = keyword || sourceFilter
@@ -1030,6 +1030,22 @@
       const found = manualSources.find(item => String(item.code || "").trim() === value);
       if (found) return found.displayName || [found.code, found.label].filter(Boolean).join(" ");
       return SOURCE_LABELS[value] || value;
+    }
+
+    function formatTemplateSourceLabel(source) {
+      const value = String(source || "").trim();
+      const found = manualSources.find(item => String(item.code || "").trim() === value);
+      if (found && found.prefix) return String(found.prefix).trim();
+      const fixed = {
+        AS: "AS",
+        AZ: "AZ",
+        "123": "123",
+        W: "W",
+        ANNA: "NA",
+        "遠貿": "UM",
+        "大台灣": "TW"
+      };
+      return fixed[value] || value;
     }
 
     function getCustomerServicePhoneBySource(source) {
