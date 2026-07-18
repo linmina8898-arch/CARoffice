@@ -590,7 +590,7 @@
           return an.localeCompare(bn, "zh-Hant");
         });
       $("templateSelect").innerHTML = '<option value="">手動填寫，或選擇固定客戶</option>' + matched.map(({ tpl, idx }) => {
-        const label = [formatTemplateSourceLabel(tpl.source), tpl.name, tpl.phone, tpl.address].filter(Boolean).join(" / ");
+        const label = [formatTemplateSourceLabel(tpl.source), tpl.name, tpl.phone, tpl.address].filter(Boolean).join("︱");
         return `<option value="${idx}">${escapeHtml(label)}</option>`;
       }).join("");
       $("templateHint").textContent = keyword || sourceFilter
