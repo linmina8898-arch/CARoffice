@@ -226,6 +226,30 @@
             <input id="customSource" name="customSource" placeholder="例如：某公司、某店家">
           </div>
           <div class="full">
+            <div class="hint-card">
+              <div class="section-title !text-[14px]">客人折扣碼</div>
+              <p class="text-sm muted mb-2">輸入客人提供的折扣碼，系統會用客人電話核對並帶入金額。</p>
+              <div class="grid-form">
+                <div>
+                  <label for="customerDiscountCode">折扣碼</label>
+                  <input id="customerDiscountCode" name="customerDiscountCode" placeholder="例如：生日優惠、老客戶券">
+                </div>
+                <div>
+                  <label for="customerDiscountTarget">套用車趟</label>
+                  <select id="customerDiscountTarget" name="customerDiscountTarget">
+                    <option value="outbound">去程</option>
+                    <option value="return">回程</option>
+                  </select>
+                </div>
+              </div>
+              <div class="flex flex-wrap gap-2 mt-2">
+                <button type="button" class="secondary-btn" id="checkCustomerDiscountBtn">查詢套用折扣碼</button>
+                <button type="button" class="secondary-btn" id="clearCustomerDiscountBtn">清除折扣碼</button>
+              </div>
+              <div id="customerDiscountStatus" class="muted text-sm mt-2"></div>
+            </div>
+          </div>
+          <div class="full">
             <label for="templateSelect">固定客戶範本</label>
             <input id="templateSearch" type="search" placeholder="搜尋姓名、電話、來源或客戶代碼，例如：陳" class="mb-2">
             <select id="templateSourceFilter" class="mb-2" aria-label="固定客戶範本來源篩選">
@@ -475,7 +499,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.45";
+    const APP_VERSION = "manual-booking-v1.0.47";
     const SOURCE_LABELS = {
       AS: "AS 安興",
       AZ: "AZ 安興竹北",
@@ -488,6 +512,7 @@
     const GAS_URL = "https://script.google.com/macros/s/AKfycby9KWdatRfDZY5g2DkieUkAhyEJDDCnKcMb_l8o2_J4JCaOtKYfEEkvzk-1sW-oZWIF/exec";
     let templates = [];
     let manualSources = [];
+    let validatedCustomerDiscount = null;
 
     const $ = id => document.getElementById(id);
     const money = v => Number(String(v || "").replace(/[^\d.-]/g, "")) || 0;
@@ -505,6 +530,16 @@
       $("templateSourceFilter").addEventListener("change", renderTemplateOptions);
       ["flightNumber", "returnFlightNumber"].forEach(id => $(id).addEventListener("input", forceUppercase));
       $("phone").addEventListener("input", formatPhoneInput);
+      $("checkCustomerDiscountBtn").addEventListener("click", validateCustomerDiscountCode);
+      $("clearCustomerDiscountBtn").addEventListener("click", clearCustomerDiscountCode);
+      $("customerDiscountCode").addEventListener("input", () => {
+        clearValidatedCustomerDiscountOnly();
+        updateSummary();
+      });
+      $("customerDiscountTarget").addEventListener("change", () => {
+        clearValidatedCustomerDiscountOnly();
+        updateSummary();
+      });
       ["source", "customSource", "serviceType", "rideDate", "rideHour", "rideMinute", "fare", "manualCashCollected", "returnManualCashCollected", "manualDiscountAmount", "manualDiscountTarget", "hasReturn", "returnHour", "returnMinute", "returnFare"].forEach(id => {
         const el = $(id);
         if (el) el.addEventListener("input", updateSummary);
@@ -548,6 +583,10 @@
       const known = knownSources();
       setValue("source", known.includes(t.source) ? t.source : (t.source ? "其他" : $("source").value));
       setValue("customSource", known.includes(t.source) ? "" : t.source);
+      validatedCustomerDiscount = null;
+      setValue("customerDiscountCode", "");
+      setValue("customerDiscountTarget", "outbound");
+      updateCustomerDiscountStatus("");
       handleSourceChange();
       setValue("serviceType", normalizeServiceType(t.serviceType) || "送機");
       setValue("airport", t.airport || "桃園機場");
@@ -975,6 +1014,11 @@
     }
 
     function collectPayload() {
+      const customerDiscountCode = $("customerDiscountCode").value.trim();
+      const couponPhone = formatPhoneNumber($("phone").value).replace(/\D/g, "");
+      const couponValid = validatedCustomerDiscount
+        && String(validatedCustomerDiscount.code || "").toUpperCase() === customerDiscountCode.toUpperCase()
+        && String(validatedCustomerDiscount.phone || "") === couponPhone;
       return {
         source: currentSource(),
         templateCode: selectedTemplateCode(),
@@ -989,6 +1033,10 @@
         manualDiscountAmount: $("manualDiscountAmount").value,
         manualDiscountLabel: $("manualDiscountLabel").value.trim(),
         manualDiscountTarget: $("manualDiscountTarget").value,
+        customerDiscountCode,
+        customerDiscountTarget: $("customerDiscountTarget").value,
+        customerDiscountAmount: couponValid ? validatedCustomerDiscount.amount : "",
+        customerDiscountLabel: couponValid ? validatedCustomerDiscount.label : "",
         hasReturn: $("hasReturn").checked,
         returnServiceType: $("returnServiceType").value,
         returnDate: $("returnDate").value,
@@ -1081,9 +1129,91 @@
       return leg === "outbound" ? amount : 0;
     }
 
+    function getCustomerCouponDiscountForLeg(p, leg) {
+      const amount = money(p.customerDiscountAmount);
+      if (!amount) return 0;
+      const target = p.customerDiscountTarget || "outbound";
+      if (target === "return") return leg === "return" ? amount : 0;
+      return leg === "outbound" ? amount : 0;
+    }
+
     function getManualTripFare(p, leg) {
       const rawFare = leg === "return" ? money(p.returnFare || p.fare) : money(p.fare);
-      return Math.max(0, rawFare - getManualDiscountForLeg(p, leg));
+      return Math.max(0, rawFare - getManualDiscountForLeg(p, leg) - getCustomerCouponDiscountForLeg(p, leg));
+    }
+
+    function updateCustomerDiscountStatus(message, type = "") {
+      const el = $("customerDiscountStatus");
+      if (!el) return;
+      el.textContent = message || "";
+      el.style.color = type === "error" ? "#b91c1c" : type === "success" ? "#553f62" : "#7A6A82";
+    }
+
+    function clearValidatedCustomerDiscountOnly() {
+      validatedCustomerDiscount = null;
+      updateCustomerDiscountStatus("");
+    }
+
+    function clearCustomerDiscountCode() {
+      const codeEl = $("customerDiscountCode");
+      if (codeEl) codeEl.value = "";
+      const targetEl = $("customerDiscountTarget");
+      if (targetEl) targetEl.value = "outbound";
+      clearValidatedCustomerDiscountOnly();
+      updateSummary();
+    }
+
+    async function validateCustomerDiscountCode() {
+      const code = $("customerDiscountCode").value.trim();
+      const phone = formatPhoneNumber($("phone").value);
+      const phoneDigits = phone.replace(/\D/g, "");
+      if (!phoneDigits) {
+        Swal.fire("請先輸入電話", "折扣碼需要對應客人的聯絡電話。", "warning");
+        return;
+      }
+      if (!code) {
+        Swal.fire("請輸入折扣碼", "", "warning");
+        return;
+      }
+      const payload = collectPayload();
+      updateCustomerDiscountStatus("查詢中...");
+      try {
+        const res = await fetch(GAS_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "validateManualCustomerDiscountCode",
+            data: {
+              phone,
+              discountCode: code,
+              source: payload.source,
+              carType: payload.carType,
+              hasReturn: payload.hasReturn,
+              target: $("customerDiscountTarget").value
+            }
+          }),
+          headers: { "Content-Type": "text/plain;charset=utf-8" }
+        }).then(r => r.json());
+        if (!res.success) {
+          validatedCustomerDiscount = null;
+          updateCustomerDiscountStatus(res.error || "折扣碼不可用", "error");
+          Swal.fire("折扣碼不可用", res.error || "請確認電話與折扣碼是否正確。", "warning");
+          updateSummary();
+          return;
+        }
+        validatedCustomerDiscount = {
+          code: res.code || code,
+          amount: money(res.amount),
+          label: res.label || res.name || "",
+          phone: phoneDigits
+        };
+        updateCustomerDiscountStatus(`已套用 ${validatedCustomerDiscount.code} -$${validatedCustomerDiscount.amount.toLocaleString()}`, "success");
+        updateSummary();
+      } catch (err) {
+        validatedCustomerDiscount = null;
+        updateCustomerDiscountStatus("查詢失敗", "error");
+        Swal.fire("查詢失敗", err.message || "請稍後再試。", "error");
+        updateSummary();
+      }
     }
 
     function buildTime(prefix) {
@@ -1135,6 +1265,8 @@
         if (p.hasReturn && money(p.returnManualCashCollected) > getManualTripFare(p, "return")) errors.push("回程現收不可大於回程車資");
       }
       if (money(p.manualDiscountAmount) > 0 && p.manualDiscountTarget === "return" && !p.hasReturn) errors.push("折讓套用回程時需勾選同時預約回程");
+      if (p.customerDiscountCode && !money(p.customerDiscountAmount)) errors.push("客人折扣碼需先查詢套用");
+      if (money(p.customerDiscountAmount) > 0 && p.customerDiscountTarget === "return" && !p.hasReturn) errors.push("折扣碼套用回程時需勾選同時預約回程");
       if (p.hasReturn) {
         if (!p.returnDate) errors.push("回程日期");
         if (!p.returnTime) errors.push("回程時間");
