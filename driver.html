@@ -183,7 +183,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.14.58";
+        const APP_VERSION = "v1.14.59";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -206,6 +206,27 @@
         let historyLoadedMonth = "";
         const DRIVER_AUTH_CACHE_KEY = "asDriverAuthCacheV1";
         const DRIVER_AUTH_CACHE_TTL_MS = 12 * 60 * 60 * 1000;
+
+        function isPlaceholderCustomerPhone(value) {
+            return String(value || '').replace(/\D/g, '') === '0900000000';
+        }
+
+        function hasUsableCustomerPhone(value) {
+            const digits = String(value || '').replace(/\D/g, '');
+            return !!digits && digits !== '0900000000';
+        }
+
+        function showNoPhoneNotice() {
+            Swal.fire({
+                title: '無電話',
+                text: '請與客服確認聯絡方式或是否舉牌',
+                icon: 'info',
+                confirmButtonText: '知道了',
+                confirmButtonColor: '#553f62',
+                background: '#fff',
+                color: '#3f304a'
+            });
+        }
         
         // 簽名板邏輯
         const canvas = document.getElementById('signaturePad');
@@ -908,7 +929,13 @@
 
             let signContent = cleanVal(t.signboard) ? t.signboard : (t.remarks && t.remarks.includes('舉牌') ? '詳見客戶備註' : '');
             let hasSign = signContent !== '';
-            let callBtn = hasSign ? '' : `<a href="tel:${t.custPhone}" class="ml-2 bg-red-600 text-white px-2 py-0.5 rounded-full text-[11px] font-bold shadow-sm inline-block tracking-wide">致電客戶</a>`;
+            const custPhoneDigits = String(t.custPhone || '').replace(/\D/g, '');
+            let callBtn = '';
+            if (!hasSign) {
+                callBtn = hasUsableCustomerPhone(t.custPhone)
+                    ? `<a href="tel:${custPhoneDigits}" class="ml-2 bg-red-600 text-white px-2 py-0.5 rounded-full text-[11px] font-bold shadow-sm inline-block tracking-wide">致電客戶</a>`
+                    : `<button type="button" onclick="showNoPhoneNotice()" class="ml-2 bg-[#fff5f8] text-[#b64a70] border border-[#efcad8] px-2 py-0.5 rounded-full text-[11px] font-bold shadow-sm inline-block tracking-wide">無電話</button>`;
+            }
 
             const paymentInfo = getDriverPaymentInfo(t);
             const isCashPayment = paymentInfo.isCash;
