@@ -183,7 +183,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.14.57";
+        const APP_VERSION = "v1.14.58";
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -192,6 +192,7 @@
 
         let driverData = null;
         let tasks = [];
+        let driverTaskLoadMode = 'lite';
         let historyData = [];
         let reconciliationData = null;
         let currentSigOrderId = null;
@@ -521,7 +522,7 @@
             updateDriverProfileUi();
             
             restoreCachedTasks();
-            setTimeout(() => loadTasks({ silentError: !!options.fromCache }), 80);
+            setTimeout(() => loadTasks({ mode: 'lite', silentError: !!options.fromCache }), 80);
         }
 
         function driverTaskCacheKey() {
@@ -536,6 +537,7 @@
                 if (!cached || !Array.isArray(cached.tasks)) return;
                 if (Date.now() - Number(cached.savedAt || 0) > 10 * 60 * 1000) return;
                 tasks = cached.tasks;
+                driverTaskLoadMode = cached.loadMode === 'full' ? 'full' : 'lite';
                 if (cached.monthCount !== undefined) {
                     document.getElementById('profCount').innerText = cached.monthCount;
                 }
@@ -545,11 +547,11 @@
             }
         }
 
-        function saveCachedTasks(monthCount) {
+        function saveCachedTasks(monthCount, loadMode) {
             try {
                 const key = driverTaskCacheKey();
                 if (!key) return;
-                localStorage.setItem(key, JSON.stringify({ tasks, monthCount, savedAt: Date.now() }));
+                localStorage.setItem(key, JSON.stringify({ tasks, monthCount, loadMode: loadMode || driverTaskLoadMode, savedAt: Date.now() }));
             } catch (err) {
                 console.warn('saveCachedTasks failed', err);
             }
@@ -584,7 +586,7 @@
             if(tab === 'history') loadHistory();
         }
 
-        function setTaskTab(tab) {
+        async function setTaskTab(tab) {
             currentTaskTab = tab;
             document.querySelectorAll('.task-tab-btn').forEach(b => {
                 b.classList.remove('bg-white', 'text-[#553f62]', 'shadow-sm');
@@ -593,6 +595,14 @@
             const activeBtn = document.getElementById(`tab-${tab}`);
             activeBtn.classList.remove('text-gray-500');
             activeBtn.classList.add('bg-white', 'text-[#553f62]', 'shadow-sm');
+            if (tab === 'all' && driverTaskLoadMode !== 'full') {
+                const taskContainer = document.getElementById('task-list');
+                if (taskContainer) {
+                    taskContainer.innerHTML = `<div class="text-center text-gray-400 mt-16 text-sm">正在載入全部任務...</div>`;
+                }
+                await loadTasks({ mode: 'full' });
+                return;
+            }
             renderTasks();
         }
 
@@ -605,20 +615,22 @@
         async function loadTasks(options = {}) {
             if (tasksLoading) return;
             tasksLoading = true;
+            const mode = options.mode === 'full' ? 'full' : 'lite';
             const taskContainer = document.getElementById('task-list');
             if (!tasks.length && taskContainer) {
                 taskContainer.innerHTML = `<div class="text-center text-gray-400 mt-16 text-sm">任務載入中...</div>`;
             }
             try {
-                const res = await apiCall('driverGetTasks', { lineId: driverData.lineId }, 18000);
+                const res = await apiCall('driverGetTasks', { lineId: driverData.lineId, mode }, 18000);
                 if (!res || res.success === false) {
                     throw new Error((res && res.error) || '後端沒有回傳任務資料');
                 }
+                driverTaskLoadMode = mode;
                 tasks = Array.isArray(res.tasks) ? res.tasks : [];
                 if(res.monthCount !== undefined) {
                     document.getElementById('profCount').innerText = res.monthCount;
                 }
-                saveCachedTasks(res.monthCount);
+                saveCachedTasks(res.monthCount, mode);
                 renderTasks();
                 // 如果明細頁開著，重新渲染明細內容以更新按鈕狀態
                 if(currentDetailOrderId) {
