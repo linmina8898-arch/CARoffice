@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>AS 詢價預約 UI 測試 v3</title>
+  <style>
+    :root{--ink:#1a0b3d;--purple:#574266;--soft:#f7f3f8;--line:#e4dce7;--pink:#d85d93;--muted:#746d78;--white:#fff}
+    *{box-sizing:border-box} body{margin:0;background:#f6f4f7;color:var(--ink);font-family:"Microsoft JhengHei",Arial,sans-serif;letter-spacing:0;font-size:15px}
+    .app{max-width:480px;min-height:100vh;margin:auto;padding:24px 18px 112px;background:#fcfbfc}.brand{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}.brand strong{font-size:24px}.test{font-size:12px;color:var(--purple);border:1px solid #d9cddd;border-radius:5px;padding:5px 8px;background:#fff}
+    .seg{display:grid;grid-template-columns:1fr 1fr;background:#f0eaf2;border:1px solid var(--line);padding:4px;border-radius:8px;gap:4px}.seg button{border:0;background:transparent;color:#6d6470;padding:14px 8px;font-size:18px;font-weight:600;border-radius:6px}.seg button.active{background:#fff;color:var(--ink);box-shadow:0 1px 5px #2b19331c}
+    .panel{border:1px solid var(--line);border-radius:8px;background:#fff;margin-top:16px;padding:18px}.panel-title{font-size:18px;font-weight:700;margin:0 0 18px}.route{position:relative;padding-left:32px}.route:before{content:"";position:absolute;left:10px;top:24px;bottom:25px;border-left:2px dashed #d9ccd8}.dot{position:absolute;left:3px;width:15px;height:15px;border:3px solid var(--purple);border-radius:50%;background:#fff}.dot.end{bottom:7px;border-color:var(--pink)}.dot.start{top:7px}.field{padding:0 0 18px}.field:last-child{padding:0}.label{font-size:13px;color:var(--muted);margin-bottom:7px}.input{width:100%;border:0;border-bottom:1px solid #e7e0e8;padding:5px 0 9px;background:transparent;font:inherit;color:var(--ink);outline:0}.input:focus{border-color:var(--purple)}
+    .nav-row{display:flex;align-items:center;gap:14px;padding:17px 0;border-bottom:1px solid #eee8ee;cursor:pointer}.nav-row:last-child{border:0;padding-bottom:0}.nav-icon{width:34px;height:34px;border-radius:6px;display:grid;place-items:center;color:var(--purple);background:#f4eff5;font-size:20px}.nav-copy{flex:1}.nav-copy small{display:block;color:var(--muted);font-size:13px;margin-bottom:3px}.nav-copy strong{font-size:18px}.chevron{font-size:25px;color:#8b818e}.hint{font-size:12px;color:var(--muted);margin:12px 0 0}
+    .fixed{position:fixed;z-index:5;left:50%;bottom:0;transform:translateX(-50%);width:min(480px,100%);background:#fff;border:1px solid #dacddb;border-bottom:0;border-radius:8px 8px 0 0;padding:13px 18px calc(13px + env(safe-area-inset-bottom));box-shadow:0 -5px 18px #25142b13;display:flex;align-items:center;gap:12px}.fixed .amount{flex:1}.fixed small{display:block;color:#746d78}.fixed strong{font-size:28px}.next{border:0;background:var(--purple);color:#fff;padding:14px 18px;border-radius:6px;font-size:17px;font-weight:700;white-space:nowrap}
+    .screen{display:none}.screen.show{display:block}.back{background:#f4eef5;border:0;border-radius:50%;width:42px;height:42px;font-size:25px;color:var(--ink)}.trip-summary{margin:20px 0;background:#fff;border:1px solid var(--line);border-radius:8px;padding:16px;line-height:1.65}.vehicle-note{font-size:14px;color:var(--muted);margin:12px 0}.car{width:100%;display:grid;grid-template-columns:45px 1fr auto;gap:12px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:16px;margin:12px 0;background:#fff;color:var(--ink);text-align:left}.car .icon{font-size:31px}.car strong{font-size:19px}.car small{display:block;color:var(--muted);margin-top:4px}.car .price{font-size:20px;font-weight:700}.car.selected{border:2px solid var(--purple);background:#fbf8fc}.car.locked{opacity:.42;background:#f5f3f5}.car.locked .price:after{content:" 不符";display:block;font-size:11px;color:var(--pink);font-weight:400}
+    .overlay{position:fixed;z-index:10;inset:0;background:#1d13224d;display:none;align-items:flex-end}.overlay.open{display:flex}.sheet{background:#fff;width:100%;max-width:480px;margin:auto;border-radius:12px 12px 0 0;padding:14px 20px calc(22px + env(safe-area-inset-bottom))}.grip{width:42px;height:4px;background:#d8d0da;border-radius:9px;margin:0 auto 18px}.sheet h2{font-size:23px;margin:0 0 17px}.counter-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.counter{text-align:center;border:1px solid var(--line);border-radius:7px;padding:12px 7px}.counter label{font-size:13px;color:var(--muted);display:block;height:35px}.steps{display:flex;justify-content:center;align-items:center;gap:13px}.steps button{border:1px solid #d9cddd;background:#fff;color:var(--purple);width:29px;height:29px;border-radius:50%;font-size:20px}.steps span{font-size:23px;min-width:19px}.sheet .done{margin-top:18px;width:100%;border:0;border-radius:6px;background:var(--purple);color:#fff;padding:14px;font-weight:700;font-size:17px}.details{display:none;margin:12px 0 0;color:#4f4652;font-size:14px;line-height:1.8}.details.show{display:block}.detail-btn{border:0;background:transparent;color:var(--purple);font:inherit;text-decoration:underline;padding:0}
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section id="tripScreen" class="screen show">
+      <header class="brand"><strong>安興租車｜詢價預約</strong><span class="test">UI 測試 v3</span></header>
+      <div class="seg"><button class="active" data-type="送機">送機</button><button data-type="接機">接機</button></div>
+      <section class="panel">
+        <h1 class="panel-title">行程路線</h1>
+        <div class="route"><i class="dot start"></i><i class="dot end"></i>
+          <div class="field"><div class="label">上車地點</div><input id="origin" class="input" placeholder="輸入上車地址" value="新竹市東區"></div>
+          <div class="field"><div class="label">接送地點・機場</div><input id="destination" class="input" value="桃園國際機場"></div>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="nav-row" id="timeOpen"><div class="nav-icon">◷</div><div class="nav-copy"><small>乘車時間</small><strong id="timeSummary">選擇乘車時間</strong></div><span class="chevron">›</span></div>
+        <div class="nav-row" id="passengerOpen"><div class="nav-icon">♧</div><div class="nav-copy"><small>乘客與行李</small><strong id="passengerSummary">請填寫人數與行李</strong></div><span class="chevron">›</span></div>
+      </section>
+      <p class="hint">此頁僅測試操作與版面，不送出資料、不連動報價或 Google 表單。</p>
+    </section>
+
+    <section id="carScreen" class="screen">
+      <header class="brand"><button class="back" id="backToTrip">‹</button><strong>選擇車型</strong><span class="test">測試</span></header>
+      <div class="trip-summary"><strong id="routeSummary">新竹市東區 → 桃園國際機場</strong><br><span id="vehicleRequirement">請先填寫乘客與行李</span></div>
+      <div class="vehicle-note">系統已依乘客與行李推薦最低可用車型；可往上選擇，不可往下選。</div>
+      <button class="car" data-car="0"><span class="icon">▱</span><span><strong>小車</strong><small>限 3 人，托運含登機箱共 2 件</small></span><span class="price">$<b>1,200</b></span></button>
+      <button class="car" data-car="1"><span class="icon">▰</span><span><strong>大車</strong><small>限 7 人，行李最多 7 件</small></span><span class="price">$<b>1,600</b></span></button>
+      <button class="car" data-car="2"><span class="icon">▰</span><span><strong>進口商務車</strong><small>舒適乘坐與大型行李安排</small></span><span class="price">$<b>2,200</b></span></button>
+      <p class="hint">正式版仍會使用您原本的人數、行李、座椅與自動升級邏輯，這裡只示範流程。</p>
+    </section>
+  </main>
+
+  <div class="fixed"><div class="amount"><small>預估費用</small><strong id="quote">$1,200</strong><div class="details" id="details">基本車資 <span id="detailBase">$1,200</span><br>此測試頁不代表正式報價。</div></div><button class="detail-btn" id="detailToggle">明細</button><button class="next" id="nextButton">選擇車型 ›</button></div>
+
+  <div class="overlay" id="timeSheet"><div class="sheet"><div class="grip"></div><h2>選擇上車時間</h2><input id="dateTime" class="input" type="datetime-local"><button class="done" data-close="timeSheet">確認時間</button></div></div>
+  <div class="overlay" id="passengerSheet"><div class="sheet"><div class="grip"></div><h2>乘客與行李</h2><div class="counter-grid">
+    <div class="counter"><label>大人</label><div class="steps"><button data-key="adult" data-step="-1">−</button><span id="adult">1</span><button data-key="adult" data-step="1">+</button></div></div>
+    <div class="counter"><label>兒童<br>4-12 歲</label><div class="steps"><button data-key="child" data-step="-1">−</button><span id="child">0</span><button data-key="child" data-step="1">+</button></div></div>
+    <div class="counter"><label>幼童<br>4 歲以下</label><div class="steps"><button data-key="toddler" data-step="-1">−</button><span id="toddler">0</span><button data-key="toddler" data-step="1">+</button></div></div>
+    <div class="counter"><label>托運箱<br>21-29 吋</label><div class="steps"><button data-key="largeBag" data-step="-1">−</button><span id="largeBag">0</span><button data-key="largeBag" data-step="1">+</button></div></div>
+    <div class="counter"><label>登機箱</label><div class="steps"><button data-key="carryBag" data-step="-1">−</button><span id="carryBag">0</span><button data-key="carryBag" data-step="1">+</button></div></div>
+  </div><button class="done" data-close="passengerSheet">確認人數與行李</button></div></div>
+
+  <script>
+    const state={type:'送機',adult:1,child:0,toddler:0,largeBag:0,carryBag:0,required:0,car:0};
+    const cars=[{name:'小車',price:1200},{name:'大車',price:1600},{name:'進口商務車',price:2200}];
+    const el=id=>document.getElementById(id);
+    const requiredCar=()=>{const people=state.adult+state.child+state.toddler,bags=state.largeBag+state.carryBag;return people<=3&&bags<=2?0:people<=7&&bags<=7?1:2};
+    function update(){state.required=requiredCar();if(state.car<state.required)state.car=state.required;['adult','child','toddler','largeBag','carryBag'].forEach(k=>el(k).textContent=state[k]);const people=state.adult+state.child+state.toddler,bags=state.largeBag+state.carryBag;el('passengerSummary').textContent=`${people} 位乘客・行李 ${bags} 件`;el('routeSummary').textContent=`${el('origin').value||'上車地點'} → ${el('destination').value||'目的地'}`;el('vehicleRequirement').textContent=`推薦最低車型：${cars[state.required].name}（${people} 人・${bags} 件）`;el('quote').textContent='$'+cars[state.car].price.toLocaleString();el('detailBase').textContent='$'+cars[state.car].price.toLocaleString();document.querySelectorAll('.car').forEach(b=>{const i=+b.dataset.car;b.classList.toggle('locked',i<state.required);b.classList.toggle('selected',i===state.car);});}
+    document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{document.querySelector('.seg .active').classList.remove('active');b.classList.add('active');state.type=b.dataset.type;update();});
+    document.querySelectorAll('[data-key]').forEach(b=>b.onclick=()=>{const k=b.dataset.key;state[k]=Math.max(0,state[k]+Number(b.dataset.step));update();});
+    document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>{el(b.dataset.close).classList.remove('open');if(b.dataset.close==='timeSheet'){const v=el('dateTime').value;if(v){const d=new Date(v);el('timeSummary').textContent=`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;} }});
+    el('timeOpen').onclick=()=>el('timeSheet').classList.add('open');el('passengerOpen').onclick=()=>el('passengerSheet').classList.add('open');
+    document.querySelectorAll('.car').forEach(b=>b.onclick=()=>{const i=+b.dataset.car;if(i>=state.required){state.car=i;update();}});
+    el('nextButton').onclick=()=>{el('tripScreen').classList.remove('show');el('carScreen').classList.add('show');el('nextButton').textContent='確認車型';update();};
+    el('backToTrip').onclick=()=>{el('carScreen').classList.remove('show');el('tripScreen').classList.add('show');el('nextButton').textContent='選擇車型 ›';};
+    el('detailToggle').onclick=()=>el('details').classList.toggle('show');['origin','destination'].forEach(id=>el(id).oninput=update);update();
+  </script>
+</body>
+</html>
