@@ -1,426 +1,426 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>安興租車｜TouchGo 風格 UI 測試 v3.1</title>
+  <title>安興租車｜詢價／預約系統測試</title>
   <style>
     :root {
       --ink: #1a0b3d;
       --purple: #574266;
-      --muted: #7a6a82;
-      --line: #dfd3e5;
-      --wash: #f8f4f8;
-      --pink: #d9578d;
-      --soft-pink: #fff5fa;
-      --white: #fff;
+      --mauve: #7a6a82;
+      --pink: #d95b93;
+      --line: #e4d8e8;
+      --surface: #ffffff;
+      --wash: #faf7fb;
+      --muted: #766f7a;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
       color: var(--ink);
-      background: #f7f4f8;
+      background: #f6f2f7;
       font-family: Arial, "Microsoft JhengHei", sans-serif;
       font-size: 14px;
     }
     button, input, select { font: inherit; }
     button { cursor: pointer; }
     .app {
-      width: min(100%, 520px);
+      max-width: 560px;
       min-height: 100vh;
       margin: 0 auto;
-      padding: 20px 16px 118px;
-      background: #fff;
+      padding: 20px 16px 150px;
+      background: var(--wash);
     }
-    .topline {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      border-bottom: 1px solid #eee6f0;
-      padding-bottom: 16px;
+    .brand {
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: 0;
+      margin: 4px 0 18px;
     }
-    .brand { font-size: 19px; font-weight: 700; letter-spacing: 0; }
-    .version { color: var(--muted); font-size: 11px; font-weight: 400; }
-    .eyebrow { color: var(--muted); margin: 20px 0 8px; font-size: 12px; }
-    h1 { margin: 0; font-size: 20px; }
-    .trip-switch {
+    .mode {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      padding: 6px;
-      margin: 18px 0;
-      border-radius: 10px;
-      background: #f5f0f6;
-    }
-    .trip-switch button {
-      min-height: 46px;
-      color: var(--muted);
-      border: 1px solid transparent;
-      border-radius: 8px;
-      background: transparent;
-      font-weight: 600;
-    }
-    .trip-switch button.active {
-      color: #fff;
-      background: var(--purple);
-      box-shadow: 0 2px 6px rgba(87, 66, 102, .16);
-    }
-    .panel {
-      margin-top: 14px;
-      padding: 16px;
-      border: 1px solid #e8dfe9;
-      border-radius: 12px;
-      background: var(--white);
-    }
-    .panel h2 {
-      margin: 0 0 14px;
-      color: var(--purple);
-      font-size: 15px;
-    }
-    .field { margin-top: 12px; }
-    .field:first-child { margin-top: 0; }
-    label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 12px; }
-    input, select {
-      width: 100%;
-      min-height: 46px;
-      padding: 0 12px;
-      color: var(--ink);
+      padding: 4px;
       border: 1px solid var(--line);
       border-radius: 8px;
-      background: #fff;
+      background: #f1ebf3;
+      margin-bottom: 16px;
     }
-    .route-row {
-      position: relative;
-      padding-left: 18px;
-    }
-    .route-row::before {
-      position: absolute;
-      left: 0;
-      top: 34px;
-      width: 8px;
-      height: 8px;
-      border: 2px solid var(--pink);
-      border-radius: 50%;
-      content: "";
-    }
-    .route-row::after {
-      position: absolute;
-      top: 51px;
-      bottom: -8px;
-      left: 4px;
-      border-left: 1px dashed #d7c8dc;
-      content: "";
-    }
-    .route-row:last-child::after { display: none; }
-    .route-row:last-child::before { border-color: var(--purple); border-radius: 2px; }
-    .time-trigger {
-      display: flex;
-      width: 100%;
-      min-height: 74px;
-      padding: 13px 14px;
-      text-align: left;
-      border: 1px solid #dbcde1;
-      border-radius: 10px;
-      background: #fff;
-    }
-    .time-trigger strong { display: block; margin: 2px 0; font-size: 17px; }
-    .time-trigger span { color: var(--muted); font-size: 12px; }
-    .time-trigger .chevron { margin-left: auto; align-self: center; color: var(--purple); font-size: 22px; }
-    .flight-note { margin: 7px 0 0; color: var(--pink); font-size: 12px; line-height: 1.45; }
-    .three-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-    }
-    .two-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-    .capacity-note {
-      margin: 12px 0 0;
-      padding: 10px;
-      color: var(--muted);
-      border-radius: 8px;
-      background: var(--wash);
-      font-size: 12px;
-      line-height: 1.5;
-    }
-    .car-card {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-top: 8px;
-      padding: 13px;
-      border: 1px solid #e4d8e7;
-      border-radius: 9px;
-      background: #fff;
-    }
-    .car-card.selected { border: 2px solid var(--purple); background: #fcfaff; }
-    .car-card small { display: block; margin-top: 3px; color: var(--muted); }
-    .car-card button {
-      min-width: 58px;
-      min-height: 32px;
-      color: var(--purple);
-      border: 1px solid #cdbbd3;
-      border-radius: 7px;
-      background: #fff;
-    }
-    .car-card.selected button { color: #fff; border-color: var(--purple); background: var(--purple); }
-    .quote-bar {
-      position: fixed;
-      right: 0;
-      bottom: 0;
-      left: 0;
-      z-index: 5;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      max-width: 520px;
-      min-height: 95px;
-      margin: 0 auto;
-      padding: 14px 16px;
-      border: 1px solid #cdbbd3;
-      border-bottom: 0;
-      border-radius: 14px 14px 0 0;
-      background: #fff;
-      box-shadow: 0 -5px 18px rgba(52, 34, 65, .11);
-    }
-    .quote-bar span { display: block; color: var(--muted); font-size: 12px; }
-    .quote-bar strong { color: var(--ink); font-size: 24px; }
-    .quote-bar button, .sheet-confirm {
-      min-height: 46px;
-      padding: 0 18px;
-      color: #fff;
+    .mode button {
       border: 0;
-      border-radius: 8px;
-      background: var(--purple);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--mauve);
+      padding: 13px 8px;
+      font-size: 16px;
       font-weight: 700;
     }
-    .backdrop {
+    .mode button.active { background: var(--surface); color: var(--ink); box-shadow: 0 1px 5px #2e143415; }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      margin: 12px 0;
+      background: var(--surface);
+      box-shadow: 0 2px 10px #2e14340a;
+    }
+    .card-title { font-weight: 700; font-size: 16px; margin: 0 0 15px; }
+    .route-row {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 10px;
+      padding: 7px 0;
+      position: relative;
+    }
+    .route-row + .route-row { border-top: 1px solid #efe9f0; margin-top: 4px; padding-top: 15px; }
+    .route-dot {
+      width: 14px;
+      height: 14px;
+      border: 3px solid var(--purple);
+      border-radius: 50%;
+      margin: 5px 0 0 5px;
+    }
+    .route-dot.airport { border-color: var(--pink); border-radius: 2px; transform: rotate(45deg); }
+    .field-label { display: block; color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+    .input, .select {
+      width: 100%;
+      height: 45px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      color: var(--ink);
+      background: #fff;
+      padding: 0 12px;
+      outline: none;
+    }
+    .input:focus, .select:focus { border-color: var(--purple); box-shadow: 0 0 0 3px #57426612; }
+    .route-note { color: var(--pink); font-size: 12px; line-height: 1.5; margin: 8px 0 0 38px; }
+    .link-button {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--ink);
+      background: var(--surface);
+      padding: 16px;
+      text-align: left;
+      margin: 12px 0;
+    }
+    .link-button .mini { color: var(--muted); font-size: 12px; display: block; margin-top: 4px; font-weight: 400; }
+    .link-button strong { display: block; font-size: 16px; }
+    .chevron { color: var(--purple); font-size: 22px; line-height: 1; }
+    .trip-toggle {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 16px 2px 4px;
+      color: var(--ink);
+      font-weight: 700;
+    }
+    .trip-toggle input { width: 19px; height: 19px; accent-color: var(--purple); }
+    .return-card { display: none; }
+    .return-card.show { display: block; }
+    .hint {
+      font-size: 12px;
+      color: var(--mauve);
+      background: #faf5fa;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 10px 12px;
+      line-height: 1.55;
+      margin-top: 10px;
+    }
+    .date-value { font-size: 16px; color: var(--ink); font-weight: 700; }
+    .sheet {
       position: fixed;
       inset: 0;
       z-index: 10;
       display: none;
+      background: #1a0b3d55;
       align-items: flex-end;
-      background: rgba(26, 11, 61, .38);
     }
-    .backdrop.open { display: flex; }
-    .sheet {
-      width: 100%;
-      max-width: 520px;
-      margin: 0 auto;
-      padding: 12px 18px 24px;
-      border-radius: 22px 22px 0 0;
+    .sheet.open { display: flex; }
+    .sheet-panel {
+      width: min(560px, 100%);
+      max-height: 88vh;
+      overflow-y: auto;
+      border-radius: 16px 16px 0 0;
+      padding: 18px 18px 28px;
       background: #fff;
-      box-shadow: 0 -10px 30px rgba(26, 11, 61, .16);
     }
-    .handle { width: 42px; height: 4px; margin: 0 auto 20px; border-radius: 99px; background: #ddd3df; }
-    .sheet h2 { margin: 0 0 20px; font-size: 22px; }
-    .picker-grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 8px; }
-    .picker-grid select {
-      min-height: 58px;
-      text-align: center;
-      font-size: 16px;
+    .sheet-handle { width: 42px; height: 4px; margin: 0 auto 16px; border-radius: 9px; background: #ddd2e0; }
+    .sheet-title { margin: 0 0 18px; font-size: 22px; font-weight: 700; }
+    .time-grid, .passenger-grid, .luggage-grid, .seat-grid { display: grid; gap: 10px; }
+    .time-grid { grid-template-columns: 1fr 1fr; }
+    .passenger-grid, .seat-grid { grid-template-columns: repeat(3, 1fr); }
+    .luggage-grid { grid-template-columns: repeat(2, 1fr); }
+    .count-label { color: var(--muted); font-size: 12px; margin: 0 0 6px; }
+    .count-control { min-width: 0; }
+    .count-control .select { padding: 0 8px; text-align: center; }
+    .checkbox-line {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 13px;
+      margin: 14px 0;
+    }
+    .checkbox-line input { width: 18px; height: 18px; accent-color: var(--purple); }
+    .safety-panel { display: none; margin-top: 12px; padding: 13px; border: 1px solid var(--line); border-radius: 7px; background: #fbf8fc; }
+    .safety-panel.show { display: block; }
+    .sheet-footer { display: grid; grid-template-columns: 1fr; margin-top: 22px; }
+    .primary {
+      border: 0;
+      border-radius: 8px;
+      background: var(--purple);
+      color: #fff;
+      min-height: 49px;
+      padding: 12px 18px;
       font-weight: 700;
-      background: #faf7fb;
+      font-size: 16px;
     }
-    .sheet-confirm { width: 100%; margin-top: 22px; border-radius: 99px; font-size: 17px; }
-    @media (max-width: 360px) {
-      .app { padding-right: 12px; padding-left: 12px; }
-      .panel { padding: 13px; }
-      .three-grid { gap: 6px; }
-      input, select { padding: 0 8px; }
+    .quote-bar {
+      position: fixed;
+      left: 50%;
+      bottom: 0;
+      transform: translateX(-50%);
+      width: min(560px, 100%);
+      z-index: 8;
+      padding: 10px 16px 18px;
+      background: #fff;
+      border: 1px solid #d8c5dc;
+      border-bottom: 0;
+      border-radius: 12px 12px 0 0;
+      box-shadow: 0 -5px 18px #2e143414;
+    }
+    .quote-caption { color: var(--mauve); font-size: 12px; }
+    .quote-row { display: flex; justify-content: space-between; align-items: center; margin: 3px 0 10px; }
+    .quote-price { font-size: 25px; font-weight: 700; color: var(--ink); }
+    .quote-action { width: 100%; }
+    @media (max-width: 390px) {
+      .app { padding-left: 12px; padding-right: 12px; }
+      .card { padding: 15px; }
+      .passenger-grid, .seat-grid { gap: 7px; }
+      .input, .select { font-size: 13px; }
     }
   </style>
 </head>
 <body>
   <main class="app">
-    <div class="topline">
-      <div class="brand">安興租車｜詢價/預約系統</div>
-      <div class="version">UI 測試 v3.1｜時間選擇版</div>
-    </div>
-    <p class="eyebrow">快速估價</p>
-    <h1>先確認行程與上車時間</h1>
+    <h1 class="brand">安興租車︱詢價／預約系統</h1>
 
-    <div class="trip-switch" aria-label="服務類型">
-      <button class="active" type="button" data-trip="送機">送機</button>
-      <button type="button" data-trip="接機">接機</button>
-    </div>
+    <section class="mode" aria-label="行程類型">
+      <button class="active" type="button" data-mode="送機">送機</button>
+      <button type="button" data-mode="接機">接機</button>
+    </section>
 
-    <section class="panel">
-      <h2>行程路線</h2>
-      <div class="route-row field">
-        <label id="originLabel" for="origin">上車地點</label>
-        <input id="origin" placeholder="輸入完整地址後選擇 Google 搜尋結果">
+    <section class="card">
+      <h2 class="card-title">基本行程</h2>
+      <div class="route-row">
+        <span class="route-dot"></span>
+        <div>
+          <label class="field-label" id="addressLabel" for="address">上車地點</label>
+          <input class="input" id="address" placeholder="輸入完整地址後，請選擇 Google 搜尋結果">
+        </div>
       </div>
-      <div class="route-row field">
-        <label id="destinationLabel" for="destination">送機地點</label>
-        <input id="destination" value="桃園機場" placeholder="選擇目的地">
+      <div class="route-row">
+        <span class="route-dot airport"></span>
+        <div>
+          <label class="field-label" id="airportLabel" for="airport">送機地點・機場</label>
+          <select class="select" id="airport">
+            <option value="桃園機場">桃園機場</option>
+            <option value="松山機場">松山機場</option>
+            <option value="台中國際機場">台中國際機場</option>
+            <option value="高雄機場">高雄機場</option>
+          </select>
+        </div>
+      </div>
+      <p class="route-note">機場請從清單選擇，地址完成後請點選 Google 搜尋結果。</p>
+      <label class="checkbox-line">
+        <input id="stopover" type="checkbox">
+        <span>需加點服務（依距離計費，限加一個停靠點）</span>
+      </label>
+      <div id="stopoverFields" hidden>
+        <label class="field-label" for="stopoverAddress">加點地址</label>
+        <input class="input" id="stopoverAddress" placeholder="輸入加點完整地址">
       </div>
     </section>
 
-    <section class="panel">
-      <h2>乘車時間</h2>
-      <button id="timeTrigger" class="time-trigger" type="button">
-        <span>
-          <label>日期與時間</label>
-          <strong id="timeSummary">請選擇日期與時間</strong>
-          <span>點選後可分別選擇日期、時、分</span>
-        </span>
-        <span class="chevron">›</span>
+    <button class="link-button" type="button" data-open-sheet="time">
+      <span><span class="mini">日期與時間</span><strong class="date-value" id="dateSummary">請選擇用車日期與時間</strong></span>
+      <span class="chevron">›</span>
+    </button>
+
+    <section class="card">
+      <label class="field-label" for="flight">航班編號</label>
+      <input class="input" id="flight" maxlength="12" placeholder="例如 BR123">
+      <p class="hint" id="flightHint">送機請填出發航班；接機請填抵台航班。</p>
+    </section>
+
+    <button class="link-button" type="button" data-open-sheet="passenger">
+      <span><span class="mini">乘客與行李</span><strong id="passengerSummary">請填寫乘客與行李</strong><span class="mini" id="vehicleHint">系統會依人數與行李建議可使用車型</span></span>
+      <span class="chevron">›</span>
+    </button>
+
+    <label class="trip-toggle">
+      <input id="roundTrip" type="checkbox">
+      <span>同時預約回程接送</span>
+    </label>
+
+    <section id="returnCard" class="card return-card">
+      <h2 class="card-title">回程資訊</h2>
+      <label class="field-label" for="returnType">回程類型</label>
+      <select class="select" id="returnType"><option value="接機">接機</option><option value="送機">送機</option></select>
+      <label class="field-label" for="returnAirport" style="margin-top:13px">回程機場</label>
+      <select class="select" id="returnAirport">
+        <option value="桃園機場">桃園機場</option>
+        <option value="松山機場">松山機場</option>
+        <option value="台中國際機場">台中國際機場</option>
+        <option value="高雄機場">高雄機場</option>
+      </select>
+      <button class="link-button" type="button" data-open-sheet="returnTime">
+        <span><span class="mini">回程日期與時間</span><strong id="returnDateSummary">請選擇回程日期與時間</strong></span><span class="chevron">›</span>
       </button>
-      <div class="field">
-        <label id="flightLabel" for="flight">出發航班編號</label>
-        <input id="flight" maxlength="12" placeholder="例如 BR123" autocomplete="off">
-        <p id="flightHelp" class="flight-note">送機請填出發航班；接機請填抵台航班。</p>
-      </div>
-    </section>
-
-    <section class="panel">
-      <h2>乘客與行李</h2>
-      <div class="three-grid">
-        <div><label for="adult">大人</label><select id="adult"></select></div>
-        <div><label for="child">小孩 (4-12)</label><select id="child"></select></div>
-        <div><label for="infant">幼童 (0-4)</label><select id="infant"></select></div>
-      </div>
-      <div class="two-grid field">
-        <div><label for="checked">托運箱 (21-29吋)</label><select id="checked"></select></div>
-        <div><label for="carry">登機箱</label><select id="carry"></select></div>
-      </div>
-      <p class="capacity-note">依實際人數與行李推薦車型；若超過車型乘載，系統只會協助往上調整車型。</p>
-    </section>
-
-    <section class="panel">
-      <h2>建議車型</h2>
-      <div id="vehicleList"></div>
+      <label class="field-label" for="returnFlight">回程航班編號</label>
+      <input class="input" id="returnFlight" maxlength="12" placeholder="例如 BR123">
+      <p class="hint">地址、加點、人數與行李預設同步去程；回程不同時可再展開修改。</p>
     </section>
   </main>
 
+  <section id="timeSheet" class="sheet" aria-hidden="true">
+    <div class="sheet-panel">
+      <div class="sheet-handle"></div>
+      <h2 class="sheet-title">選擇上車時間</h2>
+      <div class="time-grid">
+        <div><label class="field-label" for="date">日期</label><input class="input" id="date" type="date"></div>
+        <div><label class="field-label" for="hour">時間</label><select class="select" id="hour"></select></div>
+      </div>
+      <div class="sheet-footer"><button class="primary" type="button" data-close-sheet="time">確認時間</button></div>
+    </div>
+  </section>
+
+  <section id="returnTimeSheet" class="sheet" aria-hidden="true">
+    <div class="sheet-panel">
+      <div class="sheet-handle"></div>
+      <h2 class="sheet-title">選擇回程時間</h2>
+      <div class="time-grid">
+        <div><label class="field-label" for="returnDate">日期</label><input class="input" id="returnDate" type="date"></div>
+        <div><label class="field-label" for="returnHour">時間</label><select class="select" id="returnHour"></select></div>
+      </div>
+      <div class="sheet-footer"><button class="primary" type="button" data-close-sheet="returnTime">確認回程時間</button></div>
+    </div>
+  </section>
+
+  <section id="passengerSheet" class="sheet" aria-hidden="true">
+    <div class="sheet-panel">
+      <div class="sheet-handle"></div>
+      <h2 class="sheet-title">乘客與行李</h2>
+      <div class="passenger-grid">
+        <div class="count-control"><p class="count-label">大人</p><select class="select" id="adult"></select></div>
+        <div class="count-control"><p class="count-label">小孩（4-12歲）</p><select class="select" id="child"></select></div>
+        <div class="count-control"><p class="count-label">幼童（4歲以下）</p><select class="select" id="toddler"></select></div>
+      </div>
+      <div id="safetyPanel" class="safety-panel">
+        <p class="count-label">小孩或幼童需確認座椅需求</p>
+        <div class="seat-grid">
+          <div class="count-control"><p class="count-label">後向座椅</p><select class="select" id="rearSeat"></select></div>
+          <div class="count-control"><p class="count-label">前向座椅</p><select class="select" id="frontSeat"></select></div>
+          <div class="count-control"><p class="count-label">增高墊</p><select class="select" id="booster"></select></div>
+        </div>
+        <p class="hint">幼童（4歲以下）需選擇對應安全座椅；小孩（4-12歲）可視需求選擇增高墊。</p>
+      </div>
+      <label class="checkbox-line"><input type="checkbox" id="noLuggage">我沒有行李</label>
+      <div id="luggageFields" class="luggage-grid">
+        <div class="count-control"><p class="count-label">登機箱</p><select class="select luggage" id="carryOn"></select></div>
+        <div class="count-control"><p class="count-label">托運箱（21-29吋）</p><select class="select luggage" id="checkedBag"></select></div>
+      </div>
+      <p class="hint" id="recommendedVehicle">系統會依人數與行李自動建議車型，只能往上升級，不會往下選擇。</p>
+      <div class="sheet-footer"><button class="primary" type="button" data-close-sheet="passenger">確認乘客與行李</button></div>
+    </div>
+  </section>
+
   <footer class="quote-bar">
-    <div><span>預估費用明細 / 總額</span><strong id="quote">$0</strong></div>
-    <button type="button">下一步</button>
+    <span class="quote-caption">預估費用明細／總額</span>
+    <div class="quote-row"><strong class="quote-price" id="price">$0</strong><span class="chevron">⌃</span></div>
+    <button class="primary quote-action" type="button">下一步，確認乘客資料</button>
   </footer>
 
-  <div id="backdrop" class="backdrop" aria-hidden="true">
-    <div class="sheet" role="dialog" aria-modal="true" aria-label="選擇上車時間">
-      <div class="handle"></div>
-      <h2>選擇上車時間</h2>
-      <div class="picker-grid">
-        <div><label for="pickDate">日期</label><select id="pickDate"></select></div>
-        <div><label for="pickHour">時</label><select id="pickHour"></select></div>
-        <div><label for="pickMinute">分</label><select id="pickMinute"></select></div>
-      </div>
-      <button id="confirmTime" class="sheet-confirm" type="button">確認時間</button>
-    </div>
-  </div>
-
   <script>
-    const state = { trip: "送機", date: null, hour: "09", minute: "00", vehicle: "小車" };
-    const week = ["日", "一", "二", "三", "四", "五", "六"];
-    const $ = (id) => document.getElementById(id);
-
-    function addOptions(id, max, suffix) {
-      const el = $(id);
-      for (let i = 0; i <= max; i += 1) {
-        const option = document.createElement("option");
-        option.value = i;
-        option.textContent = i + suffix;
-        el.appendChild(option);
-      }
-    }
-    ["adult", "child", "infant"].forEach((id) => addOptions(id, 7, ""));
-    ["checked", "carry"].forEach((id) => addOptions(id, 8, ""));
-    $("adult").value = "1";
-
-    function formatDate(date) {
-      return (date.getMonth() + 1) + "月" + date.getDate() + "日 週" + week[date.getDay()];
-    }
-    function populateTime() {
-      const now = new Date();
-      now.setHours(0, 0, 0, 0);
-      for (let i = 0; i < 30; i += 1) {
-        const d = new Date(now);
-        d.setDate(now.getDate() + i);
-        const option = document.createElement("option");
-        option.value = d.toISOString().slice(0, 10);
-        option.textContent = formatDate(d);
-        $("pickDate").appendChild(option);
-      }
-      state.date = $("pickDate").value;
-      for (let h = 0; h < 24; h += 1) {
-        const option = document.createElement("option");
-        option.value = String(h).padStart(2, "0");
-        option.textContent = option.value + " 時";
-        $("pickHour").appendChild(option);
-      }
-      [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].forEach((m) => {
-        const option = document.createElement("option");
-        option.value = String(m).padStart(2, "0");
-        option.textContent = option.value + " 分";
-        $("pickMinute").appendChild(option);
-      });
-      $("pickHour").value = state.hour;
-      $("pickMinute").value = state.minute;
-    }
-    function updateTime() {
-      const d = new Date(state.date + "T00:00:00");
-      $("timeSummary").textContent = (d.getMonth() + 1) + "/" + d.getDate() + "（" + week[d.getDay()] + "） " + state.hour + ":" + state.minute;
-      $("confirmTime").textContent = "確認：" + $("timeSummary").textContent;
-    }
-    function setTrip(trip) {
-      state.trip = trip;
-      document.querySelectorAll("[data-trip]").forEach((button) => button.classList.toggle("active", button.dataset.trip === trip));
-      const send = trip === "送機";
-      $("originLabel").textContent = send ? "上車地點" : "接機地點";
-      $("destinationLabel").textContent = send ? "送機地點" : "下車地點";
-      $("destination").value = send ? "桃園機場" : "";
-      $("destination").placeholder = send ? "選擇機場" : "輸入完整送達地址";
-      $("flightLabel").textContent = send ? "出發航班編號" : "抵台航班編號";
-      $("flightHelp").textContent = send ? "送機請填出發航班，例如 BR123。" : "接機請填抵台航班，例如 BR123。";
-    }
-
-    const vehicles = [
-      { name: "小車", note: "限 3 人 2 件", price: 1300, people: 3, bags: 2 },
-      { name: "大車", note: "限 7 人 7 件", price: 1800, people: 7, bags: 7 },
-      { name: "進口商務車", note: "舒適乘坐", price: 2200, people: 6, bags: 5 },
-      { name: "New Alphard 40系", note: "限 4 人 3 件", price: 2800, people: 4, bags: 3 }
-    ];
-    function renderVehicles() {
-      const people = +$("adult").value + +$("child").value + +$("infant").value;
-      const bags = +$("checked").value + +$("carry").value;
-      const list = $("vehicleList");
-      list.innerHTML = "";
-      const permitted = vehicles.filter((car) => car.people >= people && car.bags >= bags);
-      if (!permitted.some((car) => car.name === state.vehicle)) state.vehicle = permitted[0] ? permitted[0].name : "大車";
-      vehicles.forEach((car) => {
-        const allowed = car.people >= people && car.bags >= bags;
-        const row = document.createElement("div");
-        row.className = "car-card" + (car.name === state.vehicle ? " selected" : "");
-        row.innerHTML = "<div><strong>" + car.name + "</strong><small>" + car.note + "</small></div><button type='button'" + (allowed ? "" : " disabled") + ">" + (car.name === state.vehicle ? "已選" : allowed ? "選擇" : "不符") + "</button>";
-        row.querySelector("button").addEventListener("click", () => { if (allowed) { state.vehicle = car.name; renderVehicles(); } });
-        list.appendChild(row);
-      });
-      const selected = vehicles.find((car) => car.name === state.vehicle);
-      $("quote").textContent = "$" + (selected ? selected.price.toLocaleString("zh-TW") : "0");
-    }
-
-    document.querySelectorAll("[data-trip]").forEach((button) => button.addEventListener("click", () => setTrip(button.dataset.trip)));
-    $("timeTrigger").addEventListener("click", () => $("backdrop").classList.add("open"));
-    $("backdrop").addEventListener("click", (event) => { if (event.target === $("backdrop")) $("backdrop").classList.remove("open"); });
-    $("confirmTime").addEventListener("click", () => {
-      state.date = $("pickDate").value;
-      state.hour = $("pickHour").value;
-      state.minute = $("pickMinute").value;
-      updateTime();
-      $("backdrop").classList.remove("open");
+    const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
+    const options = Array.from({ length: 11 }, (_, i) => '<option value="' + i + '">' + i + '</option>').join('');
+    ["adult", "child", "toddler", "rearSeat", "frontSeat", "booster", "carryOn", "checkedBag"].forEach(id => document.getElementById(id).innerHTML = options);
+    ["hour", "returnHour"].forEach(id => {
+      document.getElementById(id).innerHTML = hours.flatMap(h => ["00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55"].map(m => '<option value="' + h + ':' + m + '">' + h + ':' + m + '</option>')).join('');
     });
-    $("flight").addEventListener("input", (event) => { event.target.value = event.target.value.toUpperCase().replace(/\s/g, ""); });
-    ["adult", "child", "infant", "checked", "carry"].forEach((id) => $(id).addEventListener("change", renderVehicles));
 
-    populateTime();
-    updateTime();
-    renderVehicles();
+    const today = new Date();
+    const dateValue = today.toISOString().slice(0, 10);
+    document.getElementById("date").min = dateValue;
+    document.getElementById("returnDate").min = dateValue;
+    document.getElementById("date").value = dateValue;
+    document.getElementById("returnDate").value = dateValue;
+
+    const formatDate = value => {
+      if (!value) return "請選擇用車日期與時間";
+      const d = new Date(value + "T00:00:00");
+      return (d.getMonth() + 1) + "月" + d.getDate() + "日（" + "日一二三四五六"[d.getDay()] + "）";
+    };
+    const updateTime = (prefix = "") => {
+      const date = document.getElementById(prefix + "date")?.value || document.getElementById("returnDate").value;
+      const hour = document.getElementById(prefix + "hour")?.value || document.getElementById("returnHour").value;
+      const target = prefix ? document.getElementById("dateSummary") : document.getElementById("returnDateSummary");
+      if (prefix) document.getElementById("dateSummary").textContent = formatDate(date) + " " + hour;
+      else document.getElementById("returnDateSummary").textContent = formatDate(date) + " " + hour;
+    };
+    document.getElementById("date").addEventListener("change", () => updateTime("main"));
+    document.getElementById("hour").addEventListener("change", () => updateTime("main"));
+    document.getElementById("returnDate").addEventListener("change", () => updateTime());
+    document.getElementById("returnHour").addEventListener("change", () => updateTime());
+    updateTime("main"); updateTime();
+
+    document.querySelectorAll(".mode button").forEach(button => button.addEventListener("click", () => {
+      document.querySelectorAll(".mode button").forEach(item => item.classList.remove("active"));
+      button.classList.add("active");
+      const pickup = button.dataset.mode === "接機";
+      document.getElementById("addressLabel").textContent = pickup ? "下車地點" : "上車地點";
+      document.getElementById("airportLabel").textContent = pickup ? "接機地點・機場" : "送機地點・機場";
+      document.getElementById("flightHint").textContent = pickup ? "接機請填抵台航班。" : "送機請填出發航班。";
+    }));
+    document.getElementById("flight").addEventListener("input", event => event.target.value = event.target.value.toUpperCase());
+    document.getElementById("returnFlight").addEventListener("input", event => event.target.value = event.target.value.toUpperCase());
+    document.getElementById("stopover").addEventListener("change", event => document.getElementById("stopoverFields").hidden = !event.target.checked);
+    document.getElementById("roundTrip").addEventListener("change", event => document.getElementById("returnCard").classList.toggle("show", event.target.checked));
+
+    const updatePassenger = () => {
+      const adult = +document.getElementById("adult").value;
+      const child = +document.getElementById("child").value;
+      const toddler = +document.getElementById("toddler").value;
+      const carry = +document.getElementById("carryOn").value;
+      const checked = +document.getElementById("checkedBag").value;
+      const noLuggage = document.getElementById("noLuggage").checked;
+      document.getElementById("safetyPanel").classList.toggle("show", child + toddler > 0);
+      const people = adult + child + toddler;
+      const bags = noLuggage ? 0 : carry + checked;
+      let vehicle = "小車";
+      if (people > 3 || bags > 3) vehicle = "大車";
+      if (people > 7 || bags > 7) vehicle = "進口商務車";
+      document.getElementById("passengerSummary").textContent = people ? people + " 位乘客・行李 " + bags + " 件" : "請填寫乘客與行李";
+      document.getElementById("vehicleHint").textContent = "建議車型：" + vehicle + "，可再選擇更高級車型";
+      document.getElementById("recommendedVehicle").textContent = "依目前資料建議：" + vehicle + "。系統只允許往上升級，避免乘載不足。";
+    };
+    ["adult", "child", "toddler", "carryOn", "checkedBag"].forEach(id => document.getElementById(id).addEventListener("change", updatePassenger));
+    document.getElementById("noLuggage").addEventListener("change", event => {
+      document.querySelectorAll(".luggage").forEach(input => { input.disabled = event.target.checked; if (event.target.checked) input.value = 0; });
+      updatePassenger();
+    });
+    updatePassenger();
+
+    document.querySelectorAll("[data-open-sheet]").forEach(button => button.addEventListener("click", () => document.getElementById(button.dataset.openSheet + "Sheet").classList.add("open")));
+    document.querySelectorAll("[data-close-sheet]").forEach(button => button.addEventListener("click", () => document.getElementById(button.dataset.closeSheet + "Sheet").classList.remove("open")));
+    document.querySelectorAll(".sheet").forEach(sheet => sheet.addEventListener("click", event => { if (event.target === sheet) sheet.classList.remove("open"); }));
   </script>
 </body>
 </html>
