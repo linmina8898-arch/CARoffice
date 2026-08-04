@@ -1,426 +1,78 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>安興租車｜詢價／預約系統測試</title>
+  <title>安興租車｜UI 測試 V3</title>
   <style>
-    :root {
-      --ink: #1a0b3d;
-      --purple: #574266;
-      --mauve: #7a6a82;
-      --pink: #d95b93;
-      --line: #e4d8e8;
-      --surface: #ffffff;
-      --wash: #faf7fb;
-      --muted: #766f7a;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      color: var(--ink);
-      background: #f6f2f7;
-      font-family: Arial, "Microsoft JhengHei", sans-serif;
-      font-size: 14px;
-    }
-    button, input, select { font: inherit; }
-    button { cursor: pointer; }
-    .app {
-      max-width: 560px;
-      min-height: 100vh;
-      margin: 0 auto;
-      padding: 20px 16px 150px;
-      background: var(--wash);
-    }
-    .brand {
-      font-size: 19px;
-      font-weight: 700;
-      letter-spacing: 0;
-      margin: 4px 0 18px;
-    }
-    .mode {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      padding: 4px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #f1ebf3;
-      margin-bottom: 16px;
-    }
-    .mode button {
-      border: 0;
-      border-radius: 6px;
-      background: transparent;
-      color: var(--mauve);
-      padding: 13px 8px;
-      font-size: 16px;
-      font-weight: 700;
-    }
-    .mode button.active { background: var(--surface); color: var(--ink); box-shadow: 0 1px 5px #2e143415; }
-    .card {
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: 18px;
-      margin: 12px 0;
-      background: var(--surface);
-      box-shadow: 0 2px 10px #2e14340a;
-    }
-    .card-title { font-weight: 700; font-size: 16px; margin: 0 0 15px; }
-    .route-row {
-      display: grid;
-      grid-template-columns: 28px 1fr;
-      gap: 10px;
-      padding: 7px 0;
-      position: relative;
-    }
-    .route-row + .route-row { border-top: 1px solid #efe9f0; margin-top: 4px; padding-top: 15px; }
-    .route-dot {
-      width: 14px;
-      height: 14px;
-      border: 3px solid var(--purple);
-      border-radius: 50%;
-      margin: 5px 0 0 5px;
-    }
-    .route-dot.airport { border-color: var(--pink); border-radius: 2px; transform: rotate(45deg); }
-    .field-label { display: block; color: var(--muted); font-size: 12px; margin-bottom: 6px; }
-    .input, .select {
-      width: 100%;
-      height: 45px;
-      border: 1px solid var(--line);
-      border-radius: 6px;
-      color: var(--ink);
-      background: #fff;
-      padding: 0 12px;
-      outline: none;
-    }
-    .input:focus, .select:focus { border-color: var(--purple); box-shadow: 0 0 0 3px #57426612; }
-    .route-note { color: var(--pink); font-size: 12px; line-height: 1.5; margin: 8px 0 0 38px; }
-    .link-button {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      color: var(--ink);
-      background: var(--surface);
-      padding: 16px;
-      text-align: left;
-      margin: 12px 0;
-    }
-    .link-button .mini { color: var(--muted); font-size: 12px; display: block; margin-top: 4px; font-weight: 400; }
-    .link-button strong { display: block; font-size: 16px; }
-    .chevron { color: var(--purple); font-size: 22px; line-height: 1; }
-    .trip-toggle {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin: 16px 2px 4px;
-      color: var(--ink);
-      font-weight: 700;
-    }
-    .trip-toggle input { width: 19px; height: 19px; accent-color: var(--purple); }
-    .return-card { display: none; }
-    .return-card.show { display: block; }
-    .hint {
-      font-size: 12px;
-      color: var(--mauve);
-      background: #faf5fa;
-      border: 1px solid var(--line);
-      border-radius: 6px;
-      padding: 10px 12px;
-      line-height: 1.55;
-      margin-top: 10px;
-    }
-    .date-value { font-size: 16px; color: var(--ink); font-weight: 700; }
-    .sheet {
-      position: fixed;
-      inset: 0;
-      z-index: 10;
-      display: none;
-      background: #1a0b3d55;
-      align-items: flex-end;
-    }
-    .sheet.open { display: flex; }
-    .sheet-panel {
-      width: min(560px, 100%);
-      max-height: 88vh;
-      overflow-y: auto;
-      border-radius: 16px 16px 0 0;
-      padding: 18px 18px 28px;
-      background: #fff;
-    }
-    .sheet-handle { width: 42px; height: 4px; margin: 0 auto 16px; border-radius: 9px; background: #ddd2e0; }
-    .sheet-title { margin: 0 0 18px; font-size: 22px; font-weight: 700; }
-    .time-grid, .passenger-grid, .luggage-grid, .seat-grid { display: grid; gap: 10px; }
-    .time-grid { grid-template-columns: 1fr 1fr; }
-    .passenger-grid, .seat-grid { grid-template-columns: repeat(3, 1fr); }
-    .luggage-grid { grid-template-columns: repeat(2, 1fr); }
-    .count-label { color: var(--muted); font-size: 12px; margin: 0 0 6px; }
-    .count-control { min-width: 0; }
-    .count-control .select { padding: 0 8px; text-align: center; }
-    .checkbox-line {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      border: 1px solid var(--line);
-      border-radius: 6px;
-      padding: 13px;
-      margin: 14px 0;
-    }
-    .checkbox-line input { width: 18px; height: 18px; accent-color: var(--purple); }
-    .safety-panel { display: none; margin-top: 12px; padding: 13px; border: 1px solid var(--line); border-radius: 7px; background: #fbf8fc; }
-    .safety-panel.show { display: block; }
-    .sheet-footer { display: grid; grid-template-columns: 1fr; margin-top: 22px; }
-    .primary {
-      border: 0;
-      border-radius: 8px;
-      background: var(--purple);
-      color: #fff;
-      min-height: 49px;
-      padding: 12px 18px;
-      font-weight: 700;
-      font-size: 16px;
-    }
-    .quote-bar {
-      position: fixed;
-      left: 50%;
-      bottom: 0;
-      transform: translateX(-50%);
-      width: min(560px, 100%);
-      z-index: 8;
-      padding: 10px 16px 18px;
-      background: #fff;
-      border: 1px solid #d8c5dc;
-      border-bottom: 0;
-      border-radius: 12px 12px 0 0;
-      box-shadow: 0 -5px 18px #2e143414;
-    }
-    .quote-caption { color: var(--mauve); font-size: 12px; }
-    .quote-row { display: flex; justify-content: space-between; align-items: center; margin: 3px 0 10px; }
-    .quote-price { font-size: 25px; font-weight: 700; color: var(--ink); }
-    .quote-action { width: 100%; }
-    @media (max-width: 390px) {
-      .app { padding-left: 12px; padding-right: 12px; }
-      .card { padding: 15px; }
-      .passenger-grid, .seat-grid { gap: 7px; }
-      .input, .select { font-size: 13px; }
-    }
+    :root{--ink:#1A0B3D;--purple:#574266;--muted:#7A6A82;--line:#e7ddea;--paper:#fff;--wash:#faf7fb;--pink:#d9578a;--soft:#f7eff7}
+    *{box-sizing:border-box} body{margin:0;background:var(--wash);color:#26202a;font-family:"Microsoft JhengHei",Arial,sans-serif;font-size:14px;letter-spacing:0}
+    .app{max-width:560px;margin:0 auto;padding:18px 16px 112px}.top{margin:3px 0 14px}.top h1{font-size:20px;line-height:1.25;margin:0;color:var(--ink);font-weight:700}.version{font-size:11px;color:#93889b;margin-top:5px}
+    .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0 16px}.step{border:1px solid #d9cee0;background:#fff;border-radius:9px;padding:9px 10px;color:#786a80;line-height:1.25}.step b{display:block;font-size:12px;color:inherit}.step small{font-size:10px}.step.active{background:var(--purple);border-color:var(--purple);color:#fff}
+    .panel{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:18px;margin:12px 0;box-shadow:0 4px 16px rgba(43,24,53,.045)}
+    h2{margin:0 0 5px;font-size:16px;color:var(--ink)}.hint{margin:0 0 14px;color:var(--muted);font-size:12px;line-height:1.55}.label{display:block;margin:13px 0 6px;color:#62546a;font-size:12px;font-weight:700}
+    input,select,button{font:inherit}input,select{width:100%;height:44px;border:1px solid #d9cee0;border-radius:8px;padding:0 12px;background:#fff;color:#29212d;outline:none}input:focus,select:focus{border-color:var(--purple);box-shadow:0 0 0 3px rgba(87,66,102,.11)}
+    .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.three{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.switches{display:grid;grid-template-columns:1fr 1fr;gap:8px}.choice{min-height:45px;border:1px solid #dfd4e3;border-radius:8px;background:#fff;display:flex;align-items:center;gap:8px;padding:0 11px;color:#4f4057}.choice input{width:17px;height:17px;margin:0;accent-color:var(--purple)}
+    .trip{display:flex;gap:8px;background:#f3edf4;border-radius:9px;padding:4px}.trip button{border:0;border-radius:7px;background:transparent;color:#75677b;padding:10px 8px;flex:1;font-weight:700;cursor:pointer}.trip button.active{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+    .route{border:1px solid #e0d6e4;border-radius:9px;padding:13px;background:#fff}.route-title{font-size:13px;font-weight:700;color:var(--ink);margin:0 0 7px}.route-line{border-left:3px solid var(--purple);padding-left:10px;margin:9px 0 4px}.route-line strong{display:block;color:#302638}.route-line span{font-size:11px;color:#81738a}.addbox,.returnbox,.seatbox{border:1px solid #e4d8e7;background:#fcf8fc;border-radius:9px;padding:12px;margin-top:12px}.returnbox{display:none}.returnbox.show{display:block}.alert{margin-top:10px;border-radius:7px;padding:9px 10px;color:#77576f;background:#fbf3f8;font-size:12px;line-height:1.45}.seatnote{font-size:11px;line-height:1.5;color:#7a6a82;margin-top:9px}
+    .vehicle-list{display:grid;gap:9px}.vehicle{width:100%;text-align:left;border:1px solid #ddd1e2;border-radius:9px;padding:12px;background:#fff;cursor:pointer;display:grid;grid-template-columns:1fr auto;gap:8px}.vehicle .name{font-weight:700;color:var(--ink);font-size:15px}.vehicle .meta{display:block;color:#85778d;font-size:11px;margin-top:4px}.vehicle .price{font-size:16px;font-weight:700;color:var(--ink);align-self:center}.vehicle.selected{border:2px solid var(--purple);background:#fbf8fb}.vehicle.locked{opacity:.48;background:#f7f4f7;cursor:not-allowed}.vehicle .tag{font-size:10px;color:var(--pink);display:block;margin-top:4px}.quote-note{font-size:11px;color:#84748c;margin-top:10px}
+    .fixed{position:fixed;z-index:10;bottom:0;left:0;right:0;background:#fff;border:1px solid #d9cee0;border-bottom:0;border-radius:14px 14px 0 0;box-shadow:0 -5px 20px rgba(45,24,55,.12)}.fixed-inner{max-width:560px;margin:0 auto;padding:12px 16px}.summary{display:flex;align-items:center;justify-content:space-between;gap:10px}.summary small{display:block;color:#796b80;font-size:11px}.summary strong{color:var(--ink);font-size:23px}.toggle{border:1px solid #dacde0;width:36px;height:36px;border-radius:50%;background:#fff;color:var(--purple);cursor:pointer}.details{display:none;border-top:1px solid #eee6ef;margin-top:10px;padding-top:8px}.details.open{display:block}.row{display:flex;justify-content:space-between;gap:12px;padding:5px 0;color:#55465d;font-size:12px}.row.total{font-size:15px;font-weight:700;color:var(--ink);border-top:1px solid #e9e1eb;margin-top:4px;padding-top:9px}.next{width:100%;margin-top:10px;height:46px;border:0;border-radius:8px;background:var(--purple);color:#fff;font-size:15px;font-weight:700}
+    .hidden{display:none!important}@media(max-width:390px){.app{padding-left:12px;padding-right:12px}.panel{padding:15px}.three{gap:6px}.vehicle{padding:10px}.step{padding:8px}}
   </style>
 </head>
 <body>
-  <main class="app">
-    <h1 class="brand">安興租車︱詢價／預約系統</h1>
+<main class="app">
+  <header class="top"><h1>安興租車｜詢價/預約系統</h1><div class="version">TouchGo UI 測試 V3.2｜原系統規則驗證</div></header>
+  <div class="steps"><div class="step active"><b>STEP 1</b><small>行程與試算</small></div><div class="step"><b>STEP 2</b><small>乘客資料</small></div><div class="step"><b>STEP 3</b><small>確認送出</small></div></div>
 
-    <section class="mode" aria-label="行程類型">
-      <button class="active" type="button" data-mode="送機">送機</button>
-      <button type="button" data-mode="接機">接機</button>
-    </section>
-
-    <section class="card">
-      <h2 class="card-title">基本行程</h2>
-      <div class="route-row">
-        <span class="route-dot"></span>
-        <div>
-          <label class="field-label" id="addressLabel" for="address">上車地點</label>
-          <input class="input" id="address" placeholder="輸入完整地址後，請選擇 Google 搜尋結果">
-        </div>
-      </div>
-      <div class="route-row">
-        <span class="route-dot airport"></span>
-        <div>
-          <label class="field-label" id="airportLabel" for="airport">送機地點・機場</label>
-          <select class="select" id="airport">
-            <option value="桃園機場">桃園機場</option>
-            <option value="松山機場">松山機場</option>
-            <option value="台中國際機場">台中國際機場</option>
-            <option value="高雄機場">高雄機場</option>
-          </select>
-        </div>
-      </div>
-      <p class="route-note">機場請從清單選擇，地址完成後請點選 Google 搜尋結果。</p>
-      <label class="checkbox-line">
-        <input id="stopover" type="checkbox">
-        <span>需加點服務（依距離計費，限加一個停靠點）</span>
-      </label>
-      <div id="stopoverFields" hidden>
-        <label class="field-label" for="stopoverAddress">加點地址</label>
-        <input class="input" id="stopoverAddress" placeholder="輸入加點完整地址">
-      </div>
-    </section>
-
-    <button class="link-button" type="button" data-open-sheet="time">
-      <span><span class="mini">日期與時間</span><strong class="date-value" id="dateSummary">請選擇用車日期與時間</strong></span>
-      <span class="chevron">›</span>
-    </button>
-
-    <section class="card">
-      <label class="field-label" for="flight">航班編號</label>
-      <input class="input" id="flight" maxlength="12" placeholder="例如 BR123">
-      <p class="hint" id="flightHint">送機請填出發航班；接機請填抵台航班。</p>
-    </section>
-
-    <button class="link-button" type="button" data-open-sheet="passenger">
-      <span><span class="mini">乘客與行李</span><strong id="passengerSummary">請填寫乘客與行李</strong><span class="mini" id="vehicleHint">系統會依人數與行李建議可使用車型</span></span>
-      <span class="chevron">›</span>
-    </button>
-
-    <label class="trip-toggle">
-      <input id="roundTrip" type="checkbox">
-      <span>同時預約回程接送</span>
-    </label>
-
-    <section id="returnCard" class="card return-card">
-      <h2 class="card-title">回程資訊</h2>
-      <label class="field-label" for="returnType">回程類型</label>
-      <select class="select" id="returnType"><option value="接機">接機</option><option value="送機">送機</option></select>
-      <label class="field-label" for="returnAirport" style="margin-top:13px">回程機場</label>
-      <select class="select" id="returnAirport">
-        <option value="桃園機場">桃園機場</option>
-        <option value="松山機場">松山機場</option>
-        <option value="台中國際機場">台中國際機場</option>
-        <option value="高雄機場">高雄機場</option>
-      </select>
-      <button class="link-button" type="button" data-open-sheet="returnTime">
-        <span><span class="mini">回程日期與時間</span><strong id="returnDateSummary">請選擇回程日期與時間</strong></span><span class="chevron">›</span>
-      </button>
-      <label class="field-label" for="returnFlight">回程航班編號</label>
-      <input class="input" id="returnFlight" maxlength="12" placeholder="例如 BR123">
-      <p class="hint">地址、加點、人數與行李預設同步去程；回程不同時可再展開修改。</p>
-    </section>
-  </main>
-
-  <section id="timeSheet" class="sheet" aria-hidden="true">
-    <div class="sheet-panel">
-      <div class="sheet-handle"></div>
-      <h2 class="sheet-title">選擇上車時間</h2>
-      <div class="time-grid">
-        <div><label class="field-label" for="date">日期</label><input class="input" id="date" type="date"></div>
-        <div><label class="field-label" for="hour">時間</label><select class="select" id="hour"></select></div>
-      </div>
-      <div class="sheet-footer"><button class="primary" type="button" data-close-sheet="time">確認時間</button></div>
+  <section class="panel">
+    <div class="trip"><button id="sendBtn" class="active" type="button">送機</button><button id="pickupBtn" type="button">接機</button></div>
+    <label class="label" for="flight">航班編號</label><input id="flight" placeholder="例如 BR123" autocomplete="off">
+    <p class="hint" id="flightHint">送機請填出發航班；接機請填抵台航班。</p>
+    <div class="route">
+      <p class="route-title">基本行程</p>
+      <div class="route-line"><span id="startLabel">上車地點</span><strong id="startPreview">請輸入完整地址</strong></div>
+      <div class="route-line"><span id="endLabel">送機地點・機場</span><strong id="endPreview">桃園機場</strong></div>
+      <label class="label" for="address">詳細地址</label><input id="address" placeholder="請輸入完整上車地址" autocomplete="street-address">
+      <div class="alert">完整輸入地址後即可試算。郵遞區號及地址中的空格不會影響區域報價判斷。</div>
+      <label class="label" for="airport">接送機場</label><select id="airport"><option value="桃園機場">桃園機場</option><option value="松山機場">松山機場</option><option value="台中機場">台中機場</option><option value="高雄機場">高雄機場</option></select>
+      <label class="label" for="date">日期與時間</label><div class="two"><input id="date" type="date"><input id="time" type="time" step="300"></div>
+      <div class="addbox"><label class="choice"><input id="addStop" type="checkbox">需加點服務</label><div id="addStopBody" class="hidden"><label class="label" for="stopAddress">加點地址</label><input id="stopAddress" placeholder="請輸入一個停靠點"><p class="seatnote">依距離計費，限加一個停靠點；臨時加點或更改請洽客服。</p></div></div>
     </div>
+    <div class="addbox"><label class="choice"><input id="roundTrip" type="checkbox">同時預約回程接送（享優惠）</label><div id="returnBox" class="returnbox"><p class="route-title">回程資訊</p><p class="hint">地址、加點、人數與行李先沿用去程；不同時可再修改。</p><div class="two"><input id="returnDate" type="date"><input id="returnTime" type="time" step="300"></div><label class="label" for="returnFlight">回程航班編號</label><input id="returnFlight" placeholder="例如 BR456"></div></div>
   </section>
 
-  <section id="returnTimeSheet" class="sheet" aria-hidden="true">
-    <div class="sheet-panel">
-      <div class="sheet-handle"></div>
-      <h2 class="sheet-title">選擇回程時間</h2>
-      <div class="time-grid">
-        <div><label class="field-label" for="returnDate">日期</label><input class="input" id="returnDate" type="date"></div>
-        <div><label class="field-label" for="returnHour">時間</label><select class="select" id="returnHour"></select></div>
-      </div>
-      <div class="sheet-footer"><button class="primary" type="button" data-close-sheet="returnTime">確認回程時間</button></div>
-    </div>
+  <section class="panel">
+    <h2>乘客與行李</h2><p class="hint">請填寫實際乘車人數、行李與座椅需求，避免車型乘載不符。</p>
+    <div class="three"><div><label class="label" for="adult">大人</label><select id="adult"></select></div><div><label class="label" for="child">小孩（4-12）</label><select id="child"></select></div><div><label class="label" for="toddler">幼童（0-4）</label><select id="toddler"></select></div></div>
+    <div id="seatBox" class="seatbox"><p class="route-title">安全座椅</p><div class="three"><div><label class="label" for="rearSeat">後向</label><select id="rearSeat"></select></div><div><label class="label" for="forwardSeat">前向</label><select id="forwardSeat"></select></div><div><label class="label" for="booster">增高墊</label><select id="booster"></select></div></div><p class="seatnote" id="seatRule">幼童需對應安全座椅；小孩可依需求選擇增高墊。</p></div>
+    <div class="switches" style="margin-top:12px"><div><label class="label" for="checked">托運箱（21-29吋）</label><select id="checked"></select></div><div><label class="label" for="carry">登機箱</label><select id="carry"></select></div></div>
+    <label class="choice" style="margin-top:10px"><input id="noLuggage" type="checkbox">我沒有行李</label>
   </section>
 
-  <section id="passengerSheet" class="sheet" aria-hidden="true">
-    <div class="sheet-panel">
-      <div class="sheet-handle"></div>
-      <h2 class="sheet-title">乘客與行李</h2>
-      <div class="passenger-grid">
-        <div class="count-control"><p class="count-label">大人</p><select class="select" id="adult"></select></div>
-        <div class="count-control"><p class="count-label">小孩（4-12歲）</p><select class="select" id="child"></select></div>
-        <div class="count-control"><p class="count-label">幼童（4歲以下）</p><select class="select" id="toddler"></select></div>
-      </div>
-      <div id="safetyPanel" class="safety-panel">
-        <p class="count-label">小孩或幼童需確認座椅需求</p>
-        <div class="seat-grid">
-          <div class="count-control"><p class="count-label">後向座椅</p><select class="select" id="rearSeat"></select></div>
-          <div class="count-control"><p class="count-label">前向座椅</p><select class="select" id="frontSeat"></select></div>
-          <div class="count-control"><p class="count-label">增高墊</p><select class="select" id="booster"></select></div>
-        </div>
-        <p class="hint">幼童（4歲以下）需選擇對應安全座椅；小孩（4-12歲）可視需求選擇增高墊。</p>
-      </div>
-      <label class="checkbox-line"><input type="checkbox" id="noLuggage">我沒有行李</label>
-      <div id="luggageFields" class="luggage-grid">
-        <div class="count-control"><p class="count-label">登機箱</p><select class="select luggage" id="carryOn"></select></div>
-        <div class="count-control"><p class="count-label">托運箱（21-29吋）</p><select class="select luggage" id="checkedBag"></select></div>
-      </div>
-      <p class="hint" id="recommendedVehicle">系統會依人數與行李自動建議車型，只能往上升級，不會往下選擇。</p>
-      <div class="sheet-footer"><button class="primary" type="button" data-close-sheet="passenger">確認乘客與行李</button></div>
-    </div>
-  </section>
+  <section class="panel"><h2>選擇接送車型</h2><p class="hint">系統先依人數與行李選出可用車型；不能選低於需求的車型，但可選更高級車型。</p><div id="vehicleList" class="vehicle-list"></div><p class="quote-note" id="vehicleHint"></p></section>
+</main>
 
-  <footer class="quote-bar">
-    <span class="quote-caption">預估費用明細／總額</span>
-    <div class="quote-row"><strong class="quote-price" id="price">$0</strong><span class="chevron">⌃</span></div>
-    <button class="primary quote-action" type="button">下一步，確認乘客資料</button>
-  </footer>
+<footer class="fixed"><div class="fixed-inner"><div class="summary"><div><small>預估費用明細/總額</small><strong id="total">$0</strong></div><button class="toggle" id="toggleDetails" type="button">⌃</button></div><div class="details" id="details"></div><button class="next" type="button">下一步，填寫乘客資料</button></div></footer>
 
-  <script>
-    const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
-    const options = Array.from({ length: 11 }, (_, i) => '<option value="' + i + '">' + i + '</option>').join('');
-    ["adult", "child", "toddler", "rearSeat", "frontSeat", "booster", "carryOn", "checkedBag"].forEach(id => document.getElementById(id).innerHTML = options);
-    ["hour", "returnHour"].forEach(id => {
-      document.getElementById(id).innerHTML = hours.flatMap(h => ["00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55"].map(m => '<option value="' + h + ':' + m + '">' + h + ':' + m + '</option>')).join('');
-    });
-
-    const today = new Date();
-    const dateValue = today.toISOString().slice(0, 10);
-    document.getElementById("date").min = dateValue;
-    document.getElementById("returnDate").min = dateValue;
-    document.getElementById("date").value = dateValue;
-    document.getElementById("returnDate").value = dateValue;
-
-    const formatDate = value => {
-      if (!value) return "請選擇用車日期與時間";
-      const d = new Date(value + "T00:00:00");
-      return (d.getMonth() + 1) + "月" + d.getDate() + "日（" + "日一二三四五六"[d.getDay()] + "）";
-    };
-    const updateTime = (prefix = "") => {
-      const date = document.getElementById(prefix + "date")?.value || document.getElementById("returnDate").value;
-      const hour = document.getElementById(prefix + "hour")?.value || document.getElementById("returnHour").value;
-      const target = prefix ? document.getElementById("dateSummary") : document.getElementById("returnDateSummary");
-      if (prefix) document.getElementById("dateSummary").textContent = formatDate(date) + " " + hour;
-      else document.getElementById("returnDateSummary").textContent = formatDate(date) + " " + hour;
-    };
-    document.getElementById("date").addEventListener("change", () => updateTime("main"));
-    document.getElementById("hour").addEventListener("change", () => updateTime("main"));
-    document.getElementById("returnDate").addEventListener("change", () => updateTime());
-    document.getElementById("returnHour").addEventListener("change", () => updateTime());
-    updateTime("main"); updateTime();
-
-    document.querySelectorAll(".mode button").forEach(button => button.addEventListener("click", () => {
-      document.querySelectorAll(".mode button").forEach(item => item.classList.remove("active"));
-      button.classList.add("active");
-      const pickup = button.dataset.mode === "接機";
-      document.getElementById("addressLabel").textContent = pickup ? "下車地點" : "上車地點";
-      document.getElementById("airportLabel").textContent = pickup ? "接機地點・機場" : "送機地點・機場";
-      document.getElementById("flightHint").textContent = pickup ? "接機請填抵台航班。" : "送機請填出發航班。";
-    }));
-    document.getElementById("flight").addEventListener("input", event => event.target.value = event.target.value.toUpperCase());
-    document.getElementById("returnFlight").addEventListener("input", event => event.target.value = event.target.value.toUpperCase());
-    document.getElementById("stopover").addEventListener("change", event => document.getElementById("stopoverFields").hidden = !event.target.checked);
-    document.getElementById("roundTrip").addEventListener("change", event => document.getElementById("returnCard").classList.toggle("show", event.target.checked));
-
-    const updatePassenger = () => {
-      const adult = +document.getElementById("adult").value;
-      const child = +document.getElementById("child").value;
-      const toddler = +document.getElementById("toddler").value;
-      const carry = +document.getElementById("carryOn").value;
-      const checked = +document.getElementById("checkedBag").value;
-      const noLuggage = document.getElementById("noLuggage").checked;
-      document.getElementById("safetyPanel").classList.toggle("show", child + toddler > 0);
-      const people = adult + child + toddler;
-      const bags = noLuggage ? 0 : carry + checked;
-      let vehicle = "小車";
-      if (people > 3 || bags > 3) vehicle = "大車";
-      if (people > 7 || bags > 7) vehicle = "進口商務車";
-      document.getElementById("passengerSummary").textContent = people ? people + " 位乘客・行李 " + bags + " 件" : "請填寫乘客與行李";
-      document.getElementById("vehicleHint").textContent = "建議車型：" + vehicle + "，可再選擇更高級車型";
-      document.getElementById("recommendedVehicle").textContent = "依目前資料建議：" + vehicle + "。系統只允許往上升級，避免乘載不足。";
-    };
-    ["adult", "child", "toddler", "carryOn", "checkedBag"].forEach(id => document.getElementById(id).addEventListener("change", updatePassenger));
-    document.getElementById("noLuggage").addEventListener("change", event => {
-      document.querySelectorAll(".luggage").forEach(input => { input.disabled = event.target.checked; if (event.target.checked) input.value = 0; });
-      updatePassenger();
-    });
-    updatePassenger();
-
-    document.querySelectorAll("[data-open-sheet]").forEach(button => button.addEventListener("click", () => document.getElementById(button.dataset.openSheet + "Sheet").classList.add("open")));
-    document.querySelectorAll("[data-close-sheet]").forEach(button => button.addEventListener("click", () => document.getElementById(button.dataset.closeSheet + "Sheet").classList.remove("open")));
-    document.querySelectorAll(".sheet").forEach(sheet => sheet.addEventListener("click", event => { if (event.target === sheet) sheet.classList.remove("open"); }));
-  </script>
-</body>
-</html>
+<script>
+  const $=id=>document.getElementById(id); const vehicleData=[
+    {id:'small',name:'小車',meta:'限 3 人｜2 托運＋1 登機箱',add:0,ok:s=>s.people<=3&&s.checked<=2&&s.carry<=1},
+    {id:'large',name:'大車',meta:'限 7 人｜7 件行李含登機箱',add:400,ok:s=>s.people<=7&&s.checked+s.carry<=7},
+    {id:'business',name:'進口商務車',meta:'Sienna / Benz V｜6 人｜5 件行李',add:700,ok:s=>s.people<=6&&s.checked+s.carry<=5},
+    {id:'alphard',name:'New Alphard 40系',meta:'限 4 人｜3 托運含登機箱',add:1200,ok:s=>s.people<=4&&s.checked<=3&&s.carry<=1}
+  ]; let mode='send',selected='small';
+  function fill(id,max=7){$(id).innerHTML=[...Array(max+1)].map((_,i)=>`<option value="${i}">${i}</option>`).join('')}
+  ['adult','child','toddler','rearSeat','forwardSeat','booster','checked','carry'].forEach(x=>fill(x));
+  const today=new Date(); $('date').value=today.toISOString().slice(0,10); $('time').value='09:00';
+  function n(v){return Number($(v).value)||0} function state(){return{people:n('adult')+n('child')+n('toddler'),checked:n('checked'),carry:n('carry'),child:n('child'),toddler:n('toddler')}}
+  function normalize(v){return (v||'').replace(/^\s*\d{3,5}\s*/,'').replace(/[\s　]+/g,'')}
+  function base(addr){const a=normalize(addr);if(!a)return 0;if(/台北|新北/.test(a))return 2200;if(/台中/.test(a))return 1800;if(/桃園/.test(a))return 1500;if(/新竹/.test(a))return 1300;if(/苗栗/.test(a))return 1500;return 1600}
+  function airport(){return $('airport').value}
+  function setMode(next){mode=next;$('sendBtn').classList.toggle('active',mode==='send');$('pickupBtn').classList.toggle('active',mode==='pickup');$('startLabel').textContent=mode==='send'?'上車地點':'接機地點・機場';$('endLabel').textContent=mode==='send'?'送機地點・機場':'下車地點';$('flightHint').textContent=mode==='send'?'送機請填出發航班；接機請填抵台航班。':'接機請填抵台航班；送機請填出發航班。';$('address').placeholder=mode==='send'?'請輸入完整上車地址':'請輸入完整下車地址';update()}
+  function enforceSeats(){let t=n('toddler'),c=n('child'),r=n('rearSeat'),f=n('forwardSeat'),b=n('booster');if(r+f>t){f=Math.max(0,t-r);$('forwardSeat').value=f}if(b>c)$('booster').value=c;$('seatRule').textContent=t||c?`幼童 ${t} 位：後向＋前向最多 ${t} 張；小孩 ${c} 位：增高墊最多 ${c} 張。`:'幼童需對應安全座椅；小孩可依需求選擇增高墊。'}
+  function drawVehicles(s){const eligible=vehicleData.filter(v=>v.ok(s));const min=eligible[0]||vehicleData[1];if(!vehicleData.find(v=>v.id===selected)?.ok(s))selected=min.id;$('vehicleList').innerHTML=vehicleData.map((v,i)=>{const allowed=v.ok(s),selectedClass=v.id===selected?' selected':'';const lock=allowed?'':' locked';const tag=!allowed?'目前人數/行李不適用':v.id===min.id?'系統建議':'';return `<button type="button" class="vehicle${selectedClass}${lock}" data-v="${v.id}" ${allowed?'':'disabled'}><span><span class="name">${v.name}</span><span class="meta">${v.meta}</span>${tag?`<span class="tag">${tag}</span>`:''}</span><span class="price">${base($('address').value)?'$'+(base($('address').value)+v.add).toLocaleString():'待試算'}</span></button>`}).join('');document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{selected=b.dataset.v;update()});$('vehicleHint').textContent=eligible.length?'已依人數與行李限制低階車型；可改選其他可用車型。':'目前需求超過可安排範圍，請聯絡客服確認車輛。'}
+  function update(){enforceSeats();const s=state();const a=$('address').value.trim(),ap=airport();$('startPreview').textContent=mode==='send'?(a||'請輸入完整地址'):ap;$('endPreview').textContent=mode==='send'?ap:(a||'請輸入完整地址');$('addStopBody').classList.toggle('hidden',!$('addStop').checked);$('returnBox').classList.toggle('show',$('roundTrip').checked);$('noLuggage').checked&&($('checked').value=0,$('carry').value=0);drawVehicles(s);const v=vehicleData.find(x=>x.id===selected);const fare=base(a);const pickup=mode==='pickup'&&fare?200:0;const add=$('addStop').checked&&fare?200:0;const seats=(n('rearSeat')+n('forwardSeat')+n('booster'))*200;const one=fare+pickup+add+seats+(v?.add||0);const total=$('roundTrip').checked?Math.max(0,one*2-100):one;$('total').textContent='$'+total.toLocaleString();const lines=[];lines.push(['基本車資',fare]);if(pickup)lines.push(['接機服務',pickup]);if(add)lines.push(['加點服務',add]);if(v?.add)lines.push([v.name+' 車型加價',v.add]);if(seats)lines.push(['安全座椅 / 增高墊',seats]);if($('roundTrip').checked){lines.push(['預約來回優惠',-100]);lines.push(['來回總額',total])}else lines.push(['預估總額',total]);$('details').innerHTML=lines.map(([k,x])=>`<div class="row ${k.includes('總額')?'total':''}"><span>${k}</span><span>${x<0?'-':'+'}$${Math.abs(x).toLocaleString()}</span></div>`).join('')}
+  $('sendBtn').onclick=()=>setMode('send');$('pickupBtn').onclick=()=>setMode('pickup');['address','airport','date','time','flight','addStop','stopAddress','roundTrip','returnDate','returnTime','returnFlight','adult','child','toddler','rearSeat','forwardSeat','booster','checked','carry','noLuggage'].forEach(id=>$(id).addEventListener('input',update));$('noLuggage').addEventListener('change',update);$('toggleDetails').onclick=()=>{$('details').classList.toggle('open');$('toggleDetails').textContent=$('details').classList.contains('open')?'⌄':'⌃'};update();
+</script>
+</body></html>
