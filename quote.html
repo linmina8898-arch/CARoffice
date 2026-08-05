@@ -34,19 +34,16 @@
         <div class="text-[11px] text-gray-400" id="versionText"></div>
       </div>
     </header>
-
     <section class="p-4 space-y-4">
       <div class="card p-4 space-y-3">
         <div class="flex items-center justify-between">
           <h2 class="text-base font-semibold text-[#553f62]">報價條件</h2>
           <button id="btnReload" class="text-xs px-3 py-1.5 rounded-full border border-[#553f62]/30 text-[#553f62]">更新資料</button>
         </div>
-
         <div>
           <label class="label">客服 / 備註用</label>
           <input id="staffName" class="field focus-ring" placeholder="例如：星星">
         </div>
-
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="label">行程</label>
@@ -60,7 +57,6 @@
             <select id="airport" class="field focus-ring"></select>
           </div>
         </div>
-
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="label">日期</label>
@@ -71,18 +67,15 @@
             <input id="rideTime" type="time" class="field focus-ring" value="09:00">
           </div>
         </div>
-
         <div>
           <label class="label">主要地區</label>
           <input id="mainZone" list="zoneList" class="field focus-ring" placeholder="輸入或選擇，例如 300 新竹市東區">
           <datalist id="zoneList"></datalist>
         </div>
-
         <div>
           <label class="label">提供給客人的地址文字</label>
           <input id="mainAddress" class="field focus-ring" placeholder="例如：新竹市東區關新路">
         </div>
-
         <div>
           <label class="label">車型</label>
           <select id="carType" class="field focus-ring">
@@ -92,7 +85,6 @@
             <option value="New Alphard 40">New Alphard 40</option>
           </select>
         </div>
-
         <div class="grid grid-cols-3 gap-3">
           <div>
             <label class="label">大人</label>
@@ -107,7 +99,6 @@
             <select id="infant" class="field focus-ring"></select>
           </div>
         </div>
-
         <div class="grid grid-cols-3 gap-3">
           <div>
             <label class="label">大行李</label>
@@ -123,7 +114,6 @@
           </div>
         </div>
       </div>
-
       <div class="card p-4 space-y-3">
         <div class="flex items-center justify-between">
           <h2 class="text-base font-semibold text-[#553f62]">加價與來回</h2>
@@ -132,12 +122,10 @@
             同時報價來回
           </label>
         </div>
-
         <label class="flex items-center gap-2 text-sm text-gray-700">
           <input id="signboard" type="checkbox" class="accent-[#553f62]">
           舉牌服務
         </label>
-
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="label">加點地區</label>
@@ -149,7 +137,6 @@
           </div>
         </div>
         <input id="extraAddress" class="field focus-ring" placeholder="加點地址文字，沒有可留空">
-
         <div id="returnBlock" class="hidden border-t border-gray-100 pt-3 space-y-3">
           <div class="grid grid-cols-2 gap-3">
             <div>
@@ -177,7 +164,6 @@
           <input id="returnAddress" class="field focus-ring" placeholder="回程地址文字">
         </div>
       </div>
-
       <div class="card p-4">
         <div class="flex items-center justify-between mb-2">
           <h2 class="text-base font-semibold text-[#553f62]">費用明細</h2>
@@ -187,14 +173,12 @@
           請先選擇地區後按「取得報價」。
         </div>
       </div>
-
       <div class="card p-4 bg-[#f8f5fa]">
         <h2 class="text-sm font-semibold text-[#553f62] mb-2">將提供給客人的文字</h2>
         <textarea id="quoteText" class="w-full min-h-[230px] bg-white border border-[#e6e2ea] rounded-xl p-3 text-sm leading-relaxed focus-ring" readonly></textarea>
       </div>
     </section>
   </main>
-
   <div class="bottom-bar">
     <div class="max-w-md mx-auto flex items-center gap-3">
       <div class="flex-1">
@@ -204,22 +188,35 @@
       <button id="btnCopy" class="bg-[#f07cad] text-white px-5 py-3 rounded-xl font-semibold shadow-sm disabled:opacity-50" disabled>複製報價</button>
     </div>
   </div>
-
   <script>
-    const APP_VERSION = "quote-v1.0.2";
+    const APP_VERSION = "quote-v1.0.3";
     const GAS_URL = "https://script.google.com/macros/s/AKfycby9KWdatRfDZY5g2DkieUkAhyEJDDCnKcMb_l8o2_J4JCaOtKYfEEkvzk-1sW-oZWIF/exec";
     const BOOKING_URL = location.href.includes("quote.html") ? location.href.replace("quote.html", "index.html") : "index.html";
     let priceRows = [];
     let lastQuote = null;
-
     const $ = (id) => document.getElementById(id);
+
+    /**
+     * 安全解析後端回應：GAS 額度不足、逾時、或服務忙碌時，Google 會回一頁 HTML 錯誤頁而不是 JSON，
+     * 直接 r.json() 會丟出 "Unexpected token '<'" 這種看不懂的錯誤。這裡先讀成文字，
+     * 解析失敗就丟出看得懂的訊息。
+     */
+    async function safeJsonParse(r) {
+      const text = await r.text();
+      try {
+        return JSON.parse(text);
+      } catch (err) {
+        console.error("後端回應非 JSON 格式（可能是 Google 額度不足或服務忙碌），原始內容前200字：", text.slice(0, 200));
+        throw new Error("系統忙碌中或連線異常，請稍後再試一次。");
+      }
+    }
+
     const money = (n, plus) => {
       const value = Number(n || 0);
       if (value < 0) return "-$" + Math.abs(value).toLocaleString("en-US");
       return (plus ? "+$" : "$") + value.toLocaleString("en-US");
     };
     const clean = (v) => String(v || "").trim();
-
     function fillNumberSelect(id, max, min = 0) {
       const el = $(id);
       el.innerHTML = "";
@@ -230,21 +227,18 @@
         el.appendChild(opt);
       }
     }
-
     async function loadPrices() {
       $("feeList").innerHTML = "報價資料載入中...";
       try {
-        const res = await fetch(`${GAS_URL}?action=getPrices&t=${Date.now()}`);
-        const data = await res.json();
+        const data = await fetch(`${GAS_URL}?action=getPrices&t=${Date.now()}`).then(r => safeJsonParse(r));
         priceRows = data.prices || [];
         renderPriceOptions();
         $("feeList").innerHTML = "請先選擇地區後按「取得報價」。";
       } catch (err) {
         $("feeList").innerHTML = "報價資料載入失敗，請稍後再試。";
-        Swal.fire("資料庫連線異常", "目前無法讀取報價資料庫。", "warning");
+        Swal.fire("資料庫連線異常", err.message || "目前無法讀取報價資料庫。", "warning");
       }
     }
-
     function renderPriceOptions() {
       const airports = [...new Set(priceRows.map(r => clean(r.a)).filter(Boolean))];
       $("airport").innerHTML = airports.map(a => `<option value="${a}">${a}</option>`).join("") || `<option value="桃園機場">桃園機場</option>`;
@@ -253,7 +247,6 @@
       if (!$("mainZone").value && zones.length) $("mainZone").value = zones[0];
       if (!$("returnZone").value && zones.length) $("returnZone").value = zones[0];
     }
-
     function buildPayload() {
       const paxText = `${$("adult").value}大 ${$("child").value}中 ${$("infant").value}小`;
       const luggageText = `${$("checkedLuggage").value}大 ${$("carryLuggage").value}登機`;
@@ -284,12 +277,10 @@
         appVersion: APP_VERSION
       };
     }
-
     function routeLine(type, airport, addressOrZone) {
       const place = clean(addressOrZone) || "接送地區";
       return type === "接機" ? `${airport} → ${place}` : `${place} → ${airport}`;
     }
-
     function formatQuoteDate(value) {
       if (!value) return "";
       const date = new Date(`${value}T00:00:00+08:00`);
@@ -298,13 +289,11 @@
       const weeks = ["日", "一", "二", "三", "四", "五", "六"];
       return `${normalized} (${weeks[date.getDay()]})`;
     }
-
     function formatQuoteMoney(value, plus) {
       const n = Number(value || 0);
       if (n < 0) return `-NT$${Math.abs(n).toLocaleString("en-US")}`;
       return `${plus ? "+" : ""}NT$${n.toLocaleString("en-US")}`;
     }
-
     function buildQuoteFeeLines(items) {
       return (items || [])
         .filter(item => !item.isTotal && !String(item.label || "").includes("小計"))
@@ -313,7 +302,6 @@
           return `${item.label}｜${formatQuoteMoney(item.amount, item.isExtra)}`;
         });
     }
-
     function buildQuoteText(payload, result) {
       const lines = [];
       const divider = "━━━━━";
@@ -373,7 +361,6 @@
       lines.push("— 合法營運｜專業接送｜安心抵達 —");
       return lines.join("\n");
     }
-
     function renderQuote(payload, result) {
       lastQuote = { payload, result };
       const rows = (result.items || []).map(item => {
@@ -385,7 +372,6 @@
       $("quoteText").value = buildQuoteText(payload, result);
       $("btnCopy").disabled = false;
     }
-
     async function getQuote() {
       const payload = buildPayload();
       if (!payload.mainZone) return Swal.fire("請選擇主要地區", "快速報價需要先選擇地區，才抓得到資料庫價格。", "info");
@@ -395,7 +381,7 @@
         const res = await fetch(GAS_URL, {
           method: "POST",
           body: JSON.stringify({ action: "quickQuote", data: payload })
-        }).then(r => r.json());
+        }).then(r => safeJsonParse(r));
         if (!res.success) throw new Error(res.error || "無法取得報價");
         renderQuote(payload, res);
       } catch (err) {
@@ -405,7 +391,6 @@
         $("btnQuote").textContent = "取得報價";
       }
     }
-
     async function copyQuote() {
       if (!lastQuote) return;
       const text = $("quoteText").value;
@@ -424,7 +409,6 @@
       }).catch(() => {});
       Swal.fire({ title: "已複製", text: "可以直接貼到 LINE、IG、Messenger 或簡訊給客人。", icon: "success", timer: 1400, showConfirmButton: false });
     }
-
     function init() {
       $("versionText").textContent = APP_VERSION;
       fillNumberSelect("adult", 7, 1);
@@ -446,9 +430,7 @@
       $("btnReload").addEventListener("click", loadPrices);
       loadPrices();
     }
-
     window.addEventListener("load", init);
   </script>
 </body>
 </html>
-
