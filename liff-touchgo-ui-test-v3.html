@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>安興租車｜UI 測試 V3</title>
+<title>安興租車預約/詢價 系統</title>
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAxYym5ZR8puPb0iiycHdwzTJTKH0Aears&libraries=places&callback=initMapAutocomplete"></script>
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
@@ -229,7 +229,7 @@
     <div class="brand" id="brandbarTitle">安興<span>租車</span></div>
     <div class="bell"><svg class="ic-svg" style="width:19px;height:19px"><use href="#i-bell"/></svg></div>
   </div>
-  <div class="version">TouchGo 風格改版 V3.3｜視覺與互動仿 TouchGo，配色與計價/車型邏輯維持原系統</div>
+  <div class="version">機場接送・商務用車・包車旅遊</div>
 
   <!-- ============ 分頁一：訂車（正式邏輯，沿用原本 V3 的計算規則） ============ -->
   <section id="tab-book" class="tabscreen show">
@@ -492,7 +492,7 @@
   <!-- ============ 分頁三：優惠 ============ -->
   <section id="tab-promo" class="tabscreen">
     <div class="screen-title">優惠</div>
-    <span class="mock-badge">橫幅為畫面示意；下方折扣碼已串接真實客戶折扣券資料</span>
+    <span class="mock-badge">折扣碼已串接真實客戶折扣券資料</span>
     <div class="promo-hero">
       <div class="badge"><svg class="ic-svg" style="width:13px;height:13px"><use href="#i-shield"/></svg> 安興承諾</div>
       <h3>固定價，不臨時加價</h3>
@@ -688,6 +688,25 @@
   </div>
 </div>
 
+<div class="sheet" id="cancelSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-inner">
+    <h2>取消預約</h2>
+    <div class="hint-card" style="margin-bottom:14px">
+      <p style="color:var(--ink);font-weight:700;margin:0 0 4px">取消規則</p>
+      <p style="margin:0">出發前 48 小時以上可自行取消；未滿 48 小時請聯絡客服協助處理。</p>
+    </div>
+    <label class="label" for="cancelOrderId">預約編號</label>
+    <input id="cancelOrderId" readonly>
+    <label class="label" for="cancelPhone">原預約聯絡電話</label>
+    <input id="cancelPhone" type="tel" placeholder="請輸入原預約時使用的電話">
+    <label class="label" for="cancelReason">取消原因（選填）</label>
+    <textarea id="cancelReason" class="field" rows="2" style="width:100%;border:1px solid #d9d6df;border-radius:10px;padding:10px 11px;font-size:15px"></textarea>
+    <button class="sheet-cta" id="confirmCancelBtn" type="button" style="margin-top:14px">確認自行取消</button>
+    <button class="secondary-btn" id="closeCancelSheet" type="button" style="margin-top:8px;width:100%">返回</button>
+  </div>
+</div>
+
 <!-- 以下為乘客/行李/座椅的實際資料來源，計數器 +/- 都是寫回這幾個隱藏欄位，
      再照原本邏輯 dispatch input 事件，畫面上不會顯示，純粹當 state store 用 -->
 <div class="hidden">
@@ -712,6 +731,20 @@
 <script>
   const $=id=>document.getElementById(id);
   const GAS_URL="https://script.google.com/macros/s/AKfycbww3Pr0IcOABPvTteIWHo9j6MWRQvNjpf_MZRE7NgDp3Nt69Upx8VhVnCVMcbUvjJwI/exec";
+
+  /**
+   * 安全解析後端回應：GAS 額度不足、逾時、或服務忙碌時，Google 會回一頁 HTML 錯誤頁而不是 JSON，
+   * 直接 r.json() 會丟出 "Unexpected token '<'" 這種看不懂的錯誤。這裡先讀成文字，
+   * 解析失敗就丟出看得懂的訊息，客人畫面才會顯示「請稍後再試」而不是原始的 JS 錯誤。
+   */
+  async function safeJsonParse(r){
+    const text=await r.text();
+    try{ return JSON.parse(text); }
+    catch(err){
+      console.error('後端回應非 JSON 格式：',text.slice(0,200));
+      throw new Error('系統忙碌中或連線異常，請稍後再試一次。');
+    }
+  }
 
   /* ---------------------------------------------------------------
    * 多管道支援：完全比照正式系統 index.html 的 CHANNEL_CONFIGS + getEntranceChannel()。
@@ -833,7 +866,7 @@
   async function loadPriceTable(){
     try{
       const res=await fetch(`${GAS_URL}?action=getPrices&channelCode=${CURRENT_CHANNEL.code}&t=${Date.now()}`);
-      const data=await res.json();
+      const data=await safeJsonParse(res);
       priceTableData=(data.prices||[]).map(r=>({a:String(r.a||'').trim(),b:String(r.b||'').trim(),c:normCity(r.c),d:Number(r.d)||0,e:Number(r.e)||0,f:Number(r.f)||0,g:Number(r.g)||0}));
       priceTableStatus='ready';
       DISCOUNT_CODES=data.discounts||{};
@@ -1231,7 +1264,7 @@
    * generateOrderId() 單號格式、payload 欄位名稱、no-cors fire-and-forget 送出、
    * 20 秒輪詢確認、行事曆/LINE卡片檢查、逾時後二次確認避免重複送單，都是同一套邏輯。
    * ------------------------------------------------------------- */
-  const APP_VERSION='TouchGo-UI-V3.4';
+  const APP_VERSION='TouchGo-UI-V3.5';
 
   function generateOrderId(){
     const d=new Date();
@@ -1326,7 +1359,7 @@
       const timeoutId=setTimeout(()=>controller.abort(),4000);
       const res=await fetch(`${GAS_URL}?action=checkReservation&reservationId=${encodeURIComponent(reservationId)}&t=${Date.now()}`,{signal:controller.signal});
       clearTimeout(timeoutId);
-      return await res.json();
+      return await safeJsonParse(res);
     }catch(err){ return {exists:false}; }
   }
 
@@ -1345,7 +1378,7 @@
   async function sendReservationConfirmationCard(ids){
     try{
       const res=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'sendReservationConfirmation',data:{reservationIds:ids}}),headers:{'Content-Type':'text/plain;charset=utf-8'}});
-      return await res.json();
+      return await safeJsonParse(res);
     }catch(err){ return {success:false,error:err.message}; }
   }
 
@@ -1469,7 +1502,7 @@
     if(phone.length<10) return;
     try{
       const res=await fetch(`${GAS_URL}?action=getLastUser&phone=${encodeURIComponent(phone)}&lineId=${encodeURIComponent(sysLineId)}&t=${Date.now()}`);
-      const data=await res.json();
+      const data=await safeJsonParse(res);
       if(data && data.error==='mismatch'){ toast('此電話已綁定其他 LINE 帳號，請聯絡客服協助處理'); return; }
       if(data && data.user){
         let filled=false;
@@ -1713,7 +1746,7 @@
     $('userDiscountsContainer').innerHTML='<p class="hint">查詢中…</p>';
     try{
       const res=await fetch(`${GAS_URL}?action=getUserDiscounts&phone=${encodeURIComponent(boundPhone)}&lineId=${encodeURIComponent(sysLineId)}&channelCode=${CURRENT_CHANNEL.code}&t=${Date.now()}`);
-      const data=await res.json();
+      const data=await safeJsonParse(res);
       if(data.error){ $('userDiscountsContainer').innerHTML=`<p class="hint" style="color:var(--pink)">${data.error}</p>`; return; }
       const list=data.discounts||[];
       if(!list.length){ $('userDiscountsContainer').innerHTML='<p class="hint">目前沒有可用的專屬折扣碼。</p>'; return; }
@@ -1756,7 +1789,7 @@
     nameEl.textContent='正在查詢企業資料…';
     try{
       const res=await fetch(`${GAS_URL}?action=getCompanyByTaxId&taxId=${encodeURIComponent(el.value)}&t=${Date.now()}`);
-      const data=await res.json();
+      const data=await safeJsonParse(res);
       const company=data && data.company;
       if(company && company.name){
         nameEl.dataset.companyName=company.name;
@@ -1809,7 +1842,7 @@
     $('goBindBtn').classList.add('hidden');
     try{
       const res=await fetch(`${GAS_URL}?action=getUserDiscounts&phone=${encodeURIComponent(boundPhone)}&lineId=${encodeURIComponent(sysLineId)}&channelCode=${CURRENT_CHANNEL.code}&t=${Date.now()}`);
-      const data=await res.json();
+      const data=await safeJsonParse(res);
       if(data.error){ $('promoCouponList').innerHTML=`<div class="empty-box" style="border:0;box-shadow:none;padding:20px 0;color:var(--pink)">${data.error}</div>`; return; }
       const html=couponListHtml(data.discounts||[]);
       $('promoCouponList').innerHTML=html;
@@ -1847,7 +1880,7 @@
     if(!boundPhone) return;
     try{
       const res=await fetch(`${GAS_URL}?action=getFavoriteAddresses&phone=${encodeURIComponent(boundPhone)}&t=${Date.now()}`);
-      const data=await res.json();
+      const data=await safeJsonParse(res);
       favoriteAddresses=data.list||[];
     }catch(err){ favoriteAddresses=[]; console.warn('常用地址載入失敗：',err); }
     renderFavAddrList();
@@ -1877,7 +1910,7 @@
   async function deleteFavAddr(id){
     try{
       const res=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'deleteFavoriteAddress',data:{id}}),headers:{'Content-Type':'text/plain;charset=utf-8'}});
-      const data=await res.json();
+      const data=await safeJsonParse(res);
       if(!data.success){ toast(data.error||'刪除失敗'); return; }
       toast('已刪除常用地址');
       loadFavoriteAddresses();
@@ -1897,7 +1930,7 @@
     if(!detail){ toast('請輸入詳細地址'); return; }
     try{
       const res=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'addFavoriteAddress',data:{phone:boundPhone,label,city,district,zip,detail}}),headers:{'Content-Type':'text/plain;charset=utf-8'}});
-      const data=await res.json();
+      const data=await safeJsonParse(res);
       if(!data.success){ toast(data.error||'儲存失敗'); return; }
       toast('已儲存常用地址');
       $('favAddrLabel').value=''; $('favAddrDetail').value=''; $('favCitySel').value='';
@@ -1957,7 +1990,7 @@
     $('tripListArea').innerHTML='<div class="empty-box" style="margin-top:20px">載入中…</div>';
     try{
       const res=await fetch(`${GAS_URL}?action=getMemberOverview&phone=${encodeURIComponent(boundPhone)}&lineId=${encodeURIComponent(sysLineId)}&t=${Date.now()}`);
-      const data=await res.json();
+      const data=await safeJsonParse(res);
       if(!data.success){ $('tripListArea').innerHTML=`<div class="empty-box" style="margin-top:20px">${data.error||'查詢失敗'}</div>`; return; }
       realTripOrders=data.orders||[];
       const s=data.stats||{};
@@ -1977,12 +2010,17 @@
     $('tripListArea').innerHTML=list.map(o=>{
       const status=classifyTrip(o);
       const label=status==='ongoing'?'進行中':status==='upcoming'?'即將出發':'已完成';
+      const cancelBtn=status==='upcoming'?`<button type="button" class="secondary-btn" style="margin-top:10px;width:100%" data-cancel-order="${o.orderId}">取消預約</button>`:'';
       return `<div class="trip-card" style="margin-top:16px">
         <div class="trow"><span class="tdate">${o.date} ${o.time}</span><span class="tstatus ${status==='history'?'done':'upcoming'}">${label}</span></div>
         <div class="troute">${o.type}｜${o.route}</div>
         <div class="tid">${o.orderId}｜${o.car||'—'}｜$${(o.amount||0).toLocaleString()}</div>
+        ${cancelBtn}
       </div>`;
     }).join('');
+    $('tripListArea').querySelectorAll('[data-cancel-order]').forEach(btn=>{
+      btn.onclick=()=>openCancelSheet(btn.dataset.cancelOrder);
+    });
   }
   document.querySelectorAll('.tripFilterBtn').forEach(btn=>{
     btn.onclick=()=>{
@@ -1991,7 +2029,49 @@
     };
   });
 
-  /* ---------------- 底部分頁切換（行程／優惠／獎勵／我的為畫面示意，非真實資料） ---------------- */
+  /* ---------------- 取消預約：出發前48小時以上可自行取消，跟正式系統 setupCancelBooking() 邏輯一致 ---------------- */
+  function openCancelSheet(orderId){
+    $('cancelOrderId').value=orderId;
+    const ordererPhoneVal=$('ordererPhone')?$('ordererPhone').value.trim():'';
+    $('cancelPhone').value=ordererPhoneVal||boundPhone||'';
+    $('cancelReason').value='';
+    openSheet('cancelSheet');
+  }
+  $('closeCancelSheet').onclick=()=>closeSheet('cancelSheet');
+  $('confirmCancelBtn').onclick=async()=>{
+    const orderId=$('cancelOrderId').value.trim();
+    const phone=$('cancelPhone').value.trim();
+    const reason=$('cancelReason').value.trim();
+    if(!orderId || phone.replace(/\D/g,'').length<10){ toast('請確認預約編號與原預約聯絡電話'); return; }
+    $('confirmCancelBtn').disabled=true;
+    $('confirmCancelBtn').textContent='處理中...';
+    try{
+      const res=await fetch(GAS_URL,{
+        method:'POST',
+        body:JSON.stringify({action:'customerCancelReservation',data:{reservationId:orderId,phone,lineId:sysLineId,reason}}),
+        headers:{'Content-Type':'text/plain;charset=utf-8'}
+      }).then(r=>safeJsonParse(r));
+      if(res.success){
+        const notice=res.cancelNotice||{};
+        const cancelLineMessage=`安興租車 取消預約通知\n\n單號：${orderId}\n日期：${notice.date||'-'}\n行程：${notice.route||'-'}\n地址：${notice.address||'-'}\n${notice.extraStop?`加點：${notice.extraStop}\n`:''}\n狀態：已取消\n\n此筆預約已完成取消。\n\n如需重新預約，請再次開啟預約系統填寫。\n\n如已付款，請留下原轉帳帳號，將在24小時內完退車資退回。`;
+        if(window.liff && liff.isInClient && liff.isInClient()){ try{ await liff.sendMessages([{type:'text',text:cancelLineMessage}]); }catch(e){} }
+        closeSheet('cancelSheet');
+        toast('已取消預約，取消通知已回傳至 LINE 聊天室');
+        loadRealTrips();
+      }else if(res.needContactService){
+        toast(res.error||'距離出發不到48小時，請聯絡客服協助取消');
+      }else{
+        toast(res.error||'取消失敗，請確認預約編號與電話是否正確');
+      }
+    }catch(err){
+      toast(err.message||'取消失敗，請稍後再試');
+    }finally{
+      $('confirmCancelBtn').disabled=false;
+      $('confirmCancelBtn').textContent='確認自行取消';
+    }
+  };
+
+  /* ---------------- 底部分頁切換（我的頁綁定手機後可看到真實資料） ---------------- */
   document.querySelectorAll('.tabbtn').forEach(btn=>{
     btn.onclick=()=>{
       const tab=btn.dataset.tab;
