@@ -711,7 +711,7 @@
 
 <script>
   const $=id=>document.getElementById(id);
-  const GAS_URL="https://script.google.com/macros/s/AKfycby9KWdatRfDZY5g2DkieUkAhyEJDDCnKcMb_l8o2_J4JCaOtKYfEEkvzk-1sW-oZWIF/exec";
+  const GAS_URL="https://script.google.com/macros/s/AKfycbww3Pr0IcOABPvTteIWHo9j6MWRQvNjpf_MZRE7NgDp3Nt69Upx8VhVnCVMcbUvjJwI/exec";
 
   /* ---------------------------------------------------------------
    * 多管道支援：完全比照正式系統 index.html 的 CHANNEL_CONFIGS + getEntranceChannel()。
@@ -861,13 +861,13 @@
   }
 
   function buildCityAreaOptions(){
-    cityAreaMap=new Map();
+    cityAreaMap=new Map(); // city -> Map(district名稱 -> {district, zip})；用行政區名稱當唯一識別碼，不是郵遞區號
     priceTableData.forEach(r=>{
       if(!r.b) return;
       const {city,district}=splitCityDistrict(r.c);
       if(!cityAreaMap.has(city)) cityAreaMap.set(city,new Map());
       const dMap=cityAreaMap.get(city);
-      if(!dMap.has(r.b)) dMap.set(r.b,district);
+      if(!dMap.has(district)) dMap.set(district,{district,zip:r.b});
     });
     const cityOrder=TW_CITIES.filter(c=>cityAreaMap.has(c));
     const cityOptionsHtml=cityOrder.map(c=>`<option value="${c}">${c}</option>`).join('');
@@ -879,18 +879,31 @@
     $('favDistrictSel').innerHTML='<option value="">鄉鎮市區</option>';
   }
 
+  // 選項的 value 是「郵遞區號::行政區名稱」組合，因為同一個郵遞區號底下可能有好幾個行政區
+  // （例如新竹市東區/北區/香山區都是 300，但價格不一樣），不能只靠郵遞區號當識別碼。
   function populateDistrictSelect(citySelId,districtSelId){
     const city=$(citySelId).value;
     const dSel=$(districtSelId);
     if(!city || !cityAreaMap.has(city)){ dSel.innerHTML='<option value="">鄉鎮市區</option>'; return; }
-    const entries=Array.from(cityAreaMap.get(city).entries()).sort((a,b)=>a[0].localeCompare(b[0]));
-    dSel.innerHTML='<option value="">鄉鎮市區</option>'+entries.map(([zip,district])=>`<option value="${zip}">${district}</option>`).join('');
+    const entries=Array.from(cityAreaMap.get(city).values()).sort((a,b)=>a.zip.localeCompare(b.zip)||a.district.localeCompare(b.district));
+    dSel.innerHTML='<option value="">鄉鎮市區</option>'+entries.map(e=>`<option value="${e.zip}::${e.district}">${e.district}</option>`).join('');
   }
 
-  function lookupFare(zip,airportName,col){
+  function parseDistrictOptionValue(v){
+    const idx=String(v||'').indexOf('::');
+    if(idx<0) return {zip:v||'',district:''};
+    return {zip:v.slice(0,idx),district:v.slice(idx+2)};
+  }
+
+  function lookupFare(zip,district,airportName,col){
     if(!zip||!airportName||!col) return 0;
     const searchAirport=String(airportName).substring(0,2);
-    const row=priceTableData.find(r=>r.a.includes(searchAirport) && r.b===zip);
+    const row=priceTableData.find(r=>{
+      if(!r.a.includes(searchAirport) || r.b!==zip) return false;
+      if(!district) return true; // 沒帶行政區名稱時退回舊行為，盡量不要中斷
+      const {district:rowDistrict}=splitCityDistrict(r.c);
+      return rowDistrict===district;
+    });
     return row ? (row[col]||0) : 0;
   }
 
@@ -990,12 +1003,12 @@
     const eligible=vehicleData.filter(v=>v.ok(s));
     const min=eligible[0]||vehicleData[1];
     if(!vehicleData.find(v=>v.id===selected)?.ok(s))selected=min.id;
-    const zip=$('districtSel').value, ap=airport();
+    const {zip,district}=parseDistrictOptionValue($('districtSel').value), ap=airport();
     $('vehicleList').innerHTML=vehicleData.map(v=>{
       const allowed=v.ok(s),selectedClass=v.id===selected?' selected':'';
       const lock=allowed?'':' locked';
       const tag=!allowed?'目前人數/行李不適用':v.id===min.id?'系統建議':'';
-      const fare=lookupFare(zip,ap,v.col);
+      const fare=lookupFare(zip,district,ap,v.col);
       const price=priceTableStatus==='error'?'客服人工確認':fare?'$'+fare.toLocaleString():'待試算';
       return `<button type="button" class="vehicle${selectedClass}${lock}" data-v="${v.id}" ${allowed?'':'disabled'}>
         <span class="mid"><span class="name">${v.name}${tag?`<span class="tag">${tag}</span>`:''}</span><span class="meta">${v.meta}</span></span>
@@ -1154,12 +1167,13 @@
   }
 
   function calcLegQuote(ctx){
-    const zip = ctx==='_R' ? ($('districtSel_R').value||$('districtSel').value) : $('districtSel').value;
+    const districtRaw = ctx==='_R' ? ($('districtSel_R').value||$('districtSel').value) : $('districtSel').value;
+    const {zip,district}=parseDistrictOptionValue(districtRaw);
     const legMode = ctx==='_R' ? (mode==='send'?'pickup':'send') : mode; // 回程方向預設與去程相反（送機↔接機）
     const dateVal = ctx==='_R' ? $('returnDate').value : $('date').value;
     const timeVal = ctx==='_R' ? $('returnTime').value : $('time').value;
     const v=vehicleData.find(x=>x.id===selected);
-    const fare = v ? lookupFare(zip, airport(), v.col) : 0;
+    const fare = v ? lookupFare(zip, district, airport(), v.col) : 0;
     const pickup = legMode==='pickup' && fare ? 200 : 0;
     const addFee = ctx==='_R' ? ($('addStop_R').checked ? extraStopFeeReturn : 0) : ($('addStop').checked ? extraStopFee : 0);
     const seats=(n('rearSeat'+ctx)+n('forwardSeat'+ctx)+n('booster'+ctx))*200;
@@ -1877,8 +1891,7 @@
     const label=$('favAddrLabel').value.trim()||'常用地址';
     const city=$('favCitySel').value;
     const distSel=$('favDistrictSel');
-    const district=distSel.value?distSel.options[distSel.selectedIndex].textContent:'';
-    const zip=distSel.value;
+    const {zip,district}=parseDistrictOptionValue(distSel.value);
     const detail=$('favAddrDetail').value.trim();
     if(!city||!zip){ toast('請選擇縣市／鄉鎮區域'); return; }
     if(!detail){ toast('請輸入詳細地址'); return; }
@@ -1909,7 +1922,7 @@
           if(!a) return;
           $('citySel').value=a.city;
           populateDistrictSelect('citySel','districtSel');
-          $('districtSel').value=a.zip;
+          $('districtSel').value=`${a.zip}::${a.district}`;
           $('address').value=a.detail;
           body.classList.remove('show');
           update();

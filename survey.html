@@ -283,7 +283,23 @@
     </div>
 
     <script>
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzMLYBvdbo4mkkEUVFcjST44oh7VUXhx7gZjWejm2R8XX549ITaReot0pRAN3mbwA8n/exec';
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbww3Pr0IcOABPvTteIWHo9j6MWRQvNjpf_MZRE7NgDp3Nt69Upx8VhVnCVMcbUvjJwI/exec';
+
+        /**
+         * 安全解析後端回應：GAS 額度不足、逾時、或服務忙碌時，Google 會回一頁 HTML 錯誤頁而不是 JSON，
+         * 直接 r.json() 會丟出 "Unexpected token '<'" 這種看不懂的錯誤。這裡先讀成文字，
+         * 解析失敗就丟出看得懂的訊息。
+         */
+        async function safeJsonParse(r) {
+            const text = await r.text();
+            try {
+                return JSON.parse(text);
+            } catch (err) {
+                console.error("後端回應非 JSON 格式：", text.slice(0, 200));
+                throw new Error("系統忙碌中或連線異常，請稍後再試一次。");
+            }
+        }
+
         const LIFF_IDS = { AS: '2009922945-xkFscb9Q', AZ: '2010218931-9a6Ss9xn' };
         const urlParams = new URLSearchParams(window.location.search);
         const storedToken = sessionStorage.getItem('surveyToken') || '';
@@ -315,7 +331,7 @@
                 const timeoutId = setTimeout(() => controller.abort(), 30000);
                 const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=getSurveyInvitation&token=${encodeURIComponent(tokenParam)}&t=${Date.now()}`, { signal: controller.signal });
                 clearTimeout(timeoutId);
-                const result = await res.json();
+                const result = await safeJsonParse(res);
                 if (!result.success) return showClosedScreen('無法開啟問卷', result.error || '請聯絡客服協助處理。');
                 if (result.submitted) return showClosedScreen('問卷已完成', '此筆行程已完成回饋填寫，謝謝您的支持。');
                 if (result.expired) return showClosedScreen('問卷已截止', '此問卷已超過收到問卷後 3 天的填寫期限。');
@@ -424,7 +440,7 @@
                 };
 
                 fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'submitSurvey', data: formData }) })
-                .then(response => response.json())
+                .then(response => safeJsonParse(response))
                 .then(result => {
                     if(result.success) { showSuccessScreen(result.discountCode, result.expiryDate, result.lineNoticeSent, result.rewardAmount); } 
                     else { alert('系統發生錯誤：' + (result.message || '請稍後再試。')); resetSubmitButton(); }

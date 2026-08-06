@@ -81,7 +81,16 @@
     </div>
     <script>
         const APP_VERSION = "v1.0.34";
-        const GAS_URL = "https://script.google.com/macros/s/AKfycby9KWdatRfDZY5g2DkieUkAhyEJDDCnKcMb_l8o2_J4JCaOtKYfEEkvzk-1sW-oZWIF/exec";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbww3Pr0IcOABPvTteIWHo9j6MWRQvNjpf_MZRE7NgDp3Nt69Upx8VhVnCVMcbUvjJwI/exec";
+
+    async function safeJsonParse(r) {
+      const text = await r.text();
+      try { return JSON.parse(text); }
+      catch (err) {
+        console.error("後端回應非 JSON 格式：", text.slice(0, 200));
+        throw new Error("系統忙碌中或連線異常，請稍後再試一次。");
+      }
+    }
         const token = new URLSearchParams(location.search).get("token") || "";
         let task = null;
         let driver = null;
@@ -115,7 +124,7 @@
             if (!token) return showClosed("無法開啟任務", "此臨時派遣網址不完整，請向調度重新索取。");
             try {
                 const response = await fetch(`${GAS_URL}?action=getTempDriverTask&token=${encodeURIComponent(token)}&t=${Date.now()}`);
-                const result = await response.json();
+                const result = await safeJsonParse(response);
                 if (!result.success) return showClosed("任務連結已失效", result.error || "請聯絡調度。");
                 task = result.task;
                 driver = result.driver;
@@ -292,7 +301,7 @@
                 if (status !== "已收單") gps = await requireGPS();
                 Swal.fire({ title:"回報中", allowOutsideClick:false, didOpen:()=>Swal.showLoading() });
                 const response = await fetch(GAS_URL, { method:"POST", headers:{ "Content-Type":"text/plain;charset=utf-8" }, body:JSON.stringify({ action:"tempDriverUpdateStatus", data:{ token, orderId:task.orderId, status, lat:gps.lat, lng:gps.lng, signatureDataUrl } }) });
-                const result = await response.json();
+                const result = await safeJsonParse(response);
                 if (!result.success) throw new Error(result.error || "回報失敗");
                 if (status === "已結案") {
                     closeSignature();
@@ -347,7 +356,7 @@
             });
             if (!result.isConfirmed) return;
             const response = await fetch(GAS_URL, { method:"POST", body:JSON.stringify({ action:"tempDriverReportAnomaly", data:{ token, orderId:task.orderId, type:result.value.type, note:result.value.note } }) });
-            const data = await response.json();
+            const data = await safeJsonParse(response);
             data.success ? Swal.fire("已通報", "調度中心已收到異況回報。", "success") : Swal.fire("通報失敗", data.error || "請直接致電調度。", "error");
         }
         function initCanvas() {

@@ -577,7 +577,16 @@
   </dialog>
 
   <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycby9KWdatRfDZY5g2DkieUkAhyEJDDCnKcMb_l8o2_J4JCaOtKYfEEkvzk-1sW-oZWIF/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbww3Pr0IcOABPvTteIWHo9j6MWRQvNjpf_MZRE7NgDp3Nt69Upx8VhVnCVMcbUvjJwI/exec";
+
+    async function safeJsonParse(r) {
+      const text = await r.text();
+      try { return JSON.parse(text); }
+      catch (err) {
+        console.error("後端回應非 JSON 格式：", text.slice(0, 200));
+        throw new Error("系統忙碌中或連線異常，請稍後再試一次。");
+      }
+    }
     const state = {
       current: new Date(),
       eventsByDate: {}
@@ -650,7 +659,7 @@
 
       try {
         const url = `${GAS_URL}?action=getCalendarMonthEvents&year=${year}&month=${month}&t=${Date.now()}`;
-        const res = await fetch(url).then(r => r.json());
+        const res = await fetch(url).then(r => safeJsonParse(r));
         if (!res.success) throw new Error(res.error || "讀取失敗");
         
         state.eventsByDate = (res.events || []).reduce((acc, item) => {

@@ -205,8 +205,8 @@
 
     <form id="manualForm">
       <section class="panel">
-        <div class="section-title">來源與固定客戶</div>
-    <div class="grid-form">
+        <div class="section-title">訂單來源</div>
+        <div class="grid-form">
           <div>
             <label for="source">本次預約來源</label>
             <select id="source" name="source">
@@ -225,43 +225,31 @@
             <label for="customSource">自訂來源</label>
             <input id="customSource" name="customSource" placeholder="例如：某公司、某店家">
           </div>
-          <div class="full">
-            <div class="hint-card">
-              <div class="section-title !text-[14px]">客人折扣碼</div>
-              <p class="text-sm muted mb-2">輸入客人提供的折扣碼，系統會用客人電話核對並帶入金額。</p>
-              <div class="grid-form">
-                <div>
-                  <label for="customerDiscountCode">折扣碼</label>
-                  <input id="customerDiscountCode" name="customerDiscountCode" placeholder="例如：生日優惠、老客戶券">
-                </div>
-                <div>
-                  <label for="customerDiscountTarget">套用車趟</label>
-                  <select id="customerDiscountTarget" name="customerDiscountTarget">
-                    <option value="outbound">去程</option>
-                    <option value="return">回程</option>
-                  </select>
-                </div>
-              </div>
-              <div class="flex flex-wrap gap-2 mt-2">
-                <button type="button" class="secondary-btn" id="checkCustomerDiscountBtn">查詢套用折扣碼</button>
-                <button type="button" class="secondary-btn" id="clearCustomerDiscountBtn">清除折扣碼</button>
-              </div>
-              <div id="customerDiscountStatus" class="muted text-sm mt-2"></div>
-            </div>
-          </div>
-          <div class="full">
-            <label for="templateSelect">固定客戶範本</label>
-            <input id="templateSearch" type="search" placeholder="搜尋姓名、電話、來源或客戶代碼，例如：陳" class="mb-2">
-            <select id="templateSourceFilter" class="mb-2" aria-label="固定客戶範本來源篩選">
-              <option value="">全部來源</option>
-            </select>
-            <div class="hint !mt-0 mb-2">這裡只用來篩選固定客戶範本，不會寫入預約單。</div>
-            <select id="templateSelect">
-              <option value="">手動填寫，或選擇固定客戶</option>
-            </select>
-            <div id="templateHint" class="hint">讀取固定客戶中...</div>
-          </div>
         </div>
+      </section>
+
+      <section class="panel">
+        <div class="section-title">固定客戶範本</div>
+        <label for="templateSelect">選擇範本</label>
+        <input id="templateSearch" type="search" placeholder="搜尋姓名、電話、來源或客戶代碼，例如：陳" class="mb-2">
+        <select id="templateSourceFilter" class="mb-2" aria-label="固定客戶範本來源篩選">
+          <option value="">全部來源</option>
+        </select>
+        <div class="hint !mt-0 mb-2">這裡只用來篩選固定客戶範本，不會寫入預約單。</div>
+        <select id="templateSelect">
+          <option value="">手動填寫，或選擇固定客戶</option>
+        </select>
+        <div id="templateHint" class="hint">讀取固定客戶中...</div>
+      </section>
+
+      <section class="panel">
+        <div class="section-title">折扣項目</div>
+        <p class="hint !mt-0 mb-2">可以疊加多筆折扣（例如：預約來回優惠、客服折讓、新客優惠…），全部會加總從車資扣除。</p>
+        <button type="button" class="secondary-btn" id="lookupPhoneDiscountsBtn">查詢此電話所有折扣碼</button>
+        <div id="phoneDiscountResults" class="hidden mt-2"></div>
+        <div id="discountItemsList" class="mt-2"></div>
+        <button type="button" class="secondary-btn mt-2" id="addDiscountItemBtn">＋ 新增折扣項目</button>
+        <div class="hint mt-2">折扣總額：<b id="discountTotalDisplay">$0</b></div>
       </section>
 
       <section class="panel">
@@ -283,9 +271,10 @@
             <select id="serviceType" name="serviceType" required>
               <option value="送機">送機</option>
               <option value="接機">接機</option>
+              <option value="單程">單程（不經機場的定點接送）</option>
             </select>
           </div>
-          <div>
+          <div id="airportWrap">
             <label for="airport">機場</label>
             <select id="airport" name="airport" required>
               <option value="桃園機場">桃園機場</option>
@@ -304,7 +293,7 @@
               <select id="rideMinute" aria-label="去程分鐘"></select>
             </div>
           </div>
-          <div>
+          <div id="flightNumberWrap">
             <label for="flightNumber">航班編號</label>
             <input id="flightNumber" name="flightNumber" placeholder="例如 BR7、CI11" style="text-transform: uppercase;">
           </div>
@@ -312,29 +301,21 @@
             <label for="fare">車資金額</label>
             <input id="fare" name="fare" type="number" inputmode="numeric" min="0" required placeholder="由客服手動輸入">
           </div>
-          <div>
-            <label for="manualDiscountAmount">客服折讓金額</label>
-            <input id="manualDiscountAmount" name="manualDiscountAmount" type="number" inputmode="numeric" min="0" placeholder="沒有折讓可留空">
-          </div>
-          <div>
-            <label for="manualDiscountLabel">折讓名稱</label>
-            <input id="manualDiscountLabel" name="manualDiscountLabel" placeholder="例如 客服折讓、熟客優惠">
-          </div>
-          <div>
-            <label for="manualDiscountTarget">折讓套用</label>
-            <select id="manualDiscountTarget" name="manualDiscountTarget">
-              <option value="outbound">去程</option>
-              <option value="return">回程</option>
-              <option value="both">去回程各折一次</option>
-            </select>
-          </div>
-          <div class="full">
+          <div class="full" id="airportAddressWrap">
             <label for="address">接送地址</label>
-            <input id="address" name="address" required placeholder="完整地址">
+            <input id="address" name="address" placeholder="完整地址">
           </div>
-          <div class="full">
-            <label for="extraLocation">加點</label>
-            <input id="extraLocation" name="extraLocation" placeholder="沒有請留空">
+          <div class="full hidden" id="oneWayAddressWrap">
+            <label for="oneWayStart">起點地址</label>
+            <input id="oneWayStart" placeholder="上車地點完整地址">
+            <label for="oneWayEnd" class="mt-2">終點地址</label>
+            <input id="oneWayEnd" placeholder="下車地點完整地址">
+          </div>
+          <div class="full" id="extraLocationWrap">
+            <label id="extraLocationLabel">加點</label>
+            <div class="hint !mt-0 mb-1" id="extraLocationHint">客服有最大權限，可以加任意站數，沒有請留空。</div>
+            <div id="extraStopsList"></div>
+            <button type="button" class="secondary-btn mt-1" id="addExtraStopBtn">＋ 新增加點</button>
           </div>
           <div class="full">
             <label class="pill">
@@ -452,12 +433,14 @@
             <input id="seatDetails" name="seatDetails" value="無">
           </div>
           <div>
-            <label for="signboard">舉牌</label>
-            <input id="signboard" name="signboard" list="signboardOptions" value="無" placeholder="無 / 需要 / 舉牌內容">
-            <datalist id="signboardOptions">
-              <option value="無"></option>
-              <option value="需要"></option>
-            </datalist>
+            <label class="pill">
+              <input id="signboardNeeded" type="checkbox">
+              需要舉牌
+            </label>
+          </div>
+          <div id="signboardContentWrap" class="hidden">
+            <label for="signboardContent">舉牌內容</label>
+            <input id="signboardContent" placeholder="例如：王小明先生">
           </div>
           <div class="full">
             <label for="remarks">備註需求</label>
@@ -499,7 +482,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.47";
+    const APP_VERSION = "manual-booking-v1.0.48";
     const SOURCE_LABELS = {
       AS: "AS 安興",
       AZ: "AZ 安興竹北",
@@ -509,10 +492,26 @@
       "遠貿": "遠貿 UM",
       "大台灣": "大台灣 TW"
     };
-    const GAS_URL = "https://script.google.com/macros/s/AKfycby9KWdatRfDZY5g2DkieUkAhyEJDDCnKcMb_l8o2_J4JCaOtKYfEEkvzk-1sW-oZWIF/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbww3Pr0IcOABPvTteIWHo9j6MWRQvNjpf_MZRE7NgDp3Nt69Upx8VhVnCVMcbUvjJwI/exec";
+
+    /**
+     * 安全解析後端回應：GAS 額度不足、逾時、或服務忙碌時，Google 會回一頁 HTML 錯誤頁而不是 JSON，
+     * 直接 r.json() 會丟出 "Unexpected token '<'" 這種看不懂的錯誤，客服看到會誤以為沒建立成功而重按，
+     * 但後端可能其實已經寫入成功了。這裡先讀成文字，解析失敗就丟出看得懂的訊息。
+     */
+    async function safeJsonParse(r) {
+      const text = await r.text();
+      try {
+        return JSON.parse(text);
+      } catch (err) {
+        console.error("後端回應非 JSON 格式（可能是 Google 額度不足或服務忙碌），原始內容前200字：", text.slice(0, 200));
+        throw new Error("系統忙碌中或連線異常。⚠️ 請先去試算表確認剛才這筆是否已經建立成功，不要直接重按「建立預約」，避免建立出兩筆一樣的訂單。");
+      }
+    }
     let templates = [];
     let manualSources = [];
-    let validatedCustomerDiscount = null;
+    let discountItems = [];
+    let extraStops = [];
 
     const $ = id => document.getElementById(id);
     const money = v => Number(String(v || "").replace(/[^\d.-]/g, "")) || 0;
@@ -523,28 +522,28 @@
       initTimeSelects();
       $("source").addEventListener("change", handleSourceChange);
       $("hasReturn").addEventListener("change", handleReturnToggle);
-      $("serviceType").addEventListener("change", syncReturnType);
+      $("serviceType").addEventListener("change", () => { syncReturnType(); toggleServiceTypeFields(); updateSummary(); });
       $("paymentMethod").addEventListener("change", toggleManualCashFields);
       $("templateSelect").addEventListener("change", applyTemplate);
       $("templateSearch").addEventListener("input", renderTemplateOptions);
       $("templateSourceFilter").addEventListener("change", renderTemplateOptions);
       ["flightNumber", "returnFlightNumber"].forEach(id => $(id).addEventListener("input", forceUppercase));
       $("phone").addEventListener("input", formatPhoneInput);
-      $("checkCustomerDiscountBtn").addEventListener("click", validateCustomerDiscountCode);
-      $("clearCustomerDiscountBtn").addEventListener("click", clearCustomerDiscountCode);
-      $("customerDiscountCode").addEventListener("input", () => {
-        clearValidatedCustomerDiscountOnly();
+      $("lookupPhoneDiscountsBtn").addEventListener("click", lookupPhoneDiscounts);
+      $("addDiscountItemBtn").addEventListener("click", () => addDiscountItem());
+      $("addExtraStopBtn").addEventListener("click", () => addExtraStop());
+      $("signboardNeeded").addEventListener("change", () => {
+        $("signboardContentWrap").classList.toggle("hidden", !$("signboardNeeded").checked);
         updateSummary();
       });
-      $("customerDiscountTarget").addEventListener("change", () => {
-        clearValidatedCustomerDiscountOnly();
-        updateSummary();
-      });
-      ["source", "customSource", "serviceType", "rideDate", "rideHour", "rideMinute", "fare", "manualCashCollected", "returnManualCashCollected", "manualDiscountAmount", "manualDiscountTarget", "hasReturn", "returnHour", "returnMinute", "returnFare"].forEach(id => {
+      ["source", "customSource", "serviceType", "rideDate", "rideHour", "rideMinute", "fare", "manualCashCollected", "returnManualCashCollected", "hasReturn", "returnHour", "returnMinute", "returnFare", "oneWayStart", "oneWayEnd"].forEach(id => {
         const el = $(id);
         if (el) el.addEventListener("input", updateSummary);
         if (el) el.addEventListener("change", updateSummary);
       });
+      toggleServiceTypeFields();
+      renderDiscountItems();
+      renderExtraStops();
       loadTemplates();
       toggleManualCashFields();
       updateSummary();
@@ -552,10 +551,10 @@
 
     async function loadTemplates() {
       try {
-        const data = await fetch(`${GAS_URL}?action=getManualBookingTemplates&t=${Date.now()}`).then(r => r.json());
+        const data = await fetch(`${GAS_URL}?action=getManualBookingTemplates&t=${Date.now()}`).then(r => safeJsonParse(r));
         let setupCreated = false;
         if (data && data.success && data.sheetExists === false) {
-          const setup = await fetch(`${GAS_URL}?action=setupManualCustomerSheet&t=${Date.now()}`).then(r => r.json());
+          const setup = await fetch(`${GAS_URL}?action=setupManualCustomerSheet&t=${Date.now()}`).then(r => safeJsonParse(r));
           if (setup.success) {
             setupCreated = true;
             data.suggestedHeaders = setup.headers || data.suggestedHeaders;
@@ -583,22 +582,28 @@
       const known = knownSources();
       setValue("source", known.includes(t.source) ? t.source : (t.source ? "其他" : $("source").value));
       setValue("customSource", known.includes(t.source) ? "" : t.source);
-      validatedCustomerDiscount = null;
-      setValue("customerDiscountCode", "");
-      setValue("customerDiscountTarget", "outbound");
-      updateCustomerDiscountStatus("");
+      discountItems = [];
+      renderDiscountItems();
+      $("phoneDiscountResults").classList.add("hidden");
+      $("phoneDiscountResults").innerHTML = "";
       handleSourceChange();
       setValue("serviceType", normalizeServiceType(t.serviceType) || "送機");
+      toggleServiceTypeFields();
       setValue("airport", t.airport || "桃園機場");
       setValue("address", t.address);
-      setValue("extraLocation", t.extraLocation);
+      extraStops = String(t.extraLocation || "").split(/\n|[；;]/).map(s => s.trim()).filter(Boolean);
+      renderExtraStops();
       setValue("customerName", t.name);
       setValue("phone", formatPhoneNumber(t.phone));
       setValue("carType", t.carType || "小車");
       setPaxFieldsFromText(t.paxCount || "1大 0中 0小");
       setLuggageFieldsFromText(t.luggageCount || "0大 0登機");
       setValue("seatDetails", t.seatDetails || "無");
-      setValue("signboard", t.signboard || "無");
+      const templateSignboard = String(t.signboard || "無").trim();
+      const signboardOn = templateSignboard && templateSignboard !== "無";
+      $("signboardNeeded").checked = signboardOn;
+      $("signboardContentWrap").classList.toggle("hidden", !signboardOn);
+      setValue("signboardContent", signboardOn && templateSignboard !== "需要" ? templateSignboard : "");
       setValue("paymentMethod", t.paymentMethod || "現金");
       setValue("fare", money(t.fare) || "");
       setValue("remarks", t.remarks);
@@ -825,9 +830,18 @@
     }
 
     function parseAirport(text) {
+      const lines = String(text || "").split(/\n+/).map(line => line.trim()).filter(Boolean);
+      // 優先找「接送機場：桃園機場」這種有明確標籤的那一行，避免被地址裡的縣市名稱（例如「台中市大里區」）誤判
+      const labeled = parseLabeledValue(lines, ["接送機場", "機場", "起降機場"]);
+      if (labeled) {
+        if (/松山/.test(labeled)) return "松山機場";
+        if (/台中|臺中/.test(labeled)) return "台中機場";
+        if (/桃園|TPE|T1|T2/i.test(labeled)) return "桃園機場";
+      }
+      // 找不到標籤才退回全文掃描；桃園機場的判斷條件比較獨特（第一/第二航廈），放前面比較不容易被地址誤觸
+      if (/桃園|TPE|第一航廈|第二航廈|T1|T2/i.test(text)) return "桃園機場";
       if (/松山/.test(text)) return "松山機場";
       if (/台中|臺中/.test(text)) return "台中機場";
-      if (/桃園|TPE|第一航廈|第二航廈|T1|T2/i.test(text)) return "桃園機場";
       return "";
     }
 
@@ -855,10 +869,30 @@
       return "";
     }
 
+    function findAllLabeledAddresses(lines) {
+      const labels = ["地址", "地點", "接送地址", "上車地址", "下車地址"];
+      const sortedLabels = [...labels].sort((a, b) => b.length - a.length);
+      const pattern = new RegExp(`^(${sortedLabels.map(escapeRegExp).join("|")})\\s*(?:[:：]|\\s+)?\\s*(.*)$`);
+      const found = [];
+      for (let i = 0; i < lines.length; i++) {
+        const normalizedLine = String(lines[i] || "").replace(/^[\s．。・･▪︎▪•*●○\-—–＿▌]+/, "").trim();
+        const match = normalizedLine.match(pattern);
+        if (!match) continue;
+        if (match[2]) { found.push(match[2]); continue; }
+        const nextLine = String(lines[i + 1] || "").replace(/^[\s．。・･▪︎▪•*●○\-—–＿▌]+/, "").trim();
+        if (nextLine && !/^(預約資訊|乘車資訊|費用資訊|注意事項|其他說明|[-─━▂]+)$/.test(nextLine)) found.push(nextLine);
+      }
+      return found.map(v => trimAddressTail(cleanParsedValue(v))).filter(Boolean);
+    }
+
     function parseExtraLocation(lines) {
       const value = parseLabeledValue(lines, ["加點地址", "加點", "停靠點"]);
-      if (!value || /^(無|沒有|不用|否|N\/A|-)$/.test(value)) return "";
-      return trimAddressTail(value);
+      if (value && !/^(無|沒有|不用|否|N\/A|-)$/.test(value)) return trimAddressTail(value);
+      // 沒有明確標示「加點」的話，改看有沒有出現第二個「地址：」——常見情境是「再送OOO / 地址：...」這種多站行程，
+      // 第一個地址已經被主地址欄位吃掉了，第二個地址就當成加點站。
+      const allAddresses = findAllLabeledAddresses(lines);
+      if (allAddresses.length >= 2) return allAddresses[1];
+      return "";
     }
 
     function parseCarType(text, lines) {
@@ -953,9 +987,13 @@
     }
 
     function parseFareText(text) {
-      const match = String(text || "").match(/(?:費用|車資|收現|轉帳)\s*[:：]?\s*\$?\s*(\d{3,5})(?:\s*元)?|\$\s*(\d{3,5})/);
-      if (!match) return "";
-      return match[1] || match[2] || "";
+      const clean = String(text || "");
+      // 「車資」「費用」後面允許中間夾雜「總計」「合計」「小計」這類字，數字部分也要能吃掉千分位逗號（例如 3,900）
+      const labeledMatch = clean.match(/(?:費用|車資|收現|轉帳)[^\d\n]{0,6}\$?\s*(\d{1,3}(?:,\d{3})*|\d{3,5})(?:\s*元)?/);
+      if (labeledMatch) return (labeledMatch[1] || "").replace(/,/g, "");
+      const dollarMatch = clean.match(/\$\s*(\d{1,3}(?:,\d{3})*|\d{3,5})/);
+      if (dollarMatch) return (dollarMatch[1] || "").replace(/,/g, "");
+      return "";
     }
 
     function parseRemarkText(lines) {
@@ -1009,34 +1047,152 @@
       updateSummary();
     }
 
+    function toggleServiceTypeFields() {
+      const isOneWay = $("serviceType").value === "單程";
+      $("airportWrap").classList.toggle("hidden", isOneWay);
+      $("flightNumberWrap").classList.toggle("hidden", isOneWay);
+      $("airportAddressWrap").classList.toggle("hidden", isOneWay);
+      $("oneWayAddressWrap").classList.toggle("hidden", !isOneWay);
+      $("airport").required = !isOneWay;
+      $("address").required = !isOneWay;
+      $("oneWayStart").required = isOneWay;
+      $("oneWayEnd").required = isOneWay;
+      // 加點欄位兩種情境都會用到，只是意義不同：機場行程是「額外繞路加收費的站」，
+      // 單程是「起點到終點中間的停靠站」，跟既有的 buildGeneralRouteLines_ 支援一致
+      $("extraLocationLabel").textContent = isOneWay ? "中途停靠站（可留空，客服可自行加任意站數）" : "加點（客服可自行加任意站數）";
+      $("extraLocationHint").textContent = isOneWay ? "這裡不影響車資，純粹是路線上會停靠的地點，會顯示在卡片行程裡。" : "客服有最大權限，可以加任意站數，沒有請留空。";
+      // 單程沒有機場方向可以判斷送機/接機，回程互換規則對它沒有意義，直接停用同時預約回程
+      $("hasReturn").disabled = isOneWay;
+      if (isOneWay && $("hasReturn").checked) { $("hasReturn").checked = false; handleReturnToggle(); }
+    }
+
+    /* ---------------- 加點站清單：跟折扣項目一樣點「新增」才加一筆，不限制數量 ---------------- */
+    function renderExtraStops() {
+      const wrap = $("extraStopsList");
+      if (!extraStops.length) {
+        wrap.innerHTML = '<div class="hint !mt-0">尚未加入任何加點站</div>';
+        return;
+      }
+      wrap.innerHTML = extraStops.map((stop, idx) => `
+        <div class="grid grid-cols-[1fr_36px] gap-2 items-center mt-2">
+          <input type="text" value="${escapeHtml(stop)}" data-idx="${idx}" class="extra-stop-field" placeholder="加點地址">
+          <button type="button" class="secondary-btn !min-h-[36px] !px-0" data-remove-stop-idx="${idx}" aria-label="刪除">✕</button>
+        </div>`).join("");
+      wrap.querySelectorAll(".extra-stop-field").forEach(el => {
+        el.addEventListener("input", () => { extraStops[Number(el.dataset.idx)] = el.value; updateSummary(); });
+      });
+      wrap.querySelectorAll("[data-remove-stop-idx]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          extraStops.splice(Number(btn.dataset.removeStopIdx), 1);
+          renderExtraStops();
+          updateSummary();
+        });
+      });
+    }
+
+    function addExtraStop(value = "") {
+      extraStops.push(value);
+      renderExtraStops();
+      updateSummary();
+    }
+
+    function collectExtraLocationText() {
+      return extraStops.map(s => s.trim()).filter(Boolean).join("\n");
+    }
+
+    /* ---------------- 折扣項目清單：可疊加多筆，取代原本「一個折扣碼＋一個客服折讓」的寫死欄位 ---------------- */
+    function renderDiscountItems() {
+      const wrap = $("discountItemsList");
+      if (!discountItems.length) {
+        wrap.innerHTML = '<div class="hint !mt-0">尚未加入任何折扣項目</div>';
+      } else {
+        wrap.innerHTML = discountItems.map((item, idx) => `
+          <div class="grid grid-cols-[1fr_100px_130px_36px] gap-2 items-center mt-2">
+            <input type="text" value="${escapeHtml(item.label)}" data-idx="${idx}" data-field="label" class="discount-field" placeholder="名稱，例如 客服折讓">
+            <input type="number" min="0" value="${item.amount || ""}" data-idx="${idx}" data-field="amount" class="discount-field" placeholder="金額">
+            <select data-idx="${idx}" data-field="target" class="discount-field">
+              <option value="outbound" ${item.target === "outbound" ? "selected" : ""}>去程</option>
+              <option value="return" ${item.target === "return" ? "selected" : ""}>回程</option>
+              <option value="both" ${item.target === "both" ? "selected" : ""}>去回程各扣</option>
+            </select>
+            <button type="button" class="secondary-btn !min-h-[36px] !px-0" data-remove-idx="${idx}" aria-label="刪除">✕</button>
+          </div>`).join("");
+        wrap.querySelectorAll(".discount-field").forEach(el => {
+          el.addEventListener("input", () => {
+            const idx = Number(el.dataset.idx), field = el.dataset.field;
+            discountItems[idx][field] = field === "amount" ? money(el.value) : el.value;
+            updateDiscountTotalDisplay();
+            updateSummary();
+          });
+          el.addEventListener("change", () => {
+            const idx = Number(el.dataset.idx), field = el.dataset.field;
+            discountItems[idx][field] = field === "amount" ? money(el.value) : el.value;
+            updateDiscountTotalDisplay();
+            updateSummary();
+          });
+        });
+        wrap.querySelectorAll("[data-remove-idx]").forEach(btn => {
+          btn.addEventListener("click", () => {
+            discountItems.splice(Number(btn.dataset.removeIdx), 1);
+            renderDiscountItems();
+            updateSummary();
+          });
+        });
+      }
+      updateDiscountTotalDisplay();
+    }
+
+    function updateDiscountTotalDisplay() {
+      const total = discountItems.reduce((sum, item) => sum + (money(item.amount) || 0), 0);
+      $("discountTotalDisplay").textContent = `$${total.toLocaleString()}`;
+    }
+
+    function addDiscountItem(label = "", amount = 0, target = "outbound") {
+      discountItems.push({ label, amount, target });
+      renderDiscountItems();
+      updateSummary();
+    }
+
+    async function lookupPhoneDiscounts() {
+      const phone = formatPhoneNumber($("phone").value).replace(/\D/g, "");
+      const area = $("phoneDiscountResults");
+      area.classList.remove("hidden");
+      if (!phone) { area.innerHTML = '<div class="hint !mt-0" style="color:#b91c1c">請先輸入客人電話</div>'; return; }
+      area.innerHTML = '<div class="hint !mt-0">查詢中...</div>';
+      try {
+        const res = await fetch(`${GAS_URL}?action=getUserDiscounts&phone=${encodeURIComponent(phone)}&t=${Date.now()}`).then(r => safeJsonParse(r));
+        if (res.error) { area.innerHTML = `<div class="hint !mt-0" style="color:#b91c1c">${escapeHtml(res.error)}</div>`; return; }
+        const list = res.discounts || [];
+        if (!list.length) { area.innerHTML = '<div class="hint !mt-0">這支電話目前沒有查到可用折扣碼</div>'; return; }
+        area.innerHTML = `<div class="hint !mt-0 mb-1">找到 ${list.length} 筆，點選加入折扣項目：</div>` +
+          list.map(c => `<button type="button" class="secondary-btn !min-h-[36px] mr-2 mb-2" data-add-code="${escapeHtml(c.code)}" data-add-amount="${money(c.amount)}">${escapeHtml(c.code)}（-$${money(c.amount).toLocaleString()}）</button>`).join("");
+        area.querySelectorAll("[data-add-code]").forEach(btn => {
+          btn.addEventListener("click", () => addDiscountItem(`折扣碼(${btn.dataset.addCode})`, Number(btn.dataset.addAmount) || 0, "outbound"));
+        });
+      } catch (err) {
+        area.innerHTML = `<div class="hint !mt-0" style="color:#b91c1c">${escapeHtml(err.message || "查詢失敗，請稍後再試")}</div>`;
+      }
+    }
+
     function currentSource() {
       return $("source").value === "其他" ? $("customSource").value.trim() : $("source").value;
     }
 
     function collectPayload() {
-      const customerDiscountCode = $("customerDiscountCode").value.trim();
-      const couponPhone = formatPhoneNumber($("phone").value).replace(/\D/g, "");
-      const couponValid = validatedCustomerDiscount
-        && String(validatedCustomerDiscount.code || "").toUpperCase() === customerDiscountCode.toUpperCase()
-        && String(validatedCustomerDiscount.phone || "") === couponPhone;
+      const isOneWay = $("serviceType").value === "單程";
+      const signboardNeeded = $("signboardNeeded").checked;
       return {
         source: currentSource(),
         templateCode: selectedTemplateCode(),
         serviceType: $("serviceType").value,
-        airport: $("airport").value,
+        airport: isOneWay ? $("oneWayEnd").value.trim() : $("airport").value,
         rideDate: $("rideDate").value,
         rideTime: buildTime("ride"),
-        flightNumber: $("flightNumber").value.trim().toUpperCase(),
-        address: $("address").value.trim(),
-        extraLocation: $("extraLocation").value.trim(),
+        flightNumber: isOneWay ? "" : $("flightNumber").value.trim().toUpperCase(),
+        address: isOneWay ? $("oneWayStart").value.trim() : $("address").value.trim(),
+        extraLocation: collectExtraLocationText(),
         fare: $("fare").value,
-        manualDiscountAmount: $("manualDiscountAmount").value,
-        manualDiscountLabel: $("manualDiscountLabel").value.trim(),
-        manualDiscountTarget: $("manualDiscountTarget").value,
-        customerDiscountCode,
-        customerDiscountTarget: $("customerDiscountTarget").value,
-        customerDiscountAmount: couponValid ? validatedCustomerDiscount.amount : "",
-        customerDiscountLabel: couponValid ? validatedCustomerDiscount.label : "",
+        discountItemsJson: JSON.stringify(discountItems.filter(item => money(item.amount) > 0 && item.label.trim())),
         hasReturn: $("hasReturn").checked,
         returnServiceType: $("returnServiceType").value,
         returnDate: $("returnDate").value,
@@ -1054,7 +1210,7 @@
         luggageCount: buildLuggageCount(),
         sportLuggage: "無",
         seatDetails: $("seatDetails").value.trim() || "無",
-        signboard: $("signboard").value,
+        signboard: signboardNeeded ? ($("signboardContent").value.trim() || "需要") : "無",
         remarks: $("remarks").value.trim(),
         appVersion: APP_VERSION
       };
@@ -1120,100 +1276,22 @@
       return `${$("checkedLuggageCount").value}大 ${$("carryLuggageCount").value}登機`;
     }
 
-    function getManualDiscountForLeg(p, leg) {
-      const amount = money(p.manualDiscountAmount);
-      if (!amount) return 0;
-      const target = p.manualDiscountTarget || "outbound";
-      if (target === "both") return amount;
-      if (target === "return") return leg === "return" ? amount : 0;
-      return leg === "outbound" ? amount : 0;
-    }
-
-    function getCustomerCouponDiscountForLeg(p, leg) {
-      const amount = money(p.customerDiscountAmount);
-      if (!amount) return 0;
-      const target = p.customerDiscountTarget || "outbound";
-      if (target === "return") return leg === "return" ? amount : 0;
-      return leg === "outbound" ? amount : 0;
+    function getDiscountForLeg(p, leg) {
+      let items = [];
+      try { items = JSON.parse(p.discountItemsJson || "[]"); } catch (e) { items = []; }
+      return items.reduce((sum, item) => {
+        const amount = money(item.amount);
+        if (!amount) return sum;
+        const target = item.target || "outbound";
+        if (target === "both") return sum + amount;
+        if (target === "return") return leg === "return" ? sum + amount : sum;
+        return leg === "outbound" ? sum + amount : sum;
+      }, 0);
     }
 
     function getManualTripFare(p, leg) {
       const rawFare = leg === "return" ? money(p.returnFare || p.fare) : money(p.fare);
-      return Math.max(0, rawFare - getManualDiscountForLeg(p, leg) - getCustomerCouponDiscountForLeg(p, leg));
-    }
-
-    function updateCustomerDiscountStatus(message, type = "") {
-      const el = $("customerDiscountStatus");
-      if (!el) return;
-      el.textContent = message || "";
-      el.style.color = type === "error" ? "#b91c1c" : type === "success" ? "#553f62" : "#7A6A82";
-    }
-
-    function clearValidatedCustomerDiscountOnly() {
-      validatedCustomerDiscount = null;
-      updateCustomerDiscountStatus("");
-    }
-
-    function clearCustomerDiscountCode() {
-      const codeEl = $("customerDiscountCode");
-      if (codeEl) codeEl.value = "";
-      const targetEl = $("customerDiscountTarget");
-      if (targetEl) targetEl.value = "outbound";
-      clearValidatedCustomerDiscountOnly();
-      updateSummary();
-    }
-
-    async function validateCustomerDiscountCode() {
-      const code = $("customerDiscountCode").value.trim();
-      const phone = formatPhoneNumber($("phone").value);
-      const phoneDigits = phone.replace(/\D/g, "");
-      if (!phoneDigits) {
-        Swal.fire("請先輸入電話", "折扣碼需要對應客人的聯絡電話。", "warning");
-        return;
-      }
-      if (!code) {
-        Swal.fire("請輸入折扣碼", "", "warning");
-        return;
-      }
-      const payload = collectPayload();
-      updateCustomerDiscountStatus("查詢中...");
-      try {
-        const res = await fetch(GAS_URL, {
-          method: "POST",
-          body: JSON.stringify({
-            action: "validateManualCustomerDiscountCode",
-            data: {
-              phone,
-              discountCode: code,
-              source: payload.source,
-              carType: payload.carType,
-              hasReturn: payload.hasReturn,
-              target: $("customerDiscountTarget").value
-            }
-          }),
-          headers: { "Content-Type": "text/plain;charset=utf-8" }
-        }).then(r => r.json());
-        if (!res.success) {
-          validatedCustomerDiscount = null;
-          updateCustomerDiscountStatus(res.error || "折扣碼不可用", "error");
-          Swal.fire("折扣碼不可用", res.error || "請確認電話與折扣碼是否正確。", "warning");
-          updateSummary();
-          return;
-        }
-        validatedCustomerDiscount = {
-          code: res.code || code,
-          amount: money(res.amount),
-          label: res.label || res.name || "",
-          phone: phoneDigits
-        };
-        updateCustomerDiscountStatus(`已套用 ${validatedCustomerDiscount.code} -$${validatedCustomerDiscount.amount.toLocaleString()}`, "success");
-        updateSummary();
-      } catch (err) {
-        validatedCustomerDiscount = null;
-        updateCustomerDiscountStatus("查詢失敗", "error");
-        Swal.fire("查詢失敗", err.message || "請稍後再試。", "error");
-        updateSummary();
-      }
+      return Math.max(0, rawFare - getDiscountForLeg(p, leg));
     }
 
     function buildTime(prefix) {
@@ -1249,12 +1327,14 @@
 
     function validatePayload(p) {
       const errors = [];
+      const isOneWay = p.serviceType === "單程";
       if (!p.source) errors.push("來源");
       if (!p.customerName) errors.push("乘客姓名");
       if (!p.phone.replace(/\D/g, "")) errors.push("電話");
       if (!p.rideDate) errors.push("日期");
       if (!p.rideTime) errors.push("時間");
-      if (!p.address) errors.push("接送地址");
+      if (!p.address) errors.push(isOneWay ? "起點地址" : "接送地址");
+      if (isOneWay && !p.airport) errors.push("終點地址");
       if (!money(p.fare)) errors.push("車資金額");
       if (!p.paxCount) errors.push("人數");
       if (!p.luggageCount) errors.push("行李");
@@ -1264,15 +1344,20 @@
         if (money(p.manualCashCollected) > getManualTripFare(p, "outbound")) errors.push("去程現收不可大於去程車資");
         if (p.hasReturn && money(p.returnManualCashCollected) > getManualTripFare(p, "return")) errors.push("回程現收不可大於回程車資");
       }
-      if (money(p.manualDiscountAmount) > 0 && p.manualDiscountTarget === "return" && !p.hasReturn) errors.push("折讓套用回程時需勾選同時預約回程");
-      if (p.customerDiscountCode && !money(p.customerDiscountAmount)) errors.push("客人折扣碼需先查詢套用");
-      if (money(p.customerDiscountAmount) > 0 && p.customerDiscountTarget === "return" && !p.hasReturn) errors.push("折扣碼套用回程時需勾選同時預約回程");
+      let items = [];
+      try { items = JSON.parse(p.discountItemsJson || "[]"); } catch (e) { items = []; }
+      items.forEach(item => {
+        if (!item.label || !item.label.trim()) errors.push("折扣項目需要填名稱");
+        if (item.target === "return" && !p.hasReturn) errors.push(`折扣項目「${item.label}」套用回程時需勾選同時預約回程`);
+      });
       if (p.hasReturn) {
         if (!p.returnDate) errors.push("回程日期");
         if (!p.returnTime) errors.push("回程時間");
       }
-      return errors;
+      return Array.from(new Set(errors));
     }
+
+    let manualBookingIdemKey = null; // 冪等性金鑰：同一次送出（含失敗重按）共用同一把，成功後才清空
 
     async function submitManualBooking() {
       const payload = collectPayload();
@@ -1281,7 +1366,12 @@
         Swal.fire("資料未填完整", errors.join("、"), "warning");
         return;
       }
-      const confirmText = `${payload.source}｜${payload.rideDate} ${payload.rideTime} ${payload.serviceType}\n${payload.customerName} / ${payload.phone}\n車資 $${getManualTripFare(payload, "outbound").toLocaleString()}${payload.hasReturn ? `\n回程 $${getManualTripFare(payload, "return").toLocaleString()}` : ""}${money(payload.manualDiscountAmount) ? `\n客服折讓：${payload.manualDiscountLabel || "客服折讓"} -$${money(payload.manualDiscountAmount).toLocaleString()}` : ""}`;
+      let discountSummaryItems = [];
+      try { discountSummaryItems = JSON.parse(payload.discountItemsJson || "[]"); } catch (e) { discountSummaryItems = []; }
+      const discountSummaryText = discountSummaryItems.length
+        ? "\n" + discountSummaryItems.map(item => `折扣：${item.label} -$${money(item.amount).toLocaleString()}`).join("\n")
+        : "";
+      const confirmText = `${payload.source}｜${payload.rideDate} ${payload.rideTime} ${payload.serviceType}\n${payload.customerName} / ${payload.phone}\n車資 $${getManualTripFare(payload, "outbound").toLocaleString()}${payload.hasReturn ? `\n回程 $${getManualTripFare(payload, "return").toLocaleString()}` : ""}${discountSummaryText}`;
       const ok = await Swal.fire({
         title: "確認建立預約？",
         text: confirmText,
@@ -1296,13 +1386,22 @@
       $("submitBtn").disabled = true;
       $("submitBtn").textContent = "建立中...";
       Swal.fire({ title: "正在建立預約單", text: "請勿關閉畫面", allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      // 冪等性金鑰：只要沒有成功過，重按用的都是同一把 key。
+      // 這樣即使因為 safeJsonParse 失敗（回應是 HTML 不是 JSON）而顯示「建立失敗」，
+      // 但後端其實已經寫入成功，客服重按時後端會認出同一把 key、直接回傳原本結果，
+      // 不會再建立第二筆一樣的訂單。這是之前真的發生過重複訂單的修正。
+      if (!manualBookingIdemKey) {
+        manualBookingIdemKey = "manual-" + Date.now() + "-" + Math.random().toString(36).slice(2, 10);
+      }
+      payload.idempotencyKey = manualBookingIdemKey;
       try {
         const res = await fetch(GAS_URL, {
           method: "POST",
           body: JSON.stringify({ action: "createManualBooking", data: payload }),
           headers: { "Content-Type": "text/plain;charset=utf-8" }
-        }).then(r => r.json());
+        }).then(r => safeJsonParse(r));
         if (!res.success) throw new Error(res.error || "建立失敗");
+        manualBookingIdemKey = null; // 這筆成功了，清空，下一筆新訂單才會產生新的 key
         const ids = (res.reservationIds || []).join("\n");
         const customerText = buildCustomerConfirmMessage(payload, res.reservationIds || []);
         saveLastCustomerMessage(customerText);
@@ -1327,6 +1426,8 @@
         });
         updateSummary(ids || "已建立");
       } catch (err) {
+        // 這裡刻意「不」清空 manualBookingIdemKey：如果客服看到這個錯誤後選擇重按，
+        // 會帶著同一把 key 再送一次，後端如果發現剛才其實已經成功建立過，會直接回傳原本結果。
         Swal.fire("建立失敗", err.message || "請稍後再試", "error");
       } finally {
         $("submitBtn").disabled = false;
@@ -1406,7 +1507,7 @@
       Swal.fire({ title: "查詢中", text: "正在讀取預約資料...", allowOutsideClick: false, didOpen: () => Swal.showLoading() });
       try {
         const url = `${GAS_URL}?action=getManualBookingTextData&reservationId=${encodeURIComponent(reservationId)}&t=${Date.now()}`;
-        const data = await fetch(url).then(r => r.json());
+        const data = await fetch(url).then(r => safeJsonParse(r));
         if (!data.success) throw new Error(data.error || "查無資料");
         const text = buildCustomerConfirmMessageFromOrders(data.orders || []);
         saveLastCustomerMessage(text);
@@ -1620,6 +1721,7 @@
     }
 
     function resetForm() {
+      manualBookingIdemKey = null; // 開始填一筆全新的訂單，之前失敗未清空的 key 不該沿用到這筆
       $("manualForm").reset();
       $("templateSelect").value = "";
       $("rideHour").value = "08";
@@ -1629,7 +1731,15 @@
       setPaxFieldsFromText("1大 0中 0小");
       setLuggageFieldsFromText("0大 0登機");
       setValue("seatDetails", "無");
+      discountItems = [];
+      renderDiscountItems();
+      extraStops = [];
+      renderExtraStops();
+      $("phoneDiscountResults").classList.add("hidden");
+      $("phoneDiscountResults").innerHTML = "";
+      $("signboardContentWrap").classList.add("hidden");
       handleSourceChange();
+      toggleServiceTypeFields();
       handleReturnToggle();
       updateSummary();
     }
