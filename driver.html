@@ -183,7 +183,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.14.62";
+        const APP_VERSION = "v1.14.64"; // 修正 loadTasks 被 tasksLoading 鎖擋住時直接無聲跳過、導致回報成功後畫面沒刷新的問題
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -204,6 +204,7 @@
         const statusSubmittingOrders = {};
         let historyOnlyUnsettled = false;
         let tasksLoading = false;
+        let pendingLoadTasksOptions = null; // loadTasks 被擋住時記下的補跑參數，見 loadTasks() 內的說明
         let historyLoadedMonth = "";
         const DRIVER_AUTH_CACHE_KEY = "asDriverAuthCacheV1";
         const DRIVER_AUTH_CACHE_TTL_MS = 12 * 60 * 60 * 1000;
@@ -668,7 +669,11 @@
         }
 
         async function loadTasks(options = {}) {
-            if (tasksLoading) return;
+            // 之前這裡如果剛好有另一次 loadTasks 還在跑，會直接無聲跳過，
+            // 導致司機剛回報完狀態、緊接著這次的刷新被吃掉，畫面卡在舊狀態，
+            // 但後端其實已經寫入成功（中控台直接讀表看到的是對的）。
+            // 改成：先記下「還有一次要跑」，等目前這次跑完再自動補跑一次。
+            if (tasksLoading) { pendingLoadTasksOptions = options; return; }
             tasksLoading = true;
             const mode = normalizeDriverTaskMode(options.mode || getDriverTaskModeForTab(currentTaskTab));
             const taskContainer = document.getElementById('task-list');
@@ -701,6 +706,11 @@
                 }
             } finally {
                 tasksLoading = false;
+                if (pendingLoadTasksOptions) {
+                    const nextOptions = pendingLoadTasksOptions;
+                    pendingLoadTasksOptions = null;
+                    loadTasks(nextOptions);
+                }
             }
         }
 
