@@ -183,7 +183,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.14.64"; // 修正 loadTasks 被 tasksLoading 鎖擋住時直接無聲跳過、導致回報成功後畫面沒刷新的問題
+        const APP_VERSION = "v1.14.65"; // 修正回報成功後，緊接著的 loadTasks() 抓到還沒跟上的舊資料，把畫面按鈕蓋回報告前狀態的問題
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -205,6 +205,7 @@
         let historyOnlyUnsettled = false;
         let tasksLoading = false;
         let pendingLoadTasksOptions = null; // loadTasks 被擋住時記下的補跑參數，見 loadTasks() 內的說明
+        let recentStatusOverrides = {}; // orderId -> {status, until}：剛回報成功的單，短時間內不能被舊資料蓋回去，見 updateStatus()/loadTasks() 內的說明
         let historyLoadedMonth = "";
         const DRIVER_AUTH_CACHE_KEY = "asDriverAuthCacheV1";
         const DRIVER_AUTH_CACHE_TTL_MS = 12 * 60 * 60 * 1000;
@@ -687,6 +688,15 @@
                 }
                 driverTaskLoadMode = mode;
                 tasks = Array.isArray(res.tasks) ? res.tasks : [];
+                // 剛回報成功、還在保護時間內的單，如果這次抓回來的資料看起來比較舊（後端試算表/快取還沒跟上），
+                // 用剛剛回報成功時記下的狀態蓋回去，不要讓畫面倒退回報成功前的按鈕。
+                const now = Date.now();
+                Object.keys(recentStatusOverrides).forEach(orderId => {
+                    const ov = recentStatusOverrides[orderId];
+                    if (!ov || now > ov.until) { delete recentStatusOverrides[orderId]; return; }
+                    const t = tasks.find(x => x.orderId === orderId);
+                    if (t && t.driverStatus !== ov.status) t.driverStatus = ov.status;
+                });
                 if(res.monthCount !== undefined) {
                     document.getElementById('profCount').innerText = res.monthCount;
                 }
@@ -1279,6 +1289,7 @@
                 }, 60000);
                 
                 if (task) task.driverStatus = newStatus;
+                recentStatusOverrides[orderId] = { status: newStatus, until: Date.now() + 15000 }; // 15 秒保護窗，避免緊接著的 loadTasks() 抓到還沒跟上的舊資料把畫面蓋回去
                 renderTasks();
                 if (currentDetailOrderId === orderId) openTaskDetail(orderId);
                 Swal.fire({ title: '成功', text: `狀態更新為：${newStatus}`, icon: 'success', timer: 1000, showConfirmButton: false });
