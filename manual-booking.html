@@ -6,6 +6,7 @@
   <title>客服快速代填預約</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAxYym5ZR8puPb0iiycHdwzTJTKH0Aears&libraries=places&callback=initManualMapReady"></script>
   <style>
     :root {
       --primary: #553f62;
@@ -483,7 +484,8 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.50"; // 折扣總額≥車資時新增即時警示(不會擋掉輸入)，並修正後端驗證卡死問題見gas.html changelog
+    const APP_VERSION = "manual-booking-v1.0.51"; // 加點站新增Google實際駕車距離提示(建議加點費)，跟正式系統index.html同一套公式；確認建立預約畫面改成完整資訊卡
+    window.initManualMapReady = function () {}; // Google Maps callback必須存在，這裡只用DistanceMatrixService，不需要額外初始化
     const SOURCE_LABELS = {
       AS: "AS 安興",
       AZ: "AZ 安興竹北",
@@ -541,6 +543,10 @@
         const el = $(id);
         if (el) el.addEventListener("input", updateSummary);
         if (el) el.addEventListener("change", updateSummary);
+      });
+      ["address", "oneWayStart"].forEach(id => {
+        const el = $(id);
+        if (el) el.addEventListener("blur", () => extraStops.forEach((_, idx) => calcExtraStopDistanceHint(idx)));
       });
       toggleServiceTypeFields();
       renderDiscountItems();
@@ -1068,6 +1074,34 @@
     }
 
     /* ---------------- 加點站清單：跟折扣項目一樣點「新增」才加一筆，不限制數量 ---------------- */
+    function getManualMainAddressText() {
+      const isOneWay = $("serviceType").value === "單程";
+      return (isOneWay ? $("oneWayStart").value : $("address").value).trim();
+    }
+    // 跟 index.html calculateDistanceFee() 同一套公式：抓 Google 實際駕車距離估算加點費，
+    // 這裡只是「提示」，不會自動改車資欄位——這個工具本來就是手動車資，客服自己看提示決定要不要調整。
+    function calcExtraStopDistanceHint(idx) {
+      const hintEl = document.querySelector(`[data-stop-hint-idx="${idx}"]`);
+      if (!hintEl) return;
+      const addr1 = getManualMainAddressText();
+      const addr2 = (extraStops[idx] || "").trim();
+      if (!addr1 || !addr2) { hintEl.textContent = ""; return; }
+      if (!window.google?.maps?.DistanceMatrixService) { hintEl.textContent = "Google 地圖尚未載入完成"; return; }
+      hintEl.textContent = "距離計算中…";
+      new google.maps.DistanceMatrixService().getDistanceMatrix(
+        { origins: [addr1], destinations: [addr2], travelMode: "DRIVING", region: "tw" },
+        (response, status) => {
+          const el = document.querySelector(`[data-stop-hint-idx="${idx}"]`);
+          if (!el) return;
+          if (status !== "OK" || response.rows[0].elements[0].status !== "OK") { el.textContent = "無法計算距離"; return; }
+          const distanceKm = response.rows[0].elements[0].distance.value / 1000;
+          const isSameCity = addr1.substring(0, 3) === addr2.substring(0, 3);
+          const units = Math.ceil(distanceKm / 5) || 1;
+          const fee = isSameCity ? (units * 100) : (200 + units * 100);
+          el.textContent = `距主地址約 ${distanceKm.toFixed(1)} 公里，建議加點費 $${fee.toLocaleString()}`;
+        }
+      );
+    }
     function renderExtraStops() {
       const wrap = $("extraStopsList");
       if (!extraStops.length) {
@@ -1075,12 +1109,16 @@
         return;
       }
       wrap.innerHTML = extraStops.map((stop, idx) => `
-        <div class="grid grid-cols-[1fr_36px] gap-2 items-center mt-2">
-          <input type="text" value="${escapeHtml(stop)}" data-idx="${idx}" class="extra-stop-field" placeholder="加點地址">
-          <button type="button" class="secondary-btn !min-h-[36px] !px-0" data-remove-stop-idx="${idx}" aria-label="刪除">✕</button>
+        <div class="mt-2">
+          <div class="grid grid-cols-[1fr_36px] gap-2 items-center">
+            <input type="text" value="${escapeHtml(stop)}" data-idx="${idx}" class="extra-stop-field" placeholder="加點地址">
+            <button type="button" class="secondary-btn !min-h-[36px] !px-0" data-remove-stop-idx="${idx}" aria-label="刪除">✕</button>
+          </div>
+          <div class="hint !mt-0.5" data-stop-hint-idx="${idx}"></div>
         </div>`).join("");
       wrap.querySelectorAll(".extra-stop-field").forEach(el => {
         el.addEventListener("input", () => { extraStops[Number(el.dataset.idx)] = el.value; updateSummary(); });
+        el.addEventListener("blur", () => calcExtraStopDistanceHint(Number(el.dataset.idx)));
       });
       wrap.querySelectorAll("[data-remove-stop-idx]").forEach(btn => {
         btn.addEventListener("click", () => {
@@ -1381,6 +1419,36 @@
 
     let manualBookingIdemKey = null; // 冪等性金鑰：同一次送出（含失敗重按）共用同一把，成功後才清空
 
+    function escapeManualHtml(value) {
+      return String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+    function confirmRow(label, value) {
+      return `<div class="flex justify-between gap-3 py-1 text-xs border-b border-gray-100"><span class="text-gray-500 flex-none">${escapeManualHtml(label)}</span><span class="text-[#1A0B3D] text-right">${escapeManualHtml(value || "無")}</span></div>`;
+    }
+    function buildManualConfirmLegHtml(p, isReturn) {
+      const type = isReturn ? p.returnServiceType : p.serviceType;
+      const date = isReturn ? p.returnDate : p.rideDate;
+      const time = isReturn ? p.returnTime : p.rideTime;
+      const flight = isReturn ? p.returnFlightNumber : p.flightNumber;
+      const fare = getManualTripFare(p, isReturn ? "return" : "outbound");
+      const cashCollected = isReturn ? p.returnManualCashCollected : p.manualCashCollected;
+      const route = type === "接機" ? `${p.airport} → ${p.address}` : `${p.address} → ${p.airport}`;
+      return `
+        <div class="border border-gray-200 rounded-lg p-2.5 ${isReturn ? "mt-2" : ""}">
+          <div class="font-bold text-[#553f62] text-sm mb-1">${isReturn ? "回程" : "去程"}｜${escapeManualHtml(date)} ${escapeManualHtml(time)} ${escapeManualHtml(type)}${flight ? "｜" + escapeManualHtml(flight) : ""}</div>
+          <div class="text-xs text-gray-600 mb-1.5">${escapeManualHtml(route)}</div>
+          ${confirmRow("加點", p.extraLocation)}
+          ${confirmRow("車型", p.carType)}
+          ${confirmRow("人數", p.paxCount)}
+          ${confirmRow("行李", p.luggageCount)}
+          ${confirmRow("安全座椅", p.seatDetails)}
+          ${confirmRow("舉牌", p.signboard)}
+          ${confirmRow("付款方式", p.paymentMethod)}
+          ${cashCollected && money(cashCollected) > 0 ? confirmRow("現場收現", "$" + money(cashCollected).toLocaleString()) : ""}
+          <div class="flex justify-between gap-3 py-1.5 mt-1 text-sm font-bold text-[#553f62] border-t border-gray-200"><span>車資</span><span>$${fare.toLocaleString()}</span></div>
+        </div>`;
+    }
+
     async function submitManualBooking() {
       const payload = collectPayload();
       const errors = validatePayload(payload);
@@ -1390,14 +1458,24 @@
       }
       let discountSummaryItems = [];
       try { discountSummaryItems = JSON.parse(payload.discountItemsJson || "[]"); } catch (e) { discountSummaryItems = []; }
-      const discountSummaryText = discountSummaryItems.length
-        ? "\n" + discountSummaryItems.map(item => `折扣：${item.label} -$${money(item.amount).toLocaleString()}`).join("\n")
+      const discountHtml = discountSummaryItems.length
+        ? `<div class="mt-2 space-y-0.5">${discountSummaryItems.map(item => confirmRow(`折扣：${item.label}（${item.target === "both" ? "去回程各扣" : item.target === "return" ? "回程" : "去程"}）`, "-$" + money(item.amount).toLocaleString())).join("")}</div>`
         : "";
-      const confirmText = `${payload.source}｜${payload.rideDate} ${payload.rideTime} ${payload.serviceType}\n${payload.customerName} / ${payload.phone}\n車資 $${getManualTripFare(payload, "outbound").toLocaleString()}${payload.hasReturn ? `\n回程 $${getManualTripFare(payload, "return").toLocaleString()}` : ""}${discountSummaryText}`;
+      const totalFare = getManualTripFare(payload, "outbound") + (payload.hasReturn ? getManualTripFare(payload, "return") : 0);
+      const confirmHtml = `
+        <div class="text-left">
+          <div class="text-xs text-gray-500 mb-2">${escapeManualHtml(payload.source)}｜${escapeManualHtml(payload.customerName)}${escapeManualHtml(payload.customerTitle)}｜${escapeManualHtml(payload.phone)}</div>
+          ${buildManualConfirmLegHtml(payload, false)}
+          ${payload.hasReturn ? buildManualConfirmLegHtml(payload, true) : ""}
+          ${discountHtml}
+          <div class="flex justify-between gap-3 py-2 mt-2 text-base font-bold text-[#993556] border-t border-gray-300"><span>總車資</span><span>$${totalFare.toLocaleString()}</span></div>
+          ${payload.remarks ? confirmRow("備註", payload.remarks) : ""}
+        </div>`;
       const ok = await Swal.fire({
         title: "確認建立預約？",
-        text: confirmText,
+        html: confirmHtml,
         icon: "question",
+        width: "min(94vw, 480px)",
         showCancelButton: true,
         confirmButtonText: "建立預約",
         cancelButtonText: "再檢查",
