@@ -250,6 +250,7 @@
         <div id="discountItemsList" class="mt-2"></div>
         <button type="button" class="secondary-btn mt-2" id="addDiscountItemBtn">＋ 新增折扣項目</button>
         <div class="hint mt-2">折扣總額：<b id="discountTotalDisplay">$0</b></div>
+        <div id="discountZeroWarning" class="hint mt-1 hidden" style="color:#c0392b"></div>
       </section>
 
       <section class="panel">
@@ -482,7 +483,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.49";
+    const APP_VERSION = "manual-booking-v1.0.50"; // 折扣總額≥車資時新增即時警示(不會擋掉輸入)，並修正後端驗證卡死問題見gas.html changelog
     const SOURCE_LABELS = {
       AS: "AS 安興",
       AZ: "AZ 安興竹北",
@@ -1145,6 +1146,27 @@
     function updateDiscountTotalDisplay() {
       const total = discountItems.reduce((sum, item) => sum + (money(item.amount) || 0), 0);
       $("discountTotalDisplay").textContent = `$${total.toLocaleString()}`;
+      // 折扣可以疊加多筆，車資被扣到 $0 是允許的（招待/全額折抵），但容易是筆誤（少打一個0、
+      // 折扣碼選錯），這裡即時提示讓客服在按下建立之前就看得到，不用等送出失敗才發現。
+      const warnEl = $("discountZeroWarning");
+      if (!warnEl) return;
+      const outboundFare = money($("fare").value);
+      const returnFare = $("hasReturn").checked ? money($("returnFare").value || $("fare").value) : null;
+      const outboundDiscount = discountItems.reduce((sum, item) => {
+        const amount = money(item.amount); if (!amount) return sum;
+        const target = item.target || "outbound";
+        return (target === "both" || target === "outbound") ? sum + amount : sum;
+      }, 0);
+      const returnDiscount = discountItems.reduce((sum, item) => {
+        const amount = money(item.amount); if (!amount) return sum;
+        const target = item.target || "outbound";
+        return (target === "both" || target === "return") ? sum + amount : sum;
+      }, 0);
+      const zeroedLegs = [];
+      if (outboundFare > 0 && outboundDiscount >= outboundFare) zeroedLegs.push("去程");
+      if (returnFare !== null && returnFare > 0 && returnDiscount >= returnFare) zeroedLegs.push("回程");
+      warnEl.textContent = zeroedLegs.length ? `⚠️ 折扣金額已達或超過車資，${zeroedLegs.join("、")}車資將變成 $0（如果是招待行程沒問題，如果不是請檢查折扣金額是否打錯）` : "";
+      warnEl.classList.toggle("hidden", !zeroedLegs.length);
     }
 
     function addDiscountItem(label = "", amount = 0, target = "outbound") {
@@ -1443,6 +1465,7 @@
       const p = collectPayload();
       const total = getManualTripFare(p, "outbound") + (p.hasReturn ? getManualTripFare(p, "return") : 0);
       $("summaryText").textContent = `${currentSource() || "未選來源"}｜${$("serviceType").value || "行程"}｜總車資 $${total.toLocaleString()}`;
+      updateDiscountTotalDisplay();
     }
 
     function buildCustomerConfirmMessage(p, reservationIds = []) {
