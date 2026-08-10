@@ -484,7 +484,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.51"; // 加點站新增Google實際駕車距離提示(建議加點費)，跟正式系統index.html同一套公式；確認建立預約畫面改成完整資訊卡
+    const APP_VERSION = "manual-booking-v1.0.52"; // 加點距離提示加上8秒逾時保底+console錯誤訊息，避免一直卡在「距離計算中」看不出原因
     window.initManualMapReady = function () {}; // Google Maps callback必須存在，這裡只用DistanceMatrixService，不需要額外初始化
     const SOURCE_LABELS = {
       AS: "AS 安興",
@@ -1088,19 +1088,44 @@
       if (!addr1 || !addr2) { hintEl.textContent = ""; return; }
       if (!window.google?.maps?.DistanceMatrixService) { hintEl.textContent = "Google 地圖尚未載入完成"; return; }
       hintEl.textContent = "距離計算中…";
-      new google.maps.DistanceMatrixService().getDistanceMatrix(
-        { origins: [addr1], destinations: [addr2], travelMode: "DRIVING", region: "tw" },
-        (response, status) => {
-          const el = document.querySelector(`[data-stop-hint-idx="${idx}"]`);
-          if (!el) return;
-          if (status !== "OK" || response.rows[0].elements[0].status !== "OK") { el.textContent = "無法計算距離"; return; }
-          const distanceKm = response.rows[0].elements[0].distance.value / 1000;
-          const isSameCity = addr1.substring(0, 3) === addr2.substring(0, 3);
-          const units = Math.ceil(distanceKm / 5) || 1;
-          const fee = isSameCity ? (units * 100) : (200 + units * 100);
-          el.textContent = `距主地址約 ${distanceKm.toFixed(1)} 公里，建議加點費 $${fee.toLocaleString()}`;
-        }
-      );
+      // 防止卡死：正常情況下 Google 的 callback 一定會被呼叫（不管成功或失敗），
+      // 8 秒內沒有任何回應通常代表這把金鑰沒開通 Distance Matrix API 或網域被擋，
+      // 加逾時保底，不會一直卡在「距離計算中」。
+      let done = false;
+      const timeoutId = setTimeout(() => {
+        if (done) return;
+        done = true;
+        console.error("[加點距離計算] 8秒內未收到Google回應，可能是Distance Matrix API未啟用或金鑰網域限制");
+        const el = document.querySelector(`[data-stop-hint-idx="${idx}"]`);
+        if (el) el.textContent = "距離計算逾時，請直接手動輸入加點費";
+      }, 8000);
+      try {
+        new google.maps.DistanceMatrixService().getDistanceMatrix(
+          { origins: [addr1], destinations: [addr2], travelMode: "DRIVING", region: "tw" },
+          (response, status) => {
+            if (done) return;
+            done = true;
+            clearTimeout(timeoutId);
+            const el = document.querySelector(`[data-stop-hint-idx="${idx}"]`);
+            if (!el) return;
+            if (status !== "OK" || !response || !response.rows[0] || response.rows[0].elements[0].status !== "OK") {
+              console.error("[加點距離計算] Google回傳狀態異常：", status, response);
+              el.textContent = `無法計算距離（${status || "未知錯誤"}）`;
+              return;
+            }
+            const distanceKm = response.rows[0].elements[0].distance.value / 1000;
+            const isSameCity = addr1.substring(0, 3) === addr2.substring(0, 3);
+            const units = Math.ceil(distanceKm / 5) || 1;
+            const fee = isSameCity ? (units * 100) : (200 + units * 100);
+            el.textContent = `距主地址約 ${distanceKm.toFixed(1)} 公里，建議加點費 $${fee.toLocaleString()}`;
+          }
+        );
+      } catch (err) {
+        done = true;
+        clearTimeout(timeoutId);
+        console.error("[加點距離計算] 呼叫Google API時發生例外：", err);
+        hintEl.textContent = "距離計算發生錯誤";
+      }
     }
     function renderExtraStops() {
       const wrap = $("extraStopsList");

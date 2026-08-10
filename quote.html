@@ -191,7 +191,7 @@
     </div>
   </div>
   <script>
-    const APP_VERSION = "quote-v1.0.5"; // 新增加點費自動抓Google實際駕車距離計算，跟正式系統index.html同一套公式
+    const APP_VERSION = "quote-v1.0.6"; // 加點距離計算加上8秒逾時保底+console錯誤訊息，避免一直卡在「距離計算中」看不出原因
     const GAS_URL = "https://script.google.com/macros/s/AKfycbww3Pr0IcOABPvTteIWHo9j6MWRQvNjpf_MZRE7NgDp3Nt69Upx8VhVnCVMcbUvjJwI/exec";
     const BOOKING_URL = location.href.includes("quote.html") ? location.href.replace("quote.html", "index.html") : "index.html";
     let priceRows = [];
@@ -223,21 +223,42 @@
       if (!addr1 || !addr2) { if (hintEl) hintEl.textContent = ""; return; }
       if (!window.google?.maps?.DistanceMatrixService) { if (hintEl) hintEl.textContent = "Google 地圖尚未載入完成，稍後再試"; return; }
       if (hintEl) hintEl.textContent = "距離計算中…";
-      new google.maps.DistanceMatrixService().getDistanceMatrix(
-        { origins: [addr1], destinations: [addr2], travelMode: "DRIVING", region: "tw" },
-        (response, status) => {
-          if (status !== "OK" || response.rows[0].elements[0].status !== "OK") {
-            if (hintEl) hintEl.textContent = "無法計算距離，請確認地址是否正確";
-            return;
+      // 防止卡死：正常情況下 Google 的 callback 一定會被呼叫（不管成功或失敗），
+      // 如果 8 秒內都沒有任何回應，通常代表這把金鑰沒開通 Distance Matrix API 或網域被擋，
+      // 這裡加一個逾時保底，至少畫面會顯示錯誤訊息，不會一直卡在「距離計算中」。
+      let done = false;
+      const timeoutId = setTimeout(() => {
+        if (done) return;
+        done = true;
+        console.error("[加點距離計算] 8秒內未收到Google回應，可能是Distance Matrix API未啟用或金鑰網域限制");
+        if (hintEl) hintEl.textContent = "距離計算逾時，請直接手動輸入加點費";
+      }, 8000);
+      try {
+        new google.maps.DistanceMatrixService().getDistanceMatrix(
+          { origins: [addr1], destinations: [addr2], travelMode: "DRIVING", region: "tw" },
+          (response, status) => {
+            if (done) return;
+            done = true;
+            clearTimeout(timeoutId);
+            if (status !== "OK" || !response || !response.rows[0] || response.rows[0].elements[0].status !== "OK") {
+              console.error("[加點距離計算] Google回傳狀態異常：", status, response);
+              if (hintEl) hintEl.textContent = `無法計算距離（${status || "未知錯誤"}），請確認地址是否正確或手動輸入`;
+              return;
+            }
+            const distanceKm = response.rows[0].elements[0].distance.value / 1000;
+            const isSameCity = addr1.substring(0, 3) === addr2.substring(0, 3);
+            const units = Math.ceil(distanceKm / 5) || 1;
+            const fee = isSameCity ? (units * 100) : (200 + units * 100);
+            if (hintEl) hintEl.textContent = `實際駕車距離約 ${distanceKm.toFixed(1)} 公里，建議加點費 $${fee.toLocaleString()}`;
+            if (!extraStopManuallyEdited) { $("extraStopFee").value = fee; if (lastQuote) getQuote(); }
           }
-          const distanceKm = response.rows[0].elements[0].distance.value / 1000;
-          const isSameCity = addr1.substring(0, 3) === addr2.substring(0, 3);
-          const units = Math.ceil(distanceKm / 5) || 1;
-          const fee = isSameCity ? (units * 100) : (200 + units * 100);
-          if (hintEl) hintEl.textContent = `實際駕車距離約 ${distanceKm.toFixed(1)} 公里，建議加點費 $${fee.toLocaleString()}`;
-          if (!extraStopManuallyEdited) { $("extraStopFee").value = fee; if (lastQuote) getQuote(); }
-        }
-      );
+        );
+      } catch (err) {
+        done = true;
+        clearTimeout(timeoutId);
+        console.error("[加點距離計算] 呼叫Google API時發生例外：", err);
+        if (hintEl) hintEl.textContent = "距離計算發生錯誤，請直接手動輸入加點費";
+      }
     }
 
     /**
