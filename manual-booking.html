@@ -487,7 +487,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.54"; // 新增「預約明細圖片」：查詢已建立的預約單號，產生適合傳給客人看的圖片版預約明細(用html2canvas渲染)，資料來源跟「產生文字」一樣是已存進試算表的正式資料
+    const APP_VERSION = "manual-booking-v1.0.55"; // 「預約明細圖片」改成完全比照正式LINE卡片buildReservationConfirmationFlex_的欄位順序與費用明細算法(基本車資/加點/折扣/來回總額)，不再是簡化版；需搭配gas.html v2.2.205(getManualBookingTextData補齊欄位)
     // 不再用 Google callback 機制初始化地圖（callback 容易撞上 async 腳本執行時機競速問題，
     // 之前就是這樣導致 initManualMapReady is not a function），距離計算改成呼叫當下才檢查
     // window.google.maps 是否就緒即可，不需要額外的載入完成回呼。
@@ -1649,6 +1649,61 @@
       }
     }
 
+    // ----- 以下這段費用明細計算邏輯，是直接比照 gas.html buildBookingFeeContents_ 的算法搬過來的，
+    // 確保「預約明細圖片」跟正式送給客人的LINE卡片費用明細完全一致，不是簡化版本。-----
+    const KNOWN_FIXED_SURCHARGE_AMOUNTS = { "接機服務": 200, "夜間加成(23-05)": 200, "24小時內急單服務費": 500 };
+    function parseStoredFeeExtras(value) {
+      return String(value || "").split(/[、\n]/).map(s => s.trim()).filter(Boolean).map(item => {
+        const m = item.match(/^(.+?)\s*\(\s*\+\$?\s*([\d,]+)\s*\)\s*$/);
+        if (m) return { label: m[1].trim(), amount: Number(m[2].replace(/,/g, "")) || 0 };
+        const plainLabel = item.replace(/\s*\(.*\)\s*$/, "").trim() || "加價項目";
+        if (KNOWN_FIXED_SURCHARGE_AMOUNTS[plainLabel] !== undefined) return { label: plainLabel, amount: KNOWN_FIXED_SURCHARGE_AMOUNTS[plainLabel] };
+        return { label: plainLabel, note: plainLabel.indexOf("客服") !== -1 ? "客服報價" : "請洽客服確認金額", amount: 0 };
+      });
+    }
+    function parseStoredFeeDiscounts(code, amount) {
+      const text = String(code || "").trim();
+      if (!text || !amount) return [];
+      const parts = text.split("+").map(s => s.trim()).filter(Boolean);
+      if (parts.length <= 1) return [{ label: text || "折扣", amount: Number(amount) || 0 }];
+      const each = Math.round((Number(amount) || 0) / parts.length);
+      return parts.map((label, i) => ({ label, amount: i === parts.length - 1 ? (Number(amount) || 0) - each * (parts.length - 1) : each }));
+    }
+    function buildOrderFeeRows(order, siblingOrders) {
+      let fee = {};
+      try { fee = JSON.parse(order.cardFeeJson || "{}"); } catch (e) { fee = {}; }
+      const isRoundTripPart = order.label === "去程" || order.label === "回程";
+      const displayTotal = order.tripAmt || money(order.fare);
+      const discountAmount = Math.abs(Number(order.discountAmt || 0));
+      const rows = [];
+      let baseFare, extras;
+      if (fee.baseFare !== undefined && fee.baseFare !== null && fee.baseFare !== "") {
+        baseFare = Number(fee.baseFare) || 0;
+        extras = (fee.extras || []).map(item => ({ label: item.label, amount: Number(item.amount || 0), note: item.note }));
+      } else {
+        extras = parseStoredFeeExtras(order.surchargeDetails);
+        const extraAmount = extras.reduce((sum, item) => sum + (item.amount || 0), 0);
+        baseFare = isRoundTripPart ? (displayTotal - extraAmount) : (displayTotal - extraAmount + discountAmount);
+      }
+      rows.push({ label: "基本車資", value: "$" + baseFare.toLocaleString() });
+      extras.forEach(item => rows.push({ label: item.label, value: item.note || ("+$" + (item.amount || 0).toLocaleString()) }));
+      const discounts = parseStoredFeeDiscounts(order.discountCode, discountAmount);
+      discounts.forEach(d => rows.push({ label: d.label, value: "-$" + d.amount.toLocaleString(), isDiscount: true }));
+      rows.push({ label: order.label === "回程" ? "回程小計" : (order.label === "去程" ? "去程小計" : "總額"), value: "$" + displayTotal.toLocaleString(), isSubtotal: true });
+      if (isRoundTripPart && Array.isArray(siblingOrders)) {
+        const otherLabel = order.label === "去程" ? "回程" : "去程";
+        const other = siblingOrders.find(o => o !== order && o.label === otherLabel);
+        if (other) {
+          const outTotal = order.label === "去程" ? displayTotal : (other.tripAmt || money(other.fare));
+          const retTotal = order.label === "回程" ? displayTotal : (other.tripAmt || money(other.fare));
+          const roundTotal = outTotal + retTotal - discountAmount;
+          rows.push({ label: "去程小計 + 回程小計", value: `$${outTotal.toLocaleString()} + $${retTotal.toLocaleString()}`, isMuted: true });
+          rows.push({ label: "來回總額", value: "$" + roundTotal.toLocaleString(), isTotal: true });
+        }
+      }
+      return rows;
+    }
+
     function clearLookupReservationId() {
       $("lookupReservationId").value = "";
     }
@@ -1656,38 +1711,46 @@
     // 產生「給客人看」的預約明細圖片：跟前面確認建立預約的資訊卡風格一致，
     // 但這裡資料來源是已經存進試算表的正式預約(getManualBookingTextData)，
     // 不是還沒送出的表單內容，確保客人拿到的圖片跟系統實際紀錄一致。
-    function buildBookingImageOrderHtml(order, isFirst) {
-      const dateText = formatCustomerDate(order.rideDate);
+    // 版面跟欄位順序直接比照正式LINE卡片buildReservationConfirmationFlex_：
+    // 單號/姓名/電話/車型/人數/行李/地址/加點/付款/座椅/備註 → 費用明細。
+    function feeRowHtml(row) {
+      const style = row.isTotal ? "border-top:1px solid #e7ddea;margin-top:6px;padding-top:10px;font-weight:700;color:#553f62;font-size:15px;"
+        : row.isSubtotal ? "font-weight:700;color:#1A0B3D;"
+        : row.isMuted ? "color:#8a8291;font-size:12px;"
+        : row.isDiscount ? "color:#993556;" : "color:#4b4553;";
+      return `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;${style}"><span>${escapeHtml(row.label)}</span><span>${escapeHtml(row.value)}</span></div>`;
+    }
+    function bookingInfoRow(label, value) {
+      return `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;color:#4b4553;"><span style="color:#8a8291;">${escapeHtml(label)}</span><span style="text-align:right;">${escapeHtml(value || "無")}</span></div>`;
+    }
+    function buildBookingImageOrderHtml(order, allOrders, isFirst) {
       const route = order.serviceType === "接機" ? `${order.airport || ""} → ${order.address || ""}` : `${order.address || ""} → ${order.airport || ""}`;
-      const fareLine = formatCustomerFareWithManualCash(order.paymentMethod, order.fare || order.grandTotal, order.manualCashCollected);
+      const feeRows = buildOrderFeeRows(order, allOrders);
+      const infoRows = [
+        ["單號", order.reservationId], ["姓名", order.customerName], ["電話", order.phone],
+        ["車型", order.carType], ["人數", formatCustomerPax(order.paxCount)], ["行李", formatCustomerLuggage(order.luggageCount)],
+        ["地址", order.address], ["加點", order.extraLocation], ["付款", order.paymentMethod],
+        ["座椅", order.seatDetails], ["備註", order.remarks]
+      ];
       return `
-        <div style="border:1px solid #e7ddea;border-radius:12px;padding:14px 16px;${isFirst ? "" : "margin-top:12px;"}">
-          <div style="font-size:15px;font-weight:700;color:#553f62;">${escapeHtml(dateText)} ${escapeHtml(order.rideTime || "")}　${escapeHtml(order.serviceType || "")}${order.flightNumber ? "｜" + escapeHtml(order.flightNumber) : ""}</div>
-          <div style="font-size:13px;color:#4b4553;margin-top:4px;">${escapeHtml(route)}</div>
-          ${order.extraLocation ? `<div style="font-size:12.5px;color:#8a8291;margin-top:2px;">加點：${escapeHtml(order.extraLocation)}</div>` : ""}
-          <div style="margin-top:10px;padding-top:10px;border-top:1px solid #f0eaf3;">
-            <div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0;color:#4b4553;"><span>車型</span><span>${escapeHtml(order.carType || "無")}</span></div>
-            <div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0;color:#4b4553;"><span>人數</span><span>${escapeHtml(formatCustomerPax(order.paxCount))}</span></div>
-            <div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0;color:#4b4553;"><span>行李</span><span>${escapeHtml(formatCustomerLuggage(order.luggageCount))}</span></div>
-            <div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0;color:#4b4553;"><span>付款方式</span><span>${escapeHtml(fareLine)}</span></div>
-          </div>
-          <div style="display:flex;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid #f0eaf3;font-weight:700;color:#553f62;font-size:15px;"><span>車資</span><span>$${Number(order.fare || order.grandTotal || 0).toLocaleString()}</span></div>
+        <div style="${isFirst ? "" : "margin-top:16px;padding-top:16px;border-top:1px solid #e7ddea;"}">
+          <div style="font-size:15px;font-weight:700;color:#1A0B3D;">${escapeHtml(order.rideDate)} ${escapeHtml(order.rideTime)}　${escapeHtml(order.serviceType)}${order.flightNumber ? "｜" + escapeHtml(order.flightNumber) : ""}</div>
+          <div style="font-size:13px;color:#4b4553;margin-top:3px;">${escapeHtml(route)}</div>
+          <div style="margin-top:10px;padding-top:10px;border-top:1px solid #f0eaf3;font-size:12px;font-weight:700;color:#993556;letter-spacing:1px;">預約資訊</div>
+          <div style="margin-top:4px;">${infoRows.map(r => bookingInfoRow(r[0], r[1])).join("")}</div>
+          <div style="margin-top:10px;padding-top:10px;border-top:1px solid #f0eaf3;font-size:12px;font-weight:700;color:#993556;letter-spacing:1px;">費用明細</div>
+          <div style="margin-top:4px;">${feeRows.map(feeRowHtml).join("")}</div>
         </div>`;
     }
     function buildBookingImageHtml(orders) {
       const first = orders[0] || {};
-      const total = orders.reduce((sum, o) => sum + Number(o.fare || o.grandTotal || 0), 0);
       return `
-        <div style="width:400px;background:#fff;font-family:-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif;">
-          <div style="background:#553f62;padding:22px 24px;text-align:center;color:#fff;">
-            <div style="font-size:21px;font-weight:700;letter-spacing:1px;">安興租車</div>
-            <div style="font-size:12.5px;opacity:.85;margin-top:4px;">預約明細確認單</div>
+        <div style="width:420px;background:#fff;font-family:-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif;">
+          <div style="background:#553f62;padding:20px 24px;">
+            <div style="color:#fff;font-size:17px;font-weight:700;">安興租車｜預約明細</div>
           </div>
           <div style="padding:20px 24px;">
-            <div style="font-size:13px;color:#8a8291;margin-bottom:12px;">${escapeHtml(first.customerName || "")}｜${escapeHtml(first.phone || "")}</div>
-            ${orders.map((o, i) => buildBookingImageOrderHtml(o, i === 0)).join("")}
-            ${orders.length > 1 ? `<div style="margin-top:14px;display:flex;justify-content:space-between;align-items:baseline;background:#FBF7FA;border-radius:10px;padding:14px 16px;"><span style="font-size:14px;font-weight:600;color:#553f62;">總車資</span><span style="font-size:22px;font-weight:700;color:#993556;">$${total.toLocaleString()}</span></div>` : ""}
-            ${first.remarks ? `<div style="font-size:12px;color:#8a8291;margin-top:12px;">備註：${escapeHtml(first.remarks)}</div>` : ""}
+            ${orders.map((o, i) => buildBookingImageOrderHtml(o, orders, i === 0)).join("")}
           </div>
           <div style="background:#FBF7FA;padding:12px 24px;font-size:11px;color:#8a8291;text-align:center;">安興租車｜機場接送．商務用車．包車旅遊</div>
         </div>`;
