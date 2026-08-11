@@ -187,7 +187,7 @@
     </div>
   </div>
   <script>
-    const APP_VERSION = "quote-v1.0.9"; // 加點站改成跟manual-booking.html一樣可以無限新增(陣列管理)，每站各自算距離建議費用；後端quickQuote只接受單一加點費用，前端把多站費用加總、地址合併後送出
+    const APP_VERSION = "quote-v1.0.10"; // 修正加點距離提示被自動填費用觸發的重畫洗掉的bug；報價單圖片改版：加上24小時效期＋非車輛保留聲明、分區塊(行程/乘車/費用資訊)、報價時間戳記
     const GAS_URL = "https://script.google.com/macros/s/AKfycbww3Pr0IcOABPvTteIWHo9j6MWRQvNjpf_MZRE7NgDp3Nt69Upx8VhVnCVMcbUvjJwI/exec";
     const BOOKING_URL = location.href.includes("quote.html") ? location.href.replace("quote.html", "index.html") : "index.html";
     let priceRows = [];
@@ -292,7 +292,10 @@
             el.textContent = `實際駕車距離約 ${distanceKm.toFixed(1)} 公里，建議加點費 $${fee.toLocaleString()}`;
             if (extraStops[idx] && !extraStops[idx].feeManuallyEdited) {
               extraStops[idx].fee = fee;
-              renderExtraStops();
+              // 這裡不能整個重新renderExtraStops()，那樣會把上面剛寫好的距離提示文字整個洗掉
+              // （提示元素會被重新建立成空的）。只直接更新費用輸入框的值就好，保留提示文字。
+              const feeEl = document.querySelector(`.extra-stop-field[data-idx="${idx}"][data-field="fee"]`);
+              if (feeEl) feeEl.value = fee;
             }
           }
         );
@@ -492,34 +495,60 @@
     function buildQuoteImageHtml(payload, result) {
       const rows = (result.items || []).map(item => {
         const value = item.note || money(item.amount, item.isExtra);
-        return `<div style="display:flex;justify-content:space-between;padding:7px 0;font-size:14px;${item.isTotal ? "border-top:1px solid #e7ddea;margin-top:4px;padding-top:12px;font-weight:700;color:#553f62;font-size:16px;" : "color:#4b4553;"}"><span>${escapeQuoteHtml(item.label)}</span><span>${escapeQuoteHtml(value)}</span></div>`;
+        return `<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13.5px;${item.isTotal ? "border-top:1px solid #e7ddea;margin-top:2px;padding-top:10px;font-weight:700;color:#553f62;font-size:15px;" : "color:#4b4553;"}"><span>${escapeQuoteHtml(item.label)}</span><span>${escapeQuoteHtml(value)}</span></div>`;
       }).join("");
       const route = routeLine(payload.serviceType, payload.airport, payload.mainAddress || payload.mainZone);
       const returnRoute = payload.hasReturn ? routeLine(payload.returnServiceType, payload.returnAirport, payload.returnAddress || payload.returnZone) : "";
+      const now = new Date();
+      const generatedAt = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, "0")}/${String(now.getDate()).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      const sectionLabel = (text) => `<div style="font-size:12px;font-weight:700;color:#993556;letter-spacing:1px;margin-bottom:6px;">${text}</div>`;
       return `
-        <div style="width:400px;background:#fff;font-family:-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif;">
-          <div style="background:#553f62;padding:22px 24px;text-align:center;color:#fff;">
-            <div style="font-size:21px;font-weight:700;letter-spacing:1px;">安興租車</div>
-            <div style="font-size:12.5px;opacity:.85;margin-top:4px;">預估報價單</div>
+        <div style="width:420px;background:#fff;font-family:-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif;">
+          <div style="background:#553f62;padding:26px 26px 22px;text-align:center;color:#fff;">
+            <div style="font-size:23px;font-weight:700;letter-spacing:2px;">安興租車</div>
+            <div style="font-size:12.5px;opacity:.85;margin-top:5px;letter-spacing:1px;">機場接送．商務用車．包車旅遊</div>
+            <div style="display:inline-block;margin-top:14px;background:rgba(255,255,255,.15);border-radius:20px;padding:5px 16px;font-size:12px;">預估報價單</div>
           </div>
-          <div style="padding:22px 24px;">
-            <div style="font-size:13px;color:#8a8291;margin-bottom:4px;">${escapeQuoteHtml(formatQuoteDate(payload.rideDate))} ${escapeQuoteHtml(payload.rideTime)}</div>
-            <div style="font-size:16px;font-weight:700;color:#1A0B3D;">${escapeQuoteHtml(payload.serviceType)}｜${escapeQuoteHtml(payload.carType)}</div>
-            <div style="font-size:13.5px;color:#4b4553;margin-top:3px;">${escapeQuoteHtml(route)}</div>
-            ${payload.hasReturn ? `<div style="font-size:12px;color:#8a8291;margin-top:8px;">回程　${escapeQuoteHtml(formatQuoteDate(payload.returnDate))} ${escapeQuoteHtml(payload.returnTime)}</div><div style="font-size:13.5px;color:#4b4553;">${escapeQuoteHtml(returnRoute)}</div>` : ""}
-            ${payload.extraAddress ? `<div style="font-size:12.5px;color:#8a8291;margin-top:8px;">加點：${escapeQuoteHtml(payload.extraAddress)}</div>` : ""}
-            <div style="margin-top:14px;padding-top:12px;border-top:1px solid #f0eaf3;">
-              <div style="display:flex;justify-content:space-between;font-size:13px;color:#8a8291;padding:4px 0;"><span>人數</span><span>${escapeQuoteHtml(payload.paxText)}</span></div>
-              <div style="display:flex;justify-content:space-between;font-size:13px;color:#8a8291;padding:4px 0;"><span>行李</span><span>${escapeQuoteHtml(payload.luggageText)}</span></div>
+
+          <div style="background:#FFF7EC;border-bottom:1px solid #F5E3C6;padding:12px 26px;text-align:center;">
+            <div style="font-size:12.5px;color:#9a6a1f;font-weight:700;">⏰ 本報價單自產生起 24 小時內有效</div>
+            <div style="font-size:11.5px;color:#b08a4a;margin-top:2px;">僅為預估費用參考，尚未完成正式預約，車輛與司機需另行預約保留</div>
+          </div>
+
+          <div style="padding:22px 26px;">
+            <div style="display:flex;justify-content:space-between;font-size:11px;color:#a89fb0;margin-bottom:16px;">
+              <span>報價時間：${generatedAt}</span>
+              ${payload.staffName ? `<span>經辦：${escapeQuoteHtml(payload.staffName)}</span>` : ""}
             </div>
-            <div style="margin-top:10px;padding-top:10px;border-top:1px solid #f0eaf3;">${rows}</div>
-            <div style="margin-top:18px;display:flex;justify-content:space-between;align-items:baseline;background:#FBF7FA;border-radius:10px;padding:14px 16px;">
+
+            ${sectionLabel("【行程資訊】")}
+            <div style="border:1px solid #e7ddea;border-radius:10px;padding:14px 16px;margin-bottom:18px;">
+              <div style="font-size:13px;color:#8a8291;margin-bottom:4px;">${escapeQuoteHtml(formatQuoteDate(payload.rideDate))} ${escapeQuoteHtml(payload.rideTime)}</div>
+              <div style="font-size:16px;font-weight:700;color:#1A0B3D;">${escapeQuoteHtml(payload.serviceType)}｜${escapeQuoteHtml(payload.carType)}</div>
+              <div style="font-size:13.5px;color:#4b4553;margin-top:3px;">${escapeQuoteHtml(route)}</div>
+              ${payload.hasReturn ? `<div style="border-top:1px dashed #e7ddea;margin-top:10px;padding-top:10px;"><div style="font-size:12px;color:#8a8291;">回程　${escapeQuoteHtml(formatQuoteDate(payload.returnDate))} ${escapeQuoteHtml(payload.returnTime)}</div><div style="font-size:13.5px;color:#4b4553;margin-top:2px;">${escapeQuoteHtml(returnRoute)}</div></div>` : ""}
+              ${payload.extraAddress ? `<div style="font-size:12.5px;color:#8a8291;margin-top:8px;">加點：${escapeQuoteHtml(payload.extraAddress)}</div>` : ""}
+            </div>
+
+            ${sectionLabel("【乘車資訊】")}
+            <div style="margin-bottom:18px;">
+              <div style="display:flex;justify-content:space-between;font-size:13px;color:#4b4553;padding:3px 0;"><span>人數</span><span>${escapeQuoteHtml(payload.paxText)}</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:13px;color:#4b4553;padding:3px 0;"><span>行李</span><span>${escapeQuoteHtml(payload.luggageText)}</span></div>
+              ${payload.seatCount ? `<div style="display:flex;justify-content:space-between;font-size:13px;color:#4b4553;padding:3px 0;"><span>安全座椅</span><span>${payload.seatCount}個</span></div>` : ""}
+              ${payload.signboard ? `<div style="display:flex;justify-content:space-between;font-size:13px;color:#4b4553;padding:3px 0;"><span>舉牌服務</span><span>需要</span></div>` : ""}
+            </div>
+
+            ${sectionLabel("【費用明細】")}
+            <div>${rows}</div>
+
+            <div style="margin-top:16px;display:flex;justify-content:space-between;align-items:baseline;background:#FBF7FA;border-radius:10px;padding:16px 18px;">
               <span style="font-size:14px;font-weight:600;color:#553f62;">預估總額</span>
-              <span style="font-size:24px;font-weight:700;color:#993556;">$${Number(result.total || 0).toLocaleString("en-US")}</span>
+              <span style="font-size:26px;font-weight:700;color:#993556;">$${Number(result.total || 0).toLocaleString("en-US")}</span>
             </div>
-            <div style="font-size:11px;color:#a89fb0;margin-top:10px;line-height:1.6;">實際費用仍將依完整上下車地址、是否加點、行李數量及實際安排車型後確認。</div>
+            <div style="font-size:11px;color:#a89fb0;margin-top:12px;line-height:1.6;">＊實際費用仍將依完整上下車地址、是否加點、行李數量及實際安排車型後確認。</div>
           </div>
-          <div style="background:#FBF7FA;padding:12px 24px;font-size:11px;color:#8a8291;text-align:center;">安興租車｜機場接送．商務用車．包車旅遊</div>
+
+          <div style="background:#FBF7FA;padding:14px 26px;font-size:11px;color:#8a8291;text-align:center;">如報價無誤，歡迎透過官方 LINE 完成正式預約｜合法營運．專業接送．安心抵達</div>
         </div>`;
     }
     async function generateQuoteImage() {
