@@ -6,6 +6,7 @@
   <title>AS 快速報價</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAxYym5ZR8puPb0iiycHdwzTJTKH0Aears&libraries=places"></script>
   <style>
     :root {
@@ -127,18 +128,11 @@
           <input id="signboard" type="checkbox" class="accent-[#553f62]">
           舉牌服務
         </label>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="label">加點地區</label>
-            <input id="extraZone" list="zoneList" class="field focus-ring" placeholder="沒有可留空">
-          </div>
-          <div>
-            <label class="label">加點費用</label>
-            <input id="extraStopFee" type="number" inputmode="numeric" min="0" step="100" class="field focus-ring" placeholder="0">
-          </div>
+        <div>
+          <label class="label">加點站（可新增多筆，沒有可留空）</label>
+          <div id="extraStopsList" class="space-y-2 mt-1"></div>
+          <button type="button" id="addExtraStopBtn" class="mt-2 w-full border border-dashed border-[#c9bccf] text-[#553f62] rounded-xl py-2 text-sm">＋ 新增加點</button>
         </div>
-        <input id="extraAddress" class="field focus-ring" placeholder="加點地址文字，沒有可留空">
-        <div id="extraStopDistHint" class="text-xs text-gray-500"></div>
         <div id="returnBlock" class="hidden border-t border-gray-100 pt-3 space-y-3">
           <div class="grid grid-cols-2 gap-3">
             <div>
@@ -181,22 +175,24 @@
       </div>
     </section>
   </main>
+  <div id="imageRenderRoot" style="position:fixed;left:-9999px;top:0;"></div>
   <div class="bottom-bar">
     <div class="max-w-md mx-auto flex items-center gap-3">
       <div class="flex-1">
         <div class="text-xs text-gray-500">預估總額</div>
         <div id="totalText" class="text-2xl font-bold text-[#553f62]">$0</div>
       </div>
+      <button id="btnImage" class="bg-white border border-[#553f62] text-[#553f62] px-4 py-3 rounded-xl font-semibold shadow-sm disabled:opacity-50" disabled>報價單圖片</button>
       <button id="btnCopy" class="bg-[#f07cad] text-white px-5 py-3 rounded-xl font-semibold shadow-sm disabled:opacity-50" disabled>複製報價</button>
     </div>
   </div>
   <script>
-    const APP_VERSION = "quote-v1.0.7"; // 修正Google地圖initQuoteMapReady callback競速bug(is not a function)，改成defer+window load事件綁定，不再依賴Google callback機制
+    const APP_VERSION = "quote-v1.0.9"; // 加點站改成跟manual-booking.html一樣可以無限新增(陣列管理)，每站各自算距離建議費用；後端quickQuote只接受單一加點費用，前端把多站費用加總、地址合併後送出
     const GAS_URL = "https://script.google.com/macros/s/AKfycbww3Pr0IcOABPvTteIWHo9j6MWRQvNjpf_MZRE7NgDp3Nt69Upx8VhVnCVMcbUvjJwI/exec";
     const BOOKING_URL = location.href.includes("quote.html") ? location.href.replace("quote.html", "index.html") : "index.html";
     let priceRows = [];
     let lastQuote = null;
-    let extraStopManuallyEdited = false; // 客服如果自己動手改過加點費，之後地址欄再變動就不要覆蓋掉客服填的數字
+    let extraStops = []; // {address, fee, feeManuallyEdited} 可疊加多筆，跟manual-booking.html的加點站清單同一套邏輯
     const $ = (id) => document.getElementById(id);
 
     // 跟 index.html calculateDistanceFee() 同一套公式：抓 Google 實際駕車距離，
@@ -206,27 +202,64 @@
     // 執行時機競速問題（之前就是這樣導致 initQuoteMapReady is not a function，整個地圖初始化失敗）。
     // 改成用 defer（不加 async），並且在 window 的 load 事件時才去綁地址自動完成，
     // 這時候 defer 腳本一定已經執行完、window.google.maps 一定存在。
-    function initQuoteMapReady() {
-      const el = $("extraAddress");
-      if (!el || !window.google?.maps?.places?.Autocomplete) return;
-      try {
-        const ac = new google.maps.places.Autocomplete(el, { componentRestrictions: { country: "tw" }, fields: ["formatted_address"] });
-        ac.addListener("place_changed", () => {
-          const place = ac.getPlace();
-          if (place.formatted_address) el.value = place.formatted_address;
-          calcExtraStopDistanceFee();
-        });
-      } catch (e) { console.warn("Google 地址自動完成無法使用：", e); }
-    }
-    window.addEventListener("load", initQuoteMapReady);
+    function initQuoteMapReady() {} // 地址自動完成改成綁在每個加點站的input上，見 renderExtraStops()
 
-    function calcExtraStopDistanceFee() {
-      const hintEl = $("extraStopDistHint");
+    // 跟 index.html calculateDistanceFee() 同一套公式：抓 Google 實際駕車距離，
+    // 同縣市每5公里$100，跨縣市另外+$200底價。這裡是「自動幫客服算一個建議值」，
+    // 客服還是可以直接覆蓋每一站的費用欄位，不會被鎖死。
+    function renderExtraStops() {
+      const wrap = $("extraStopsList");
+      if (!extraStops.length) {
+        wrap.innerHTML = '<div class="text-xs text-gray-400">尚未加入任何加點站</div>';
+        return;
+      }
+      wrap.innerHTML = extraStops.map((stop, idx) => `
+        <div class="border border-gray-200 rounded-xl p-2.5">
+          <div class="grid grid-cols-[1fr_100px_36px] gap-2 items-center">
+            <input type="text" value="${escapeQuoteHtml(stop.address)}" data-idx="${idx}" data-field="address" class="extra-stop-field field focus-ring !py-1.5 !text-sm" placeholder="加點地址">
+            <input type="number" min="0" value="${stop.fee || ""}" data-idx="${idx}" data-field="fee" class="extra-stop-field field focus-ring !py-1.5 !text-sm" placeholder="費用">
+            <button type="button" class="text-gray-400" data-remove-idx="${idx}" aria-label="刪除">✕</button>
+          </div>
+          <div class="text-xs text-gray-500 mt-1" data-stop-hint-idx="${idx}"></div>
+        </div>`).join("");
+      wrap.querySelectorAll(".extra-stop-field").forEach(el => {
+        el.addEventListener("input", () => {
+          const idx = Number(el.dataset.idx), field = el.dataset.field;
+          extraStops[idx][field] = field === "fee" ? Number(el.value || 0) : el.value;
+          if (field === "fee") extraStops[idx].feeManuallyEdited = true;
+        });
+        el.addEventListener("blur", () => {
+          const idx = Number(el.dataset.idx);
+          if (el.dataset.field === "address") calcExtraStopDistanceFee(idx);
+        });
+        if (el.dataset.field === "address" && window.google?.maps?.places?.Autocomplete) {
+          try {
+            const ac = new google.maps.places.Autocomplete(el, { componentRestrictions: { country: "tw" }, fields: ["formatted_address"] });
+            ac.addListener("place_changed", () => {
+              const place = ac.getPlace();
+              const idx = Number(el.dataset.idx);
+              if (place.formatted_address && extraStops[idx]) { extraStops[idx].address = place.formatted_address; el.value = place.formatted_address; }
+              calcExtraStopDistanceFee(idx);
+            });
+          } catch (e) { console.warn("Google 地址自動完成無法使用：", e); }
+        }
+      });
+      wrap.querySelectorAll("[data-remove-idx]").forEach(btn => {
+        btn.addEventListener("click", () => { extraStops.splice(Number(btn.dataset.removeIdx), 1); renderExtraStops(); });
+      });
+    }
+    function addExtraStop() {
+      extraStops.push({ address: "", fee: 0, feeManuallyEdited: false });
+      renderExtraStops();
+    }
+    function calcExtraStopDistanceFee(idx) {
+      const hintEl = document.querySelector(`[data-stop-hint-idx="${idx}"]`);
       const addr1 = $("mainAddress").value.trim();
-      const addr2 = $("extraAddress").value.trim();
-      if (!addr1 || !addr2) { if (hintEl) hintEl.textContent = ""; return; }
-      if (!window.google?.maps?.DistanceMatrixService) { if (hintEl) hintEl.textContent = "Google 地圖尚未載入完成，稍後再試"; return; }
-      if (hintEl) hintEl.textContent = "距離計算中…";
+      const addr2 = (extraStops[idx] && extraStops[idx].address || "").trim();
+      if (!hintEl) return;
+      if (!addr1 || !addr2) { hintEl.textContent = ""; return; }
+      if (!window.google?.maps?.DistanceMatrixService) { hintEl.textContent = "Google 地圖尚未載入完成，稍後再試"; return; }
+      hintEl.textContent = "距離計算中…";
       // 防止卡死：正常情況下 Google 的 callback 一定會被呼叫（不管成功或失敗），
       // 如果 8 秒內都沒有任何回應，通常代表這把金鑰沒開通 Distance Matrix API 或網域被擋，
       // 這裡加一個逾時保底，至少畫面會顯示錯誤訊息，不會一直卡在「距離計算中」。
@@ -235,7 +268,8 @@
         if (done) return;
         done = true;
         console.error("[加點距離計算] 8秒內未收到Google回應，可能是Distance Matrix API未啟用或金鑰網域限制");
-        if (hintEl) hintEl.textContent = "距離計算逾時，請直接手動輸入加點費";
+        const el = document.querySelector(`[data-stop-hint-idx="${idx}"]`);
+        if (el) el.textContent = "距離計算逾時，請直接手動輸入加點費";
       }, 8000);
       try {
         new google.maps.DistanceMatrixService().getDistanceMatrix(
@@ -244,17 +278,22 @@
             if (done) return;
             done = true;
             clearTimeout(timeoutId);
+            const el = document.querySelector(`[data-stop-hint-idx="${idx}"]`);
+            if (!el) return;
             if (status !== "OK" || !response || !response.rows[0] || response.rows[0].elements[0].status !== "OK") {
               console.error("[加點距離計算] Google回傳狀態異常：", status, response);
-              if (hintEl) hintEl.textContent = `無法計算距離（${status || "未知錯誤"}），請確認地址是否正確或手動輸入`;
+              el.textContent = `無法計算距離（${status || "未知錯誤"}），請確認地址是否正確或手動輸入`;
               return;
             }
             const distanceKm = response.rows[0].elements[0].distance.value / 1000;
             const isSameCity = addr1.substring(0, 3) === addr2.substring(0, 3);
             const units = Math.ceil(distanceKm / 5) || 1;
             const fee = isSameCity ? (units * 100) : (200 + units * 100);
-            if (hintEl) hintEl.textContent = `實際駕車距離約 ${distanceKm.toFixed(1)} 公里，建議加點費 $${fee.toLocaleString()}`;
-            if (!extraStopManuallyEdited) { $("extraStopFee").value = fee; if (lastQuote) getQuote(); }
+            el.textContent = `實際駕車距離約 ${distanceKm.toFixed(1)} 公里，建議加點費 $${fee.toLocaleString()}`;
+            if (extraStops[idx] && !extraStops[idx].feeManuallyEdited) {
+              extraStops[idx].fee = fee;
+              renderExtraStops();
+            }
           }
         );
       } catch (err) {
@@ -319,6 +358,9 @@
     function buildPayload() {
       const paxText = `${$("adult").value}大 ${$("child").value}中 ${$("infant").value}小`;
       const luggageText = `${$("checkedLuggage").value}大 ${$("carryLuggage").value}登機`;
+      const validStops = extraStops.filter(s => (s.address || "").trim() || s.fee > 0);
+      const extraStopFee = validStops.reduce((sum, s) => sum + (Number(s.fee) || 0), 0);
+      const extraAddress = validStops.map(s => s.address.trim()).filter(Boolean).join("、");
       return {
         channelCode: "AS",
         staffName: clean($("staffName").value),
@@ -328,9 +370,9 @@
         rideTime: $("rideTime").value,
         mainZone: clean($("mainZone").value),
         mainAddress: clean($("mainAddress").value),
-        extraZone: clean($("extraZone").value),
-        extraAddress: clean($("extraAddress").value),
-        extraStopFee: Number($("extraStopFee").value || 0),
+        extraZone: "",
+        extraAddress,
+        extraStopFee,
         carType: $("carType").value,
         paxText,
         luggageText,
@@ -440,6 +482,83 @@
       $("totalText").textContent = `$${Number(result.total || 0).toLocaleString("en-US")}`;
       $("quoteText").value = buildQuoteText(payload, result);
       $("btnCopy").disabled = false;
+      $("btnImage").disabled = false;
+    }
+    function escapeQuoteHtml(value) {
+      return String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+    // 產生「給客人看」的報價單圖片：跟後台試算工具不一樣，這裡只放客人需要知道的資訊
+    // （行程、費用明細、總額），不放客服備註、通路代碼這些內部欄位。
+    function buildQuoteImageHtml(payload, result) {
+      const rows = (result.items || []).map(item => {
+        const value = item.note || money(item.amount, item.isExtra);
+        return `<div style="display:flex;justify-content:space-between;padding:7px 0;font-size:14px;${item.isTotal ? "border-top:1px solid #e7ddea;margin-top:4px;padding-top:12px;font-weight:700;color:#553f62;font-size:16px;" : "color:#4b4553;"}"><span>${escapeQuoteHtml(item.label)}</span><span>${escapeQuoteHtml(value)}</span></div>`;
+      }).join("");
+      const route = routeLine(payload.serviceType, payload.airport, payload.mainAddress || payload.mainZone);
+      const returnRoute = payload.hasReturn ? routeLine(payload.returnServiceType, payload.returnAirport, payload.returnAddress || payload.returnZone) : "";
+      return `
+        <div style="width:400px;background:#fff;font-family:-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif;">
+          <div style="background:#553f62;padding:22px 24px;text-align:center;color:#fff;">
+            <div style="font-size:21px;font-weight:700;letter-spacing:1px;">安興租車</div>
+            <div style="font-size:12.5px;opacity:.85;margin-top:4px;">預估報價單</div>
+          </div>
+          <div style="padding:22px 24px;">
+            <div style="font-size:13px;color:#8a8291;margin-bottom:4px;">${escapeQuoteHtml(formatQuoteDate(payload.rideDate))} ${escapeQuoteHtml(payload.rideTime)}</div>
+            <div style="font-size:16px;font-weight:700;color:#1A0B3D;">${escapeQuoteHtml(payload.serviceType)}｜${escapeQuoteHtml(payload.carType)}</div>
+            <div style="font-size:13.5px;color:#4b4553;margin-top:3px;">${escapeQuoteHtml(route)}</div>
+            ${payload.hasReturn ? `<div style="font-size:12px;color:#8a8291;margin-top:8px;">回程　${escapeQuoteHtml(formatQuoteDate(payload.returnDate))} ${escapeQuoteHtml(payload.returnTime)}</div><div style="font-size:13.5px;color:#4b4553;">${escapeQuoteHtml(returnRoute)}</div>` : ""}
+            ${payload.extraAddress ? `<div style="font-size:12.5px;color:#8a8291;margin-top:8px;">加點：${escapeQuoteHtml(payload.extraAddress)}</div>` : ""}
+            <div style="margin-top:14px;padding-top:12px;border-top:1px solid #f0eaf3;">
+              <div style="display:flex;justify-content:space-between;font-size:13px;color:#8a8291;padding:4px 0;"><span>人數</span><span>${escapeQuoteHtml(payload.paxText)}</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:13px;color:#8a8291;padding:4px 0;"><span>行李</span><span>${escapeQuoteHtml(payload.luggageText)}</span></div>
+            </div>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid #f0eaf3;">${rows}</div>
+            <div style="margin-top:18px;display:flex;justify-content:space-between;align-items:baseline;background:#FBF7FA;border-radius:10px;padding:14px 16px;">
+              <span style="font-size:14px;font-weight:600;color:#553f62;">預估總額</span>
+              <span style="font-size:24px;font-weight:700;color:#993556;">$${Number(result.total || 0).toLocaleString("en-US")}</span>
+            </div>
+            <div style="font-size:11px;color:#a89fb0;margin-top:10px;line-height:1.6;">實際費用仍將依完整上下車地址、是否加點、行李數量及實際安排車型後確認。</div>
+          </div>
+          <div style="background:#FBF7FA;padding:12px 24px;font-size:11px;color:#8a8291;text-align:center;">安興租車｜機場接送．商務用車．包車旅遊</div>
+        </div>`;
+    }
+    async function generateQuoteImage() {
+      if (!lastQuote) return;
+      const btn = $("btnImage");
+      btn.disabled = true;
+      const originalText = btn.textContent;
+      btn.textContent = "產生中...";
+      try {
+        const root = $("imageRenderRoot");
+        root.innerHTML = buildQuoteImageHtml(lastQuote.payload, lastQuote.result);
+        await new Promise(r => setTimeout(r, 50));
+        const canvas = await html2canvas(root.firstElementChild, { scale: 2, backgroundColor: "#ffffff" });
+        const dataUrl = canvas.toDataURL("image/png");
+        await Swal.fire({
+          imageUrl: dataUrl,
+          imageAlt: "報價單",
+          imageWidth: 320,
+          title: "報價單圖片",
+          confirmButtonText: "下載圖片",
+          confirmButtonColor: "#553f62",
+          showCancelButton: true,
+          cancelButtonText: "關閉",
+          width: "min(94vw, 420px)"
+        }).then(r => {
+          if (r.isConfirmed) {
+            const a = document.createElement("a");
+            a.href = dataUrl;
+            a.download = `安興租車報價單-${lastQuote.payload.rideDate || ""}.png`;
+            a.click();
+          }
+        });
+      } catch (err) {
+        console.error("[報價單圖片] 產生失敗：", err);
+        Swal.fire("圖片產生失敗", "請稍後再試，或直接用文字版複製給客人。", "error");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
     }
     async function getQuote() {
       const payload = buildPayload();
@@ -496,10 +615,11 @@
       });
       $("btnQuote").addEventListener("click", getQuote);
       $("btnCopy").addEventListener("click", copyQuote);
+      $("btnImage").addEventListener("click", generateQuoteImage);
       $("btnReload").addEventListener("click", loadPrices);
-      $("mainAddress").addEventListener("blur", calcExtraStopDistanceFee);
-      $("extraAddress").addEventListener("blur", calcExtraStopDistanceFee);
-      $("extraStopFee").addEventListener("input", () => { extraStopManuallyEdited = true; });
+      $("addExtraStopBtn").addEventListener("click", addExtraStop);
+      $("mainAddress").addEventListener("blur", () => extraStops.forEach((_, idx) => calcExtraStopDistanceFee(idx)));
+      renderExtraStops();
       loadPrices();
     }
     window.addEventListener("load", init);
