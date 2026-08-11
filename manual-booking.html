@@ -487,7 +487,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.56"; // 預約明細圖片微調：日期加上星期幾、路線摘要只顯示縣市(完整地址下面已經有了不用重複)、右側欄位文字加粗
+    const APP_VERSION = "manual-booking-v1.0.57"; // 預約明細圖片字級整體加大(客服反應太小)，卡片寬度420→480px
     // 不再用 Google callback 機制初始化地圖（callback 容易撞上 async 腳本執行時機競速問題，
     // 之前就是這樣導致 initManualMapReady is not a function），距離計算改成呼叫當下才檢查
     // window.google.maps 是否就緒即可，不需要額外的載入完成回呼。
@@ -1714,14 +1714,14 @@
     // 版面跟欄位順序直接比照正式LINE卡片buildReservationConfirmationFlex_：
     // 單號/姓名/電話/車型/人數/行李/地址/加點/付款/座椅/備註 → 費用明細。
     function feeRowHtml(row) {
-      const style = row.isTotal ? "border-top:1px solid #e7ddea;margin-top:6px;padding-top:10px;font-weight:700;color:#553f62;font-size:15px;"
-        : row.isSubtotal ? "font-weight:700;color:#1A0B3D;"
-        : row.isMuted ? "color:#8a8291;font-size:12px;"
+      const style = row.isTotal ? "border-top:1px solid #e7ddea;margin-top:8px;padding-top:12px;font-weight:700;color:#553f62;font-size:19px;"
+        : row.isSubtotal ? "font-weight:700;color:#1A0B3D;font-size:16px;"
+        : row.isMuted ? "color:#8a8291;font-size:13.5px;"
         : row.isDiscount ? "color:#993556;" : "color:#4b4553;";
-      return `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;${style}"><span>${escapeHtml(row.label)}</span><span>${escapeHtml(row.value)}</span></div>`;
+      return `<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:15.5px;${style}"><span>${escapeHtml(row.label)}</span><span>${escapeHtml(row.value)}</span></div>`;
     }
     function bookingInfoRow(label, value) {
-      return `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;color:#4b4553;"><span style="color:#8a8291;">${escapeHtml(label)}</span><span style="text-align:right;font-weight:700;color:#1A0B3D;">${escapeHtml(value || "無")}</span></div>`;
+      return `<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:15.5px;color:#4b4553;"><span style="color:#8a8291;">${escapeHtml(label)}</span><span style="text-align:right;font-weight:700;color:#1A0B3D;">${escapeHtml(value || "無")}</span></div>`;
     }
     // 路線摘要只要抓到縣市即可（完整地址下面「地址」那一欄已經有了，這裡重複顯示反而太長）。
     const TW_CITIES_FOR_ROUTE = ["台北市", "新北市", "桃園市", "新竹市", "新竹縣", "苗栗縣", "台中市", "台南市", "高雄市", "基隆市", "嘉義市", "彰化縣", "南投縣", "雲林縣", "嘉義縣", "屏東縣", "宜蘭縣", "花蓮縣", "台東縣", "澎湖縣", "金門縣", "連江縣"];
@@ -1747,26 +1747,26 @@
         ["座椅", order.seatDetails], ["備註", order.remarks]
       ];
       return `
-        <div style="${isFirst ? "" : "margin-top:16px;padding-top:16px;border-top:1px solid #e7ddea;"}">
-          <div style="font-size:15px;font-weight:700;color:#1A0B3D;">${escapeHtml(formatBookingImageDate(order.rideDate))} ${escapeHtml(order.rideTime)}　${escapeHtml(order.serviceType)}${order.flightNumber ? "｜" + escapeHtml(order.flightNumber) : ""}</div>
-          <div style="font-size:13px;color:#4b4553;margin-top:3px;">${escapeHtml(route)}</div>
-          <div style="margin-top:10px;padding-top:10px;border-top:1px solid #f0eaf3;font-size:12px;font-weight:700;color:#993556;letter-spacing:1px;">預約資訊</div>
+        <div style="${isFirst ? "" : "margin-top:20px;padding-top:20px;border-top:1px solid #e7ddea;"}">
+          <div style="font-size:19px;font-weight:700;color:#1A0B3D;">${escapeHtml(formatBookingImageDate(order.rideDate))}　${escapeHtml(order.rideTime)}　${escapeHtml(order.serviceType)}${order.flightNumber ? "｜" + escapeHtml(order.flightNumber) : ""}</div>
+          <div style="font-size:16px;color:#4b4553;margin-top:5px;">${escapeHtml(route)}</div>
+          <div style="margin-top:14px;padding-top:14px;border-top:1px solid #f0eaf3;font-size:15px;font-weight:700;color:#993556;letter-spacing:1px;">預約資訊</div>
           <div style="margin-top:4px;">${infoRows.map(r => bookingInfoRow(r[0], r[1])).join("")}</div>
-          <div style="margin-top:10px;padding-top:10px;border-top:1px solid #f0eaf3;font-size:12px;font-weight:700;color:#993556;letter-spacing:1px;">費用明細</div>
+          <div style="margin-top:14px;padding-top:14px;border-top:1px solid #f0eaf3;font-size:15px;font-weight:700;color:#993556;letter-spacing:1px;">費用明細</div>
           <div style="margin-top:4px;">${feeRows.map(feeRowHtml).join("")}</div>
         </div>`;
     }
     function buildBookingImageHtml(orders) {
       const first = orders[0] || {};
       return `
-        <div style="width:420px;background:#fff;font-family:-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif;">
-          <div style="background:#553f62;padding:20px 24px;">
-            <div style="color:#fff;font-size:17px;font-weight:700;">安興租車｜預約明細</div>
+        <div style="width:480px;background:#fff;font-family:-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif;">
+          <div style="background:#553f62;padding:24px 28px;">
+            <div style="color:#fff;font-size:22px;font-weight:700;">安興租車｜預約明細</div>
           </div>
-          <div style="padding:20px 24px;">
+          <div style="padding:24px 28px;">
             ${orders.map((o, i) => buildBookingImageOrderHtml(o, orders, i === 0)).join("")}
           </div>
-          <div style="background:#FBF7FA;padding:12px 24px;font-size:11px;color:#8a8291;text-align:center;">安興租車｜機場接送．商務用車．包車旅遊</div>
+          <div style="background:#FBF7FA;padding:14px 28px;font-size:13px;color:#8a8291;text-align:center;">安興租車｜機場接送．商務用車．包車旅遊</div>
         </div>`;
     }
     async function generateImageByReservationId() {
