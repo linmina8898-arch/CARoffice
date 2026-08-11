@@ -487,7 +487,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.55"; // 「預約明細圖片」改成完全比照正式LINE卡片buildReservationConfirmationFlex_的欄位順序與費用明細算法(基本車資/加點/折扣/來回總額)，不再是簡化版；需搭配gas.html v2.2.205(getManualBookingTextData補齊欄位)
+    const APP_VERSION = "manual-booking-v1.0.56"; // 預約明細圖片微調：日期加上星期幾、路線摘要只顯示縣市(完整地址下面已經有了不用重複)、右側欄位文字加粗
     // 不再用 Google callback 機制初始化地圖（callback 容易撞上 async 腳本執行時機競速問題，
     // 之前就是這樣導致 initManualMapReady is not a function），距離計算改成呼叫當下才檢查
     // window.google.maps 是否就緒即可，不需要額外的載入完成回呼。
@@ -1721,10 +1721,24 @@
       return `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;${style}"><span>${escapeHtml(row.label)}</span><span>${escapeHtml(row.value)}</span></div>`;
     }
     function bookingInfoRow(label, value) {
-      return `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;color:#4b4553;"><span style="color:#8a8291;">${escapeHtml(label)}</span><span style="text-align:right;">${escapeHtml(value || "無")}</span></div>`;
+      return `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;color:#4b4553;"><span style="color:#8a8291;">${escapeHtml(label)}</span><span style="text-align:right;font-weight:700;color:#1A0B3D;">${escapeHtml(value || "無")}</span></div>`;
+    }
+    // 路線摘要只要抓到縣市即可（完整地址下面「地址」那一欄已經有了，這裡重複顯示反而太長）。
+    const TW_CITIES_FOR_ROUTE = ["台北市", "新北市", "桃園市", "新竹市", "新竹縣", "苗栗縣", "台中市", "台南市", "高雄市", "基隆市", "嘉義市", "彰化縣", "南投縣", "雲林縣", "嘉義縣", "屏東縣", "宜蘭縣", "花蓮縣", "台東縣", "澎湖縣", "金門縣", "連江縣"];
+    function extractCityFromAddress(address) {
+      const text = String(address || "").replace(/臺/g, "台");
+      const city = TW_CITIES_FOR_ROUTE.find(c => text.includes(c));
+      return city || address || "";
+    }
+    function formatBookingImageDate(dateStr) {
+      const days = ["日", "一", "二", "三", "四", "五", "六"];
+      const d = new Date(`${dateStr}T00:00:00+08:00`);
+      if (isNaN(d.getTime())) return dateStr;
+      return `${dateStr}（${days[d.getDay()]}）`;
     }
     function buildBookingImageOrderHtml(order, allOrders, isFirst) {
-      const route = order.serviceType === "接機" ? `${order.airport || ""} → ${order.address || ""}` : `${order.address || ""} → ${order.airport || ""}`;
+      const mainCity = extractCityFromAddress(order.address);
+      const route = order.serviceType === "接機" ? `${order.airport || ""} → ${mainCity}` : `${mainCity} → ${order.airport || ""}`;
       const feeRows = buildOrderFeeRows(order, allOrders);
       const infoRows = [
         ["單號", order.reservationId], ["姓名", order.customerName], ["電話", order.phone],
@@ -1734,7 +1748,7 @@
       ];
       return `
         <div style="${isFirst ? "" : "margin-top:16px;padding-top:16px;border-top:1px solid #e7ddea;"}">
-          <div style="font-size:15px;font-weight:700;color:#1A0B3D;">${escapeHtml(order.rideDate)} ${escapeHtml(order.rideTime)}　${escapeHtml(order.serviceType)}${order.flightNumber ? "｜" + escapeHtml(order.flightNumber) : ""}</div>
+          <div style="font-size:15px;font-weight:700;color:#1A0B3D;">${escapeHtml(formatBookingImageDate(order.rideDate))} ${escapeHtml(order.rideTime)}　${escapeHtml(order.serviceType)}${order.flightNumber ? "｜" + escapeHtml(order.flightNumber) : ""}</div>
           <div style="font-size:13px;color:#4b4553;margin-top:3px;">${escapeHtml(route)}</div>
           <div style="margin-top:10px;padding-top:10px;border-top:1px solid #f0eaf3;font-size:12px;font-weight:700;color:#993556;letter-spacing:1px;">預約資訊</div>
           <div style="margin-top:4px;">${infoRows.map(r => bookingInfoRow(r[0], r[1])).join("")}</div>
