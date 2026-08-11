@@ -6,7 +6,7 @@
   <title>AS 快速報價</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAxYym5ZR8puPb0iiycHdwzTJTKH0Aears&libraries=places&callback=initQuoteMapReady"></script>
+  <script defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAxYym5ZR8puPb0iiycHdwzTJTKH0Aears&libraries=places"></script>
   <style>
     :root {
       --primary: #553f62;
@@ -191,7 +191,7 @@
     </div>
   </div>
   <script>
-    const APP_VERSION = "quote-v1.0.6"; // 加點距離計算加上8秒逾時保底+console錯誤訊息，避免一直卡在「距離計算中」看不出原因
+    const APP_VERSION = "quote-v1.0.7"; // 修正Google地圖initQuoteMapReady callback競速bug(is not a function)，改成defer+window load事件綁定，不再依賴Google callback機制
     const GAS_URL = "https://script.google.com/macros/s/AKfycbww3Pr0IcOABPvTteIWHo9j6MWRQvNjpf_MZRE7NgDp3Nt69Upx8VhVnCVMcbUvjJwI/exec";
     const BOOKING_URL = location.href.includes("quote.html") ? location.href.replace("quote.html", "index.html") : "index.html";
     let priceRows = [];
@@ -202,6 +202,10 @@
     // 跟 index.html calculateDistanceFee() 同一套公式：抓 Google 實際駕車距離，
     // 同縣市每5公里$100，跨縣市另外+$200底價。這裡是「自動幫客服算一個建議值」，
     // 客服還是可以直接覆蓋 extraStopFee 欄位，不會被鎖死。
+    // 不再用 Google callback 機制（callback=xxx）綁地圖初始化，因為 callback 容易撞上腳本
+    // 執行時機競速問題（之前就是這樣導致 initQuoteMapReady is not a function，整個地圖初始化失敗）。
+    // 改成用 defer（不加 async），並且在 window 的 load 事件時才去綁地址自動完成，
+    // 這時候 defer 腳本一定已經執行完、window.google.maps 一定存在。
     function initQuoteMapReady() {
       const el = $("extraAddress");
       if (!el || !window.google?.maps?.places?.Autocomplete) return;
@@ -214,7 +218,7 @@
         });
       } catch (e) { console.warn("Google 地址自動完成無法使用：", e); }
     }
-    window.initQuoteMapReady = initQuoteMapReady;
+    window.addEventListener("load", initQuoteMapReady);
 
     function calcExtraStopDistanceFee() {
       const hintEl = $("extraStopDistHint");
