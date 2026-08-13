@@ -187,10 +187,11 @@
     </div>
   </div>
   <script>
-    const APP_VERSION = "quote-v1.0.12"; // 修正加點費同縣市誤判成跨縣市多收$200的bug：不再直接比較地址文字前3碼，改用主要地區(mainZone)或地址文字反查真正縣市名稱來比對，同步修正index.html的同一個bug
+    const APP_VERSION = "quote-v1.0.13"; // 新增特殊節日加價：後台「特殊日期」表設定好日期/金額/名稱，取得報價時自動比對套用，跟折扣碼一樣不用手動輸入
     const GAS_URL = "https://script.google.com/macros/s/AKfycbww3Pr0IcOABPvTteIWHo9j6MWRQvNjpf_MZRE7NgDp3Nt69Upx8VhVnCVMcbUvjJwI/exec";
     const BOOKING_URL = location.href.includes("quote.html") ? location.href.replace("quote.html", "index.html") : "index.html";
     let priceRows = [];
+    let SPECIAL_DATE_SURCHARGES = {}; // 特殊節日加價：{"2026-06-18":{amount:400,label:"端午節連假加成"}}，跟折扣碼一樣後台設定、系統自動比對套用
     let lastQuote = null;
     let extraStops = []; // {address, fee, feeManuallyEdited} 可疊加多筆，跟manual-booking.html的加點站清單同一套邏輯
     const $ = (id) => document.getElementById(id);
@@ -353,6 +354,7 @@
       try {
         const data = await fetch(`${GAS_URL}?action=getPrices&t=${Date.now()}`).then(r => safeJsonParse(r));
         priceRows = data.prices || [];
+        SPECIAL_DATE_SURCHARGES = data.specialDates || {};
         renderPriceOptions();
         $("feeList").innerHTML = "請先選擇地區後按「取得報價」。";
       } catch (err) {

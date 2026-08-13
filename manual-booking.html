@@ -303,6 +303,7 @@
           <div>
             <label for="fare">車資金額</label>
             <input id="fare" name="fare" type="number" inputmode="numeric" min="0" required placeholder="由客服手動輸入">
+            <div id="specialDateHint" class="hint !mt-1 hidden" style="color:#9a6a1f"></div>
           </div>
           <div class="full" id="airportAddressWrap">
             <label for="address">接送地址</label>
@@ -341,6 +342,7 @@
             <div>
               <label for="returnFare">回程車資</label>
               <input id="returnFare" name="returnFare" type="number" inputmode="numeric" min="0" placeholder="不填則同去程金額">
+              <div id="returnSpecialDateHint" class="hint !mt-1 hidden" style="color:#9a6a1f"></div>
             </div>
             <div>
               <label for="returnDate">回程日期</label>
@@ -487,7 +489,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.59"; // 修正加點費同縣市誤判成跨縣市多收$200的bug：不再直接比較地址文字前3碼，改用縣市清單反查真正縣市名稱來比對，同步修正index.html的同一個bug
+    const APP_VERSION = "manual-booking-v1.0.60"; // 新增特殊節日加價提示：這個工具是手動車資不套自動公式，車資欄位下面會提示「今天是OO建議加價$XXX」，客服自己決定要不要加進車資，不會自動改總額
     // 不再用 Google callback 機制初始化地圖（callback 容易撞上 async 腳本執行時機競速問題，
     // 之前就是這樣導致 initManualMapReady is not a function），距離計算改成呼叫當下才檢查
     // window.google.maps 是否就緒即可，不需要額外的載入完成回呼。
@@ -518,6 +520,7 @@
     }
     let templates = [];
     let manualSources = [];
+    let SPECIAL_DATE_SURCHARGES = {}; // 特殊節日加價：{"2026-06-18":{amount:400,label:"端午節連假加成"}}。這個工具是手動車資，不自動套用，只提示客服自己決定要不要加
     let discountItems = [];
     let extraStops = [];
 
@@ -544,7 +547,7 @@
         $("signboardContentWrap").classList.toggle("hidden", !$("signboardNeeded").checked);
         updateSummary();
       });
-      ["source", "customSource", "serviceType", "rideDate", "rideHour", "rideMinute", "fare", "manualCashCollected", "returnManualCashCollected", "hasReturn", "returnHour", "returnMinute", "returnFare", "oneWayStart", "oneWayEnd"].forEach(id => {
+      ["source", "customSource", "serviceType", "rideDate", "rideHour", "rideMinute", "fare", "manualCashCollected", "returnManualCashCollected", "hasReturn", "returnHour", "returnMinute", "returnFare", "returnDate", "oneWayStart", "oneWayEnd"].forEach(id => {
         const el = $(id);
         if (el) el.addEventListener("input", updateSummary);
         if (el) el.addEventListener("change", updateSummary);
@@ -574,6 +577,7 @@
         }
         templates = data.templates || [];
         manualSources = data.sources || [];
+        SPECIAL_DATE_SURCHARGES = data.specialDates || {};
         renderSourceOptions(templates);
         renderTemplateSourceFilter();
         renderTemplateOptions();
@@ -1580,6 +1584,23 @@
       const total = getManualTripFare(p, "outbound") + (p.hasReturn ? getManualTripFare(p, "return") : 0);
       $("summaryText").textContent = `${currentSource() || "未選來源"}｜${$("serviceType").value || "行程"}｜總車資 $${total.toLocaleString()}`;
       updateDiscountTotalDisplay();
+      updateSpecialDateHints(p);
+    }
+    // 特殊節日加價：這個工具是手動車資、不套自動公式，所以不像index.html/quote.html那樣自動加進總額，
+    // 只在車資欄位下面提示「今天是OO，後台設定建議加價$XXX」，客服自己決定要不要把這筆加進車資裡。
+    function updateSpecialDateHints(p) {
+      const outEl = $("specialDateHint"), retEl = $("returnSpecialDateHint");
+      const outSpecial = p.rideDate ? SPECIAL_DATE_SURCHARGES[p.rideDate] : null;
+      if (outEl) {
+        outEl.classList.toggle("hidden", !outSpecial);
+        if (outSpecial) outEl.textContent = `⚠️ ${p.rideDate} 是「${outSpecial.label}」，後台設定建議加價 $${Number(outSpecial.amount).toLocaleString()}（不會自動加進車資，請自行加總）`;
+      }
+      if (retEl) {
+        const retDate = p.hasReturn ? ($("returnDate").value || p.rideDate) : "";
+        const retSpecial = retDate ? SPECIAL_DATE_SURCHARGES[retDate] : null;
+        retEl.classList.toggle("hidden", !retSpecial);
+        if (retSpecial) retEl.textContent = `⚠️ ${retDate} 是「${retSpecial.label}」，後台設定建議加價 $${Number(retSpecial.amount).toLocaleString()}（不會自動加進車資，請自行加總）`;
+      }
     }
 
     function buildCustomerConfirmMessage(p, reservationIds = []) {
