@@ -81,7 +81,7 @@
         </div>
     </div>
     <script>
-        const APP_VERSION = "v1.0.37";
+        const APP_VERSION = "v1.0.38"; // 任務畫面「客戶姓名」同步改成局部遮蔽(只留頭尾字，中間用O)，跟admin.html分享文字的遮蔽規則一致；出租單(給航警查核用)仍使用task.custName完整姓名，不受影響
         const GAS_URL = "https://script.google.com/macros/s/AKfycbww3Pr0IcOABPvTteIWHo9j6MWRQvNjpf_MZRE7NgDp3Nt69Upx8VhVnCVMcbUvjJwI/exec";
         const LIFF_ID = "2009971109-EdjC9QlC";
         let lineUserId = "";
@@ -106,6 +106,19 @@
         const esc = value => String(value || "-").replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
         const clean = value => (!value || value === "無") ? "" : String(value);
         const displayDriverName = value => clean(value).replace(/（臨時）$/g, "").trim();
+        function maskCustomerName(value) {
+            const raw = clean(value).trim();
+            if (!raw) return raw;
+            const titleMatch = raw.match(/(先生|小姐|女士|太太)$/);
+            const title = titleMatch ? titleMatch[0] : "";
+            const core = title ? raw.slice(0, raw.length - title.length) : raw;
+            const chars = Array.from(core);
+            let maskedCore;
+            if (chars.length <= 1) maskedCore = core;
+            else if (chars.length === 2) maskedCore = chars[0] + "O";
+            else maskedCore = chars[0] + "O" + chars[chars.length - 1];
+            return maskedCore + title;
+        }
         const displayDriverOrderId = value => clean(value).replace(/-去程$/g, "-A").replace(/-回程$/g, "-B").replace(/-01$/g, "-A").replace(/-02$/g, "-B");
         function formatSportLuggageSuffix(value) {
             const text = clean(value);
@@ -184,7 +197,7 @@
             const fields = [
                 ["接送機場", task.airport],
                 ["航班編號", task.flightNo],
-                ["客戶姓名", task.custName],
+                ["客戶姓名", maskCustomerName(task.custName)],
                 ["接送地址", task.address],
                 ["加點地址", task.extraStop],
                 ["乘車人數", task.paxCount],
