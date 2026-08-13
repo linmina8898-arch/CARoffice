@@ -81,7 +81,7 @@
         </div>
     </div>
     <script>
-        const APP_VERSION = "v1.0.38"; // 任務畫面「客戶姓名」同步改成局部遮蔽(只留頭尾字，中間用O)，跟admin.html分享文字的遮蔽規則一致；出租單(給航警查核用)仍使用task.custName完整姓名，不受影響
+        const APP_VERSION = "v1.0.39"; // 修正LIFF withLoginOnExternalBrowser登入流程導回頁面時，網址上的?token=有時候會遺失、導致顯示「無法開啟任務」的問題：進頁面時把token先存到sessionStorage，網址讀不到token時改用暫存的這份
         const GAS_URL = "https://script.google.com/macros/s/AKfycbww3Pr0IcOABPvTteIWHo9j6MWRQvNjpf_MZRE7NgDp3Nt69Upx8VhVnCVMcbUvjJwI/exec";
         const LIFF_ID = "2009971109-EdjC9QlC";
         let lineUserId = "";
@@ -94,7 +94,8 @@
         throw new Error("系統忙碌中或連線異常，請稍後再試一次。");
       }
     }
-        const token = new URLSearchParams(location.search).get("token") || "";
+        const token = new URLSearchParams(location.search).get("token") || sessionStorage.getItem("asTempDriverToken") || "";
+        if (token) { try { sessionStorage.setItem("asTempDriverToken", token); } catch (e) {} }
         let task = null;
         let driver = null;
         let hasSignature = false;
