@@ -487,7 +487,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.57"; // 預約明細圖片字級整體加大(客服反應太小)，卡片寬度420→480px
+    const APP_VERSION = "manual-booking-v1.0.58"; // 修正預約明細圖片折扣排版誤導：來回程回程這一腿的折扣改排在小計之後、來回總額之前，跟正式卡片gas.html v2.2.206排法一致
     // 不再用 Google callback 機制初始化地圖（callback 容易撞上 async 腳本執行時機競速問題，
     // 之前就是這樣導致 initManualMapReady is not a function），距離計算改成呼叫當下才檢查
     // window.google.maps 是否就緒即可，不需要額外的載入完成回呼。
@@ -1687,9 +1687,14 @@
       }
       rows.push({ label: "基本車資", value: "$" + baseFare.toLocaleString() });
       extras.forEach(item => rows.push({ label: item.label, value: item.note || ("+$" + (item.amount || 0).toLocaleString()) }));
+      // 折扣是套在「整趟來回總額」上，不是套在回程自己這一腿的小計上，所以來回程的回程這一腿，
+      // 折扣要排在小計「之後」、來回總額「之前」，不能排在小計前面（會讓客人誤會成
+      // 基本車資+加點-折扣=小計，實際上不是這樣算），跟客人自己下單時系統試算畫面一致。
       const discounts = parseStoredFeeDiscounts(order.discountCode, discountAmount);
-      discounts.forEach(d => rows.push({ label: d.label, value: "-$" + d.amount.toLocaleString(), isDiscount: true }));
+      const isReturnLeg = order.label === "回程";
+      if (!isReturnLeg) discounts.forEach(d => rows.push({ label: d.label, value: "-$" + d.amount.toLocaleString(), isDiscount: true }));
       rows.push({ label: order.label === "回程" ? "回程小計" : (order.label === "去程" ? "去程小計" : "總額"), value: "$" + displayTotal.toLocaleString(), isSubtotal: true });
+      if (isReturnLeg) discounts.forEach(d => rows.push({ label: d.label, value: "-$" + d.amount.toLocaleString(), isDiscount: true }));
       if (isRoundTripPart && Array.isArray(siblingOrders)) {
         const otherLabel = order.label === "去程" ? "回程" : "去程";
         const other = siblingOrders.find(o => o !== order && o.label === otherLabel);
