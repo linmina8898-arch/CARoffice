@@ -183,7 +183,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.14.66"; // 人數/行李分隔符號統一改用「+」(原本用空白)，胖胖箱格式改用「+」不再用「*」，跟gas.html/index.html同步
+        const APP_VERSION = "v1.14.67"; // 登入時driverCheckAuth若失敗(例如帳號被黑名單停用)，改成明確跳出錯誤訊息，不再卡在「正在確認司機身分...」轉圈圈沒反應
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -523,7 +523,17 @@
                     }
 
                     document.getElementById('authMsg').innerText = "正在確認司機身分...";
-                    const checkRes = await apiCall('driverCheckAuth', { lineId: profile.userId }, 30000);
+                    let checkRes;
+                    try {
+                        checkRes = await apiCall('driverCheckAuth', { lineId: profile.userId }, 30000);
+                    } catch (err) {
+                        clearAuthTimeout();
+                        clearCachedDriverAuth();
+                        document.getElementById('authSpinner').classList.add('hidden');
+                        document.getElementById('authMsg').innerText = err.message || '登入失敗，請聯絡調度。';
+                        Swal.fire('無法登入', err.message || '請聯絡調度確認帳號狀態。', 'error');
+                        return;
+                    }
                     if(checkRes.isBound) {
                         driverData = checkRes.driver;
                         saveCachedDriverAuth(profile.userId, driverData);
