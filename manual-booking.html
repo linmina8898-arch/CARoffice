@@ -489,7 +489,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.61"; // 特殊節日加價提示改成依車型顯示對應金額(跟後端gas.html v2.2.208的amounts陣列格式對齊)，並補上「特殊節日恕無法使用折扣」的提醒文字
+    const APP_VERSION = "manual-booking-v1.0.62"; // 人數/行李分隔符號統一改用「+」(原本用空白)，跟gas.html/index.html/driver.html同步
     // 不再用 Google callback 機制初始化地圖（callback 容易撞上 async 腳本執行時機競速問題，
     // 之前就是這樣導致 initManualMapReady is not a function），距離計算改成呼叫當下才檢查
     // window.google.maps 是否就緒即可，不需要額外的載入完成回呼。
@@ -2013,7 +2013,8 @@
       if (adult) parts.push(`${adult}大`);
       if (child) parts.push(`${child}中`);
       if (infant) parts.push(`${infant}小`);
-      return parts.join(" ") || "0人";
+      // 分隔符號統一用「+」，跟客人端確認頁、預約卡片、行事曆內文、司機端同一套風格。
+      return parts.join("+") || "0人";
     }
 
     function formatCustomerLuggage(value) {
@@ -2025,7 +2026,7 @@
       const parts = [];
       if (checked) parts.push(`${checked}大`);
       if (carry) parts.push(`${carry}登機`);
-      return parts.join(" ") || "無";
+      return parts.join("+") || "無";
     }
 
     function formatCustomerFare(paymentMethod, fare) {

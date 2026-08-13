@@ -183,7 +183,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.14.65"; // 修正回報成功後，緊接著的 loadTasks() 抓到還沒跟上的舊資料，把畫面按鈕蓋回報告前狀態的問題
+        const APP_VERSION = "v1.14.66"; // 人數/行李分隔符號統一改用「+」(原本用空白)，胖胖箱格式改用「+」不再用「*」，跟gas.html/index.html同步
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -772,28 +772,36 @@
                 const adult = Number(standard[1] || 0);
                 const child = Number(standard[2] || 0);
                 const infant = Number(standard[3] || 0);
-                return adult + child + infant > 0 ? `${adult}大 ${child}中 ${infant}小` : '請確認預約單';
+                return adult + child + infant > 0 ? formatPaxParts(adult, child, infant) : '請確認預約單';
             }
             const legacy = text.match(/大\s*(\d+)(?:\s*中\s*(\d+))?(?:\s*小\s*(\d+))?/);
             if (legacy) {
                 const adult = Number(legacy[1] || 0);
                 const child = Number(legacy[2] || 0);
                 const infant = Number(legacy[3] || 0);
-                return adult + child + infant > 0 ? `${adult}大 ${child}中 ${infant}小` : '請確認預約單';
+                return adult + child + infant > 0 ? formatPaxParts(adult, child, infant) : '請確認預約單';
             }
             const slash = text.match(/^(\d+)\/(\d+)\/(\d+)$/);
             if (slash) {
                 const adult = Number(slash[1] || 0);
                 const child = Number(slash[2] || 0);
                 const infant = Number(slash[3] || 0);
-                return adult + child + infant > 0 ? `${adult}大 ${child}中 ${infant}小` : '請確認預約單';
+                return adult + child + infant > 0 ? formatPaxParts(adult, child, infant) : '請確認預約單';
             }
             return text;
+        }
+        // 分隔符號統一用「+」、0的項目自動省略，跟客人端確認頁、預約卡片、行事曆內文同一套風格。
+        function formatPaxParts(adult, child, infant) {
+            const parts = [];
+            if (adult) parts.push(`${adult}大`);
+            if (child) parts.push(`${child}中`);
+            if (infant) parts.push(`${infant}小`);
+            return parts.join('+') || '請確認預約單';
         }
         function formatLuggageCount(v) {
             const text = cleanVal(v);
             if (!text) return '';
-            return text.replace(/(\d+)\s*小/g, '$1登機').replace(/(\d+大)(?=\d)/g, '$1 ');
+            return text.replace(/(\d+)\s*小/g, '$1登機').replace(/(\d+大)(?=\d)/g, '$1+').replace(/\s+/g, '+');
         }
         function formatSportLuggageSuffix(v) {
             const text = cleanVal(v);
@@ -802,8 +810,8 @@
             const sizeMatch = text.match(/有\s*[（(]\s*\d+\s*件\s*[,，]\s*([^）)]+)[）)]/) || text.match(/(\d{2})\s*吋?/);
             const qty = qtyMatch ? qtyMatch[1] : '1';
             const size = sizeMatch ? cleanVal(sizeMatch[1]).replace(/吋/g, '') : '';
-            if (size) return `( 含胖胖箱${size}*${qty})`;
-            return `( 含胖胖箱${text.replace(/^有/, '').replace(/[()（）]/g, '').replace(/\s+/g, '')})`;
+            if (size) return `(含胖胖箱${size}+${qty})`;
+            return `(含胖胖箱${text.replace(/^有/, '').replace(/[()（）]/g, '').replace(/\s+/g, '')})`;
         }
         function formatLuggageWithSport(luggage, sport) {
             const base = cleanVal(luggage) === '0' ? '' : formatLuggageCount(luggage);
