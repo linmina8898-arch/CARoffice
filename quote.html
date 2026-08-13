@@ -187,7 +187,7 @@
     </div>
   </div>
   <script>
-    const APP_VERSION = "quote-v1.0.13"; // 新增特殊節日加價：後台「特殊日期」表設定好日期/金額/名稱，取得報價時自動比對套用，跟折扣碼一樣不用手動輸入
+    const APP_VERSION = "quote-v1.0.14"; // 特殊節日加價改成依車型查對應金額(跟後端gas.html v2.2.208的amounts陣列格式對齊)；特殊節日恕無法使用早鳥/預約來回優惠，改顯示「特殊節日恕無法使用優惠折抵」
     const GAS_URL = "https://script.google.com/macros/s/AKfycbww3Pr0IcOABPvTteIWHo9j6MWRQvNjpf_MZRE7NgDp3Nt69Upx8VhVnCVMcbUvjJwI/exec";
     const BOOKING_URL = location.href.includes("quote.html") ? location.href.replace("quote.html", "index.html") : "index.html";
     let priceRows = [];

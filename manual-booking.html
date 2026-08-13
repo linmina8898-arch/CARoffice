@@ -489,7 +489,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.60"; // 新增特殊節日加價提示：這個工具是手動車資不套自動公式，車資欄位下面會提示「今天是OO建議加價$XXX」，客服自己決定要不要加進車資，不會自動改總額
+    const APP_VERSION = "manual-booking-v1.0.61"; // 特殊節日加價提示改成依車型顯示對應金額(跟後端gas.html v2.2.208的amounts陣列格式對齊)，並補上「特殊節日恕無法使用折扣」的提醒文字
     // 不再用 Google callback 機制初始化地圖（callback 容易撞上 async 腳本執行時機競速問題，
     // 之前就是這樣導致 initManualMapReady is not a function），距離計算改成呼叫當下才檢查
     // window.google.maps 是否就緒即可，不需要額外的載入完成回呼。
@@ -547,7 +547,7 @@
         $("signboardContentWrap").classList.toggle("hidden", !$("signboardNeeded").checked);
         updateSummary();
       });
-      ["source", "customSource", "serviceType", "rideDate", "rideHour", "rideMinute", "fare", "manualCashCollected", "returnManualCashCollected", "hasReturn", "returnHour", "returnMinute", "returnFare", "returnDate", "oneWayStart", "oneWayEnd"].forEach(id => {
+      ["source", "customSource", "serviceType", "rideDate", "rideHour", "rideMinute", "fare", "manualCashCollected", "returnManualCashCollected", "hasReturn", "returnHour", "returnMinute", "returnFare", "returnDate", "oneWayStart", "oneWayEnd", "carType"].forEach(id => {
         const el = $(id);
         if (el) el.addEventListener("input", updateSummary);
         if (el) el.addEventListener("change", updateSummary);
@@ -1587,19 +1587,30 @@
       updateSpecialDateHints(p);
     }
     // 特殊節日加價：這個工具是手動車資、不套自動公式，所以不像index.html/quote.html那樣自動加進總額，
-    // 只在車資欄位下面提示「今天是OO，後台設定建議加價$XXX」，客服自己決定要不要把這筆加進車資裡。
+    // 只在車資欄位下面提示「今天是OO，依目前選的車型建議加價$XXX」，客服自己決定要不要把這筆加進車資裡。
+    // 特殊日期表現在是依車型分開設定金額(小車/大車/商務車/Alphard)，這裡要對應目前選的車型抓對應金額。
+    function getSpecialDateVehicleIndex(carType) {
+      const t = String(carType || "");
+      if (t.indexOf("Alphard") !== -1) return 3;
+      if (t.indexOf("商務") !== -1 || t.indexOf("豪華") !== -1) return 2;
+      if (t.indexOf("大車") !== -1) return 1;
+      return 0;
+    }
     function updateSpecialDateHints(p) {
       const outEl = $("specialDateHint"), retEl = $("returnSpecialDateHint");
+      const carIdx = getSpecialDateVehicleIndex(p.carType);
       const outSpecial = p.rideDate ? SPECIAL_DATE_SURCHARGES[p.rideDate] : null;
+      const outAmount = outSpecial ? Number((outSpecial.amounts || [])[carIdx] || 0) : 0;
       if (outEl) {
-        outEl.classList.toggle("hidden", !outSpecial);
-        if (outSpecial) outEl.textContent = `⚠️ ${p.rideDate} 是「${outSpecial.label}」，後台設定建議加價 $${Number(outSpecial.amount).toLocaleString()}（不會自動加進車資，請自行加總）`;
+        outEl.classList.toggle("hidden", !(outSpecial && outAmount > 0));
+        if (outSpecial && outAmount > 0) outEl.textContent = `⚠️ ${p.rideDate} 是「${outSpecial.label}」，${p.carType || "此車型"}建議加價 $${outAmount.toLocaleString()}（不會自動加進車資，請自行加總；特殊節日恕無法使用折扣）`;
       }
       if (retEl) {
         const retDate = p.hasReturn ? ($("returnDate").value || p.rideDate) : "";
         const retSpecial = retDate ? SPECIAL_DATE_SURCHARGES[retDate] : null;
-        retEl.classList.toggle("hidden", !retSpecial);
-        if (retSpecial) retEl.textContent = `⚠️ ${retDate} 是「${retSpecial.label}」，後台設定建議加價 $${Number(retSpecial.amount).toLocaleString()}（不會自動加進車資，請自行加總）`;
+        const retAmount = retSpecial ? Number((retSpecial.amounts || [])[carIdx] || 0) : 0;
+        retEl.classList.toggle("hidden", !(retSpecial && retAmount > 0));
+        if (retSpecial && retAmount > 0) retEl.textContent = `⚠️ ${retDate} 是「${retSpecial.label}」，${p.carType || "此車型"}建議加價 $${retAmount.toLocaleString()}（不會自動加進車資，請自行加總；特殊節日恕無法使用折扣）`;
       }
     }
 
