@@ -6,6 +6,7 @@
     <title>AS派車 - 臨時派遣任務</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
         :root { --primary:#553f62; --accent:#f07cad; --bg:#f3f4f6; }
         body { font-family:sans-serif; background:var(--bg); color:#1f2937; font-size:14px; }
@@ -80,8 +81,10 @@
         </div>
     </div>
     <script>
-        const APP_VERSION = "v1.0.35";
+        const APP_VERSION = "v1.0.37";
         const GAS_URL = "https://script.google.com/macros/s/AKfycbww3Pr0IcOABPvTteIWHo9j6MWRQvNjpf_MZRE7NgDp3Nt69Upx8VhVnCVMcbUvjJwI/exec";
+        const LIFF_ID = "2009971109-EdjC9QlC";
+        let lineUserId = "";
 
     async function safeJsonParse(r) {
       const text = await r.text();
@@ -120,10 +123,41 @@
             return suffix ? `${base || "無"}${suffix}` : base;
         }
 
+        function withTimeout(promise, ms, message) {
+            return Promise.race([
+                promise,
+                new Promise((_, reject) => setTimeout(() => reject(new Error(message)), ms))
+            ]);
+        }
+        function waitForLiffSdk(ms = 8000) {
+            return new Promise((resolve, reject) => {
+                const startedAt = Date.now();
+                const check = () => {
+                    if (window.liff && typeof liff.init === "function") return resolve();
+                    if (Date.now() - startedAt >= ms) return reject(new Error("LINE 系統載入失敗，請關閉頁面後重新開啟，或聯絡調度。"));
+                    setTimeout(check, 120);
+                };
+                check();
+            });
+        }
+        async function ensureLineLogin() {
+            document.getElementById("loading").innerText = "LINE 身分驗證中...";
+            await waitForLiffSdk();
+            await withTimeout(liff.init({ liffId: LIFF_ID, withLoginOnExternalBrowser: true }), 18000, "LINE 驗證逾時，請重新整理再試一次。");
+            if (!liff.isLoggedIn()) { liff.login(); return null; }
+            const profile = await withTimeout(liff.getProfile(), 8000, "讀取 LINE 身分逾時，請重新整理再試一次。");
+            return profile.userId;
+        }
         async function loadTask() {
             if (!token) return showClosed("無法開啟任務", "此臨時派遣網址不完整，請向調度重新索取。");
             try {
-                const response = await fetch(`${GAS_URL}?action=getTempDriverTask&token=${encodeURIComponent(token)}&t=${Date.now()}`);
+                lineUserId = await ensureLineLogin();
+                if (!lineUserId) return; // liff.login() 會導頁跳轉，這裡先不做任何事
+            } catch (error) {
+                return showClosed("LINE 驗證失敗", error.message || "請關閉頁面後重新用 LINE 開啟此連結。");
+            }
+            try {
+                const response = await fetch(`${GAS_URL}?action=getTempDriverTask&token=${encodeURIComponent(token)}&lineUserId=${encodeURIComponent(lineUserId)}&t=${Date.now()}`);
                 const result = await safeJsonParse(response);
                 if (!result.success) return showClosed("任務連結已失效", result.error || "請聯絡調度。");
                 task = result.task;
@@ -151,7 +185,6 @@
                 ["接送機場", task.airport],
                 ["航班編號", task.flightNo],
                 ["客戶姓名", task.custName],
-                ["客戶電話", task.custPhone],
                 ["接送地址", task.address],
                 ["加點地址", task.extraStop],
                 ["乘車人數", task.paxCount],
@@ -186,7 +219,7 @@
         }
         function fieldValueHtml(label, value) {
             if (label.includes("地址")) return mapLinkHtml(value);
-            if (label === "客戶電話") return `<a class="text-blue-600 underline" href="tel:${encodeURIComponent(value)}">${esc(value)}</a>`;
+            if (label === "客戶姓名") return `<div class="flex items-center justify-end gap-2"><span>${esc(value)}</span>${customerCallButtonHtml()}</div>`;
             if (label === "付款方式" && String(value || "").includes("現場收現")) {
                 const cash = parseCashAmount(task && task.cashCollected);
                 const payout = parseCashAmount(task && (task.driverPayout || task.payout));
@@ -194,6 +227,25 @@
                 return `<span class="text-[#553f62]" style="font-weight:700;">${esc(value)}</span>${noteBtn}`;
             }
             return esc(value).replace(/\n/g, '<br>');
+        }
+        function isPlaceholderCustomerPhone(value) {
+            return String(value || "").replace(/\D/g, "") === "0900000000";
+        }
+        function hasUsableCustomerPhone(value) {
+            const digits = String(value || "").replace(/\D/g, "");
+            return !!digits && digits !== "0900000000";
+        }
+        function customerCallButtonHtml() {
+            if (!task) return "";
+            const phone = task.custPhone;
+            if (!hasUsableCustomerPhone(phone)) {
+                return `<button type="button" onclick="showNoPhoneNotice()" class="bg-[#fff5f8] text-[#b64a70] border border-[#efcad8] px-2 py-0.5 rounded-full text-[11px] font-bold shrink-0">無電話</button>`;
+            }
+            const digits = String(phone).replace(/\D/g, "");
+            return `<a href="tel:${digits}" class="bg-red-600 text-white px-2 py-0.5 rounded-full text-[11px] font-bold shadow-sm shrink-0">致電客戶</a>`;
+        }
+        function showNoPhoneNotice() {
+            Swal.fire({ title:"無電話", text:"請與調度確認聯絡方式", icon:"info", confirmButtonText:"知道了", confirmButtonColor:"#553f62" });
         }
         function parseCashAmount(value) {
             const n = parseFloat(String(value ?? "").replace(/[^\d.-]/g, ""));
@@ -300,7 +352,7 @@
                 let gps = { lat:"", lng:"" };
                 if (status !== "已收單") gps = await requireGPS();
                 Swal.fire({ title:"回報中", allowOutsideClick:false, didOpen:()=>Swal.showLoading() });
-                const response = await fetch(GAS_URL, { method:"POST", headers:{ "Content-Type":"text/plain;charset=utf-8" }, body:JSON.stringify({ action:"tempDriverUpdateStatus", data:{ token, orderId:task.orderId, status, lat:gps.lat, lng:gps.lng, signatureDataUrl } }) });
+                const response = await fetch(GAS_URL, { method:"POST", headers:{ "Content-Type":"text/plain;charset=utf-8" }, body:JSON.stringify({ action:"tempDriverUpdateStatus", data:{ token, lineUserId, orderId:task.orderId, status, lat:gps.lat, lng:gps.lng, signatureDataUrl } }) });
                 const result = await safeJsonParse(response);
                 if (!result.success) throw new Error(result.error || "回報失敗");
                 if (status === "已結案") {
@@ -355,7 +407,7 @@
                 }
             });
             if (!result.isConfirmed) return;
-            const response = await fetch(GAS_URL, { method:"POST", body:JSON.stringify({ action:"tempDriverReportAnomaly", data:{ token, orderId:task.orderId, type:result.value.type, note:result.value.note } }) });
+            const response = await fetch(GAS_URL, { method:"POST", body:JSON.stringify({ action:"tempDriverReportAnomaly", data:{ token, lineUserId, orderId:task.orderId, type:result.value.type, note:result.value.note } }) });
             const data = await safeJsonParse(response);
             data.success ? Swal.fire("已通報", "調度中心已收到異況回報。", "success") : Swal.fire("通報失敗", data.error || "請直接致電調度。", "error");
         }
