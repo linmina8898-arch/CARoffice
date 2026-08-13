@@ -487,7 +487,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.58"; // 修正預約明細圖片折扣排版誤導：來回程回程這一腿的折扣改排在小計之後、來回總額之前，跟正式卡片gas.html v2.2.206排法一致
+    const APP_VERSION = "manual-booking-v1.0.59"; // 修正加點費同縣市誤判成跨縣市多收$200的bug：不再直接比較地址文字前3碼，改用縣市清單反查真正縣市名稱來比對，同步修正index.html的同一個bug
     // 不再用 Google callback 機制初始化地圖（callback 容易撞上 async 腳本執行時機競速問題，
     // 之前就是這樣導致 initManualMapReady is not a function），距離計算改成呼叫當下才檢查
     // window.google.maps 是否就緒即可，不需要額外的載入完成回呼。
@@ -1079,6 +1079,11 @@
     }
 
     /* ---------------- 加點站清單：跟折扣項目一樣點「新增」才加一筆，不限制數量 ---------------- */
+    const TW_CITIES_FOR_DISTANCE = ["台北市", "新北市", "桃園市", "新竹市", "新竹縣", "苗栗縣", "台中市", "台南市", "高雄市", "基隆市", "嘉義市", "彰化縣", "南投縣", "雲林縣", "嘉義縣", "屏東縣", "宜蘭縣", "花蓮縣", "台東縣", "澎湖縣", "金門縣", "連江縣"];
+    function extractCityFromText(text) {
+      const t = String(text || "").replace(/臺/g, "台");
+      return TW_CITIES_FOR_DISTANCE.find(c => t.includes(c)) || "";
+    }
     function getManualMainAddressText() {
       const isOneWay = $("serviceType").value === "單程";
       return (isOneWay ? $("oneWayStart").value : $("address").value).trim();
@@ -1119,7 +1124,8 @@
               return;
             }
             const distanceKm = response.rows[0].elements[0].distance.value / 1000;
-            const isSameCity = addr1.substring(0, 3) === addr2.substring(0, 3);
+            // 不要單純比文字前3碼（之前index.html就是這樣誤判過同縣市的加點站），改用縣市清單比對真正的縣市名稱。
+            const isSameCity = Boolean(extractCityFromText(addr1)) && extractCityFromText(addr1) === extractCityFromText(addr2);
             const units = Math.ceil(distanceKm / 5) || 1;
             const fee = isSameCity ? (units * 100) : (200 + units * 100);
             el.textContent = `距主地址約 ${distanceKm.toFixed(1)} 公里，建議加點費 $${fee.toLocaleString()}`;

@@ -187,7 +187,7 @@
     </div>
   </div>
   <script>
-    const APP_VERSION = "quote-v1.0.11"; // 報價單圖片字級整體加大，卡片寬度420→480px，跟manual-booking.html風格保持一致
+    const APP_VERSION = "quote-v1.0.12"; // 修正加點費同縣市誤判成跨縣市多收$200的bug：不再直接比較地址文字前3碼，改用主要地區(mainZone)或地址文字反查真正縣市名稱來比對，同步修正index.html的同一個bug
     const GAS_URL = "https://script.google.com/macros/s/AKfycbww3Pr0IcOABPvTteIWHo9j6MWRQvNjpf_MZRE7NgDp3Nt69Upx8VhVnCVMcbUvjJwI/exec";
     const BOOKING_URL = location.href.includes("quote.html") ? location.href.replace("quote.html", "index.html") : "index.html";
     let priceRows = [];
@@ -252,8 +252,16 @@
       extraStops.push({ address: "", fee: 0, feeManuallyEdited: false });
       renderExtraStops();
     }
+    const TW_CITIES_FOR_DISTANCE = ["台北市", "新北市", "桃園市", "新竹市", "新竹縣", "苗栗縣", "台中市", "台南市", "高雄市", "基隆市", "嘉義市", "彰化縣", "南投縣", "雲林縣", "嘉義縣", "屏東縣", "宜蘭縣", "花蓮縣", "台東縣", "澎湖縣", "金門縣", "連江縣"];
+    function extractCityFromText(text) {
+      const t = String(text || "").replace(/臺/g, "台");
+      return TW_CITIES_FOR_DISTANCE.find(c => t.includes(c)) || "";
+    }
     function calcExtraStopDistanceFee(idx) {
       const hintEl = document.querySelector(`[data-stop-hint-idx="${idx}"]`);
+      // 「提供給客人的地址文字」欄位可能只填門牌巷弄、不含縣市（跟「主要地區」是分開的兩個欄位），
+      // 判斷同縣市不能只看這欄文字，優先用「主要地區」(mainZone，格式是「郵遞區號 縣市 鄉鎮市區」)反查縣市，
+      // 抓不到才退回用地址文字本身找。
       const addr1 = $("mainAddress").value.trim();
       const addr2 = (extraStops[idx] && extraStops[idx].address || "").trim();
       if (!hintEl) return;
@@ -286,7 +294,9 @@
               return;
             }
             const distanceKm = response.rows[0].elements[0].distance.value / 1000;
-            const isSameCity = addr1.substring(0, 3) === addr2.substring(0, 3);
+            const city1 = extractCityFromText($("mainZone").value) || extractCityFromText(addr1);
+            const city2 = extractCityFromText(addr2);
+            const isSameCity = Boolean(city1) && city1 === city2;
             const units = Math.ceil(distanceKm / 5) || 1;
             const fee = isSameCity ? (units * 100) : (200 + units * 100);
             el.textContent = `實際駕車距離約 ${distanceKm.toFixed(1)} 公里，建議加點費 $${fee.toLocaleString()}`;
