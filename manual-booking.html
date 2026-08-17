@@ -489,7 +489,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.62"; // 人數/行李分隔符號統一改用「+」(原本用空白)，跟gas.html/index.html/driver.html同步
+    const APP_VERSION = "manual-booking-v1.0.63"; // 預約明細圖「去程小計 + 回程小計」拆成獨立兩行(帶+字首)，跟正式卡片gas.html v2.2.220同步
     // 不再用 Google callback 機制初始化地圖（callback 容易撞上 async 腳本執行時機競速問題，
     // 之前就是這樣導致 initManualMapReady is not a function），距離計算改成呼叫當下才檢查
     // window.google.maps 是否就緒即可，不需要額外的載入完成回呼。
@@ -1740,7 +1740,8 @@
           const outTotal = order.label === "去程" ? displayTotal : (other.tripAmt || money(other.fare));
           const retTotal = order.label === "回程" ? displayTotal : (other.tripAmt || money(other.fare));
           const roundTotal = outTotal + retTotal - discountAmount;
-          rows.push({ label: "去程小計 + 回程小計", value: `$${outTotal.toLocaleString()} + $${retTotal.toLocaleString()}`, isMuted: true });
+          rows.push({ label: "去程小計", value: `+$${outTotal.toLocaleString()}`, isMuted: true });
+          rows.push({ label: "回程小計", value: `+$${retTotal.toLocaleString()}`, isMuted: true });
           rows.push({ label: "來回總額", value: "$" + roundTotal.toLocaleString(), isTotal: true });
         }
       }
