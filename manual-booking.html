@@ -489,7 +489,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.63"; // 預約明細圖「去程小計 + 回程小計」拆成獨立兩行(帶+字首)，跟正式卡片gas.html v2.2.220同步
+    const APP_VERSION = "manual-booking-v1.0.64"; // 底部總結區補上「優惠折扣」明細行，折扣項目群組加「優惠折扣」小標題(紫色)，跟gas.html v2.2.221同步
     // 不再用 Google callback 機制初始化地圖（callback 容易撞上 async 腳本執行時機競速問題，
     // 之前就是這樣導致 initManualMapReady is not a function），距離計算改成呼叫當下才檢查
     // window.google.maps 是否就緒即可，不需要額外的載入完成回呼。
@@ -1730,9 +1730,15 @@
       // 基本車資+加點-折扣=小計，實際上不是這樣算），跟客人自己下單時系統試算畫面一致。
       const discounts = parseStoredFeeDiscounts(order.discountCode, discountAmount);
       const isReturnLeg = order.label === "回程";
-      if (!isReturnLeg) discounts.forEach(d => rows.push({ label: d.label, value: "-$" + d.amount.toLocaleString(), isDiscount: true }));
+      if (!isReturnLeg && discounts.length) {
+        rows.push({ label: "優惠折扣", value: "", isSectionHeader: true });
+        discounts.forEach(d => rows.push({ label: d.label, value: "-$" + d.amount.toLocaleString(), isDiscount: true }));
+      }
       rows.push({ label: order.label === "回程" ? "回程小計" : (order.label === "去程" ? "去程小計" : "總額"), value: "$" + displayTotal.toLocaleString(), isSubtotal: true });
-      if (isReturnLeg) discounts.forEach(d => rows.push({ label: d.label, value: "-$" + d.amount.toLocaleString(), isDiscount: true }));
+      if (isReturnLeg && discounts.length) {
+        rows.push({ label: "優惠折扣", value: "", isSectionHeader: true });
+        discounts.forEach(d => rows.push({ label: d.label, value: "-$" + d.amount.toLocaleString(), isDiscount: true }));
+      }
       if (isRoundTripPart && Array.isArray(siblingOrders)) {
         const otherLabel = order.label === "去程" ? "回程" : "去程";
         const other = siblingOrders.find(o => o !== order && o.label === otherLabel);
@@ -1742,6 +1748,7 @@
           const roundTotal = outTotal + retTotal - discountAmount;
           rows.push({ label: "去程小計", value: `+$${outTotal.toLocaleString()}`, isMuted: true });
           rows.push({ label: "回程小計", value: `+$${retTotal.toLocaleString()}`, isMuted: true });
+          if (discountAmount > 0) rows.push({ label: "優惠折扣", value: `-$${discountAmount.toLocaleString()}`, isMuted: true });
           rows.push({ label: "來回總額", value: "$" + roundTotal.toLocaleString(), isTotal: true });
         }
       }
@@ -1760,6 +1767,7 @@
     function feeRowHtml(row) {
       const style = row.isTotal ? "border-top:1px solid #e7ddea;margin-top:8px;padding-top:12px;font-weight:700;color:#553f62;font-size:19px;"
         : row.isSubtotal ? "font-weight:700;color:#1A0B3D;font-size:16px;"
+        : row.isSectionHeader ? "font-weight:700;color:#553f62;font-size:14px;padding-top:10px;"
         : row.isMuted ? "color:#8a8291;font-size:13.5px;"
         : row.isDiscount ? "color:#993556;" : "color:#4b4553;";
       return `<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:15.5px;${style}"><span>${escapeHtml(row.label)}</span><span>${escapeHtml(row.value)}</span></div>`;
