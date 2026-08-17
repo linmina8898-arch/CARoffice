@@ -489,7 +489,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.64"; // 底部總結區補上「優惠折扣」明細行，折扣項目群組加「優惠折扣」小標題(紫色)，跟gas.html v2.2.221同步
+    const APP_VERSION = "manual-booking-v1.0.65"; // 修正parseStoredFeeExtras把「無」當成加價項目名稱解析的bug，跟gas.html v2.2.226同步
     // 不再用 Google callback 機制初始化地圖（callback 容易撞上 async 腳本執行時機競速問題，
     // 之前就是這樣導致 initManualMapReady is not a function），距離計算改成呼叫當下才檢查
     // window.google.maps 是否就緒即可，不需要額外的載入完成回呼。
@@ -1691,7 +1691,7 @@
     // 確保「預約明細圖片」跟正式送給客人的LINE卡片費用明細完全一致，不是簡化版本。-----
     const KNOWN_FIXED_SURCHARGE_AMOUNTS = { "接機服務": 200, "夜間加成(23-05)": 200, "24小時內急單服務費": 500 };
     function parseStoredFeeExtras(value) {
-      return String(value || "").split(/[、\n]/).map(s => s.trim()).filter(Boolean).map(item => {
+      return String(value || "").split(/[、\n]/).map(s => s.trim()).filter(item => item && item !== "無" && item !== "-").map(item => {
         const m = item.match(/^(.+?)\s*\(\s*\+\$?\s*([\d,]+)\s*\)\s*$/);
         if (m) return { label: m[1].trim(), amount: Number(m[2].replace(/,/g, "")) || 0 };
         const plainLabel = item.replace(/\s*\(.*\)\s*$/, "").trim() || "加價項目";
