@@ -183,7 +183,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.14.68"; // ①修正formatLuggageWithSport沒偵測到「0大0小」這種全部都是0的行李數，只有字面上剛好等於'0'才會顯示無，改成加總所有數字判斷。②行李件數顯示「無」時，比照司機提醒的粉紅底樣式提醒司機「無：出來快，勿遲到！」
+        const APP_VERSION = "v1.14.69"; // 單程(不經機場的定點接送)司機端畫面調整：原本沿用接送機場欄位配置，導致單程被標成「接送機場」很奇怪(其實顯示的是終點地址)、還會多顯示用不到的「航班編號」。改成單程專屬格式：「上車地址／下車地址」各自帶地圖連結方便導航，不顯示航班編號。只限定t.type==='單程'才套用，接機/送機畫面完全不受影響
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -1057,13 +1057,16 @@
                     </div>
                     
                     <div class="space-y-0 text-sm bg-gray-50 p-3 rounded-lg border border-gray-100">
-                        <div class="driver-field"><span class="driver-field-label">接送機場</span><span class="driver-field-value">${cleanVal(t.airport)}</span></div>
-                        <div class="driver-field"><span class="driver-field-label">航班編號</span><span class="driver-field-value text-gray-800">${cleanVal(t.flightNo)}</span></div>
+                        ${t.type === '單程'
+                          ? `<div class="driver-field"><span class="driver-field-label">上車地址</span><span class="driver-field-value">${mapLinkHtml(t.address)}</span></div>
+                             <div class="driver-field"><span class="driver-field-label">下車地址</span><span class="driver-field-value">${mapLinkHtml(t.airport)}</span></div>`
+                          : `<div class="driver-field"><span class="driver-field-label">接送機場</span><span class="driver-field-value">${cleanVal(t.airport)}</span></div>
+                             <div class="driver-field"><span class="driver-field-label">航班編號</span><span class="driver-field-value text-gray-800">${cleanVal(t.flightNo)}</span></div>`}
                         <div class="driver-field">
                             <span class="driver-field-label">客戶姓名</span>
                             <div class="driver-field-value flex items-center justify-end"><span>${cleanVal(t.custName)}</span>${callBtn}</div>
                         </div>
-                        <div class="driver-field"><span class="driver-field-label">接送地址</span><span class="driver-field-value">${addressHtml}</span></div>
+                        ${t.type !== '單程' ? `<div class="driver-field"><span class="driver-field-label">接送地址</span><span class="driver-field-value">${addressHtml}</span></div>` : ''}
                         <div class="driver-field"><span class="driver-field-label">加點地址</span><span class="driver-field-value">${extraStopHtml}</span></div>
                         <div class="driver-field"><span class="driver-field-label">乘車人數</span><span class="driver-field-value">${formatPassengerCount(t.paxCount)}</span></div>
                         ${luggageText === '無'
