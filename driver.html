@@ -183,7 +183,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.14.67"; // 登入時driverCheckAuth若失敗(例如帳號被黑名單停用)，改成明確跳出錯誤訊息，不再卡在「正在確認司機身分...」轉圈圈沒反應
+        const APP_VERSION = "v1.14.68"; // ①修正formatLuggageWithSport沒偵測到「0大0小」這種全部都是0的行李數，只有字面上剛好等於'0'才會顯示無，改成加總所有數字判斷。②行李件數顯示「無」時，比照司機提醒的粉紅底樣式提醒司機「無：出來快，勿遲到！」
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -824,9 +824,11 @@
             return `(含胖胖箱${text.replace(/^有/, '').replace(/[()（）]/g, '').replace(/\s+/g, '')})`;
         }
         function formatLuggageWithSport(luggage, sport) {
-            const base = cleanVal(luggage) === '0' ? '' : formatLuggageCount(luggage);
+            const luggageClean = cleanVal(luggage);
+            const totalCount = (luggageClean.match(/\d+/g) || []).reduce((sum, n) => sum + Number(n), 0);
+            const base = totalCount > 0 ? formatLuggageCount(luggage) : '';
             const suffix = formatSportLuggageSuffix(sport);
-            return suffix ? `${base || '無'}${suffix}` : base;
+            return suffix ? `${base || '無'}${suffix}` : (base || '無');
         }
         function displayPayoutStatus(v) {
             return cleanVal(v) === '已付款' ? '已結清' : (cleanVal(v) || '待確認');
@@ -1064,7 +1066,9 @@
                         <div class="driver-field"><span class="driver-field-label">接送地址</span><span class="driver-field-value">${addressHtml}</span></div>
                         <div class="driver-field"><span class="driver-field-label">加點地址</span><span class="driver-field-value">${extraStopHtml}</span></div>
                         <div class="driver-field"><span class="driver-field-label">乘車人數</span><span class="driver-field-value">${formatPassengerCount(t.paxCount)}</span></div>
-                        <div class="driver-field"><span class="driver-field-label">行李件數</span><span class="driver-field-value">${luggageText}</span></div>
+                        ${luggageText === '無'
+                          ? `<div class="driver-field bg-[#fff5f8] -mx-3 px-3 border-y border-[#f07cad]/20"><span class="driver-field-label text-[#b63c6b]">行李件數</span><span class="driver-field-value text-[#b63c6b]" style="font-weight:700;">無：出來快，勿遲到！</span></div>`
+                          : `<div class="driver-field"><span class="driver-field-label">行李件數</span><span class="driver-field-value">${luggageText}</span></div>`}
                         <div class="driver-field"><span class="driver-field-label">預約車型</span><span class="driver-field-value">${cleanVal(t.car)}</span></div>
                         ${tripVehicleHtml}
                         <div class="driver-field"><span class="driver-field-label">兒童座椅</span><span class="driver-field-value">${cleanVal(t.seats)}</span></div>
