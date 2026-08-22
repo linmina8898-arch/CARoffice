@@ -271,6 +271,14 @@
       </section>
 
       <section class="panel">
+        <div class="section-title">加值服務項目（選填）</div>
+        <p class="hint !mt-0 mb-2">例如接機服務、加點服務、夜間加成等，可以疊加多筆，全部會加總到車資裡，也會個別列在卡片費用明細上。下面「車資」欄位請只填基本車資，不用把這些服務費也加進去，系統會自動加總。</p>
+        <div id="surchargeItemsList" class="mt-2"></div>
+        <button type="button" class="secondary-btn mt-2" id="addSurchargeItemBtn">＋ 新增加值服務項目</button>
+        <div class="hint mt-2">加值服務總額：<b id="surchargeTotalDisplay">$0</b></div>
+      </section>
+
+      <section class="panel">
         <div class="section-title">折扣項目</div>
         <p class="hint !mt-0 mb-2">可以疊加多筆折扣（例如：預約來回優惠、客服折讓、新客優惠…），全部會加總從車資扣除。</p>
         <button type="button" class="secondary-btn" id="lookupPhoneDiscountsBtn">查詢此電話所有折扣碼</button>
@@ -517,7 +525,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.69"; // 「補建遺漏的去程/回程」新增「查詢另一腿，自動帶入相同資料」按鈕：填好既有單號跟腿別後，會自動抓另一腿的客人姓名/電話/地址/車型/人數/行李/座椅/舉牌/付款方式/備註帶進主表單，行程類型自動反向(送機↔接機)，不用再手動翻另一筆單照抄。日期/時間/航班這幾個兩腿本來就會不同的欄位留給客服自己填
+    const APP_VERSION = "manual-booking-v1.0.70"; // 新增「加值服務項目」區塊(比照折扣項目的做法)：可以疊加多筆「項目名稱+金額」(例如接機服務+$200)，車資欄位改成只填基本車資，加值服務會自動加總進去，也會正確列進卡片費用明細，不再是含糊的一個總金額
     // 不再用 Google callback 機制初始化地圖（callback 容易撞上 async 腳本執行時機競速問題，
     // 之前就是這樣導致 initManualMapReady is not a function），距離計算改成呼叫當下才檢查
     // window.google.maps 是否就緒即可，不需要額外的載入完成回呼。
@@ -550,6 +558,7 @@
     let manualSources = [];
     let SPECIAL_DATE_SURCHARGES = {}; // 特殊節日加價：{"2026-06-18":{amount:400,label:"端午節連假加成"}}。這個工具是手動車資，不自動套用，只提示客服自己決定要不要加
     let discountItems = [];
+    let surchargeItems = [];
     let extraStops = [];
 
     const $ = id => document.getElementById(id);
@@ -572,6 +581,7 @@
       $("phone").addEventListener("input", formatPhoneInput);
       $("lookupPhoneDiscountsBtn").addEventListener("click", lookupPhoneDiscounts);
       $("addDiscountItemBtn").addEventListener("click", () => addDiscountItem());
+      $("addSurchargeItemBtn").addEventListener("click", () => addSurchargeItem());
       $("addExtraStopBtn").addEventListener("click", () => addExtraStop());
       $("signboardNeeded").addEventListener("change", () => {
         $("signboardContentWrap").classList.toggle("hidden", !$("signboardNeeded").checked);
@@ -630,6 +640,8 @@
       setValue("customSource", known.includes(t.source) ? "" : t.source);
       discountItems = [];
       renderDiscountItems();
+      surchargeItems = [];
+      renderSurchargeItems();
       $("phoneDiscountResults").classList.add("hidden");
       $("phoneDiscountResults").innerHTML = "";
       handleSourceChange();
@@ -1214,6 +1226,54 @@
     }
 
     /* ---------------- 折扣項目清單：可疊加多筆，取代原本「一個折扣碼＋一個客服折讓」的寫死欄位 ---------------- */
+    function renderSurchargeItems() {
+      const wrap = $("surchargeItemsList");
+      if (!surchargeItems.length) {
+        wrap.innerHTML = '<div class="hint !mt-0">尚未加入任何加值服務項目</div>';
+      } else {
+        wrap.innerHTML = surchargeItems.map((item, idx) => `
+          <div class="grid grid-cols-[1fr_100px_130px_36px] gap-2 items-center mt-2">
+            <input type="text" value="${escapeHtml(item.label)}" data-idx="${idx}" data-field="label" class="surcharge-field" placeholder="名稱，例如 接機服務">
+            <input type="number" min="0" value="${item.amount || ""}" data-idx="${idx}" data-field="amount" class="surcharge-field" placeholder="金額">
+            <select data-idx="${idx}" data-field="target" class="surcharge-field">
+              <option value="outbound" ${item.target === "outbound" ? "selected" : ""}>去程</option>
+              <option value="return" ${item.target === "return" ? "selected" : ""}>回程</option>
+              <option value="both" ${item.target === "both" ? "selected" : ""}>去回程各加</option>
+            </select>
+            <button type="button" class="secondary-btn !min-h-[36px] !px-0" data-remove-idx="${idx}" aria-label="刪除">✕</button>
+          </div>`).join("");
+        wrap.querySelectorAll(".surcharge-field").forEach(el => {
+          const sync = () => {
+            const idx = Number(el.dataset.idx), field = el.dataset.field;
+            surchargeItems[idx][field] = field === "amount" ? money(el.value) : el.value;
+            updateSurchargeTotalDisplay();
+            updateSummary();
+          };
+          el.addEventListener("input", sync);
+          el.addEventListener("change", sync);
+        });
+        wrap.querySelectorAll("[data-remove-idx]").forEach(btn => {
+          btn.addEventListener("click", () => {
+            surchargeItems.splice(Number(btn.dataset.removeIdx), 1);
+            renderSurchargeItems();
+            updateSummary();
+          });
+        });
+      }
+      updateSurchargeTotalDisplay();
+    }
+
+    function updateSurchargeTotalDisplay() {
+      const total = surchargeItems.reduce((sum, item) => sum + (money(item.amount) || 0), 0);
+      $("surchargeTotalDisplay").textContent = `$${total.toLocaleString()}`;
+    }
+
+    function addSurchargeItem(label = "", amount = 0, target = "outbound") {
+      surchargeItems.push({ label, amount, target });
+      renderSurchargeItems();
+      updateSummary();
+    }
+
     function renderDiscountItems() {
       const wrap = $("discountItemsList");
       if (!discountItems.length) {
@@ -1327,6 +1387,7 @@
         extraLocation: collectExtraLocationText(),
         fare: $("fare").value,
         discountItemsJson: JSON.stringify(discountItems.filter(item => money(item.amount) > 0 && item.label.trim())),
+        surchargeItemsJson: JSON.stringify(surchargeItems.filter(item => money(item.amount) > 0 && item.label.trim())),
         hasReturn: $("hasReturn").checked,
         returnServiceType: isOneWay ? "單程" : $("returnServiceType").value,
         returnDate: $("returnDate").value,
@@ -1423,9 +1484,22 @@
       }, 0);
     }
 
+    function getSurchargeForLeg(p, leg) {
+      let items = [];
+      try { items = JSON.parse(p.surchargeItemsJson || "[]"); } catch (e) { items = []; }
+      return items.reduce((sum, item) => {
+        const amount = money(item.amount);
+        if (!amount) return sum;
+        const target = item.target || "outbound";
+        if (target === "both") return sum + amount;
+        if (target === "return") return leg === "return" ? sum + amount : sum;
+        return leg === "outbound" ? sum + amount : sum;
+      }, 0);
+    }
+
     function getManualTripFare(p, leg) {
       const rawFare = leg === "return" ? money(p.returnFare || p.fare) : money(p.fare);
-      return Math.max(0, rawFare - getDiscountForLeg(p, leg));
+      return Math.max(0, rawFare + getSurchargeForLeg(p, leg) - getDiscountForLeg(p, leg));
     }
 
     function buildTime(prefix) {
@@ -1532,6 +1606,11 @@
       }
       let discountSummaryItems = [];
       try { discountSummaryItems = JSON.parse(payload.discountItemsJson || "[]"); } catch (e) { discountSummaryItems = []; }
+      let surchargeSummaryItems = [];
+      try { surchargeSummaryItems = JSON.parse(payload.surchargeItemsJson || "[]"); } catch (e) { surchargeSummaryItems = []; }
+      const surchargeHtml = surchargeSummaryItems.length
+        ? `<div class="mt-2 space-y-0.5">${surchargeSummaryItems.map(item => confirmRow(`加值：${item.label}（${item.target === "both" ? "去回程各加" : item.target === "return" ? "回程" : "去程"}）`, "+$" + money(item.amount).toLocaleString())).join("")}</div>`
+        : "";
       const discountHtml = discountSummaryItems.length
         ? `<div class="mt-2 space-y-0.5">${discountSummaryItems.map(item => confirmRow(`折扣：${item.label}（${item.target === "both" ? "去回程各扣" : item.target === "return" ? "回程" : "去程"}）`, "-$" + money(item.amount).toLocaleString())).join("")}</div>`
         : "";
@@ -1541,6 +1620,7 @@
           <div class="text-xs text-gray-500 mb-2">${escapeManualHtml(payload.source)}｜${escapeManualHtml(payload.customerName)}${escapeManualHtml(payload.customerTitle)}｜${escapeManualHtml(payload.phone)}</div>
           ${buildManualConfirmLegHtml(payload, false)}
           ${payload.hasReturn ? buildManualConfirmLegHtml(payload, true) : ""}
+          ${surchargeHtml}
           ${discountHtml}
           <div class="flex justify-between gap-3 py-2 mt-2 text-base font-bold text-[#993556] border-t border-gray-300"><span>總車資</span><span>$${totalFare.toLocaleString()}</span></div>
           ${payload.remarks ? confirmRow("備註", payload.remarks) : ""}
@@ -2116,6 +2196,8 @@
       setValue("seatDetails", "無");
       discountItems = [];
       renderDiscountItems();
+      surchargeItems = [];
+      renderSurchargeItems();
       extraStops = [];
       renderExtraStops();
       $("phoneDiscountResults").classList.add("hidden");
