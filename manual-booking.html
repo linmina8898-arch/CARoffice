@@ -227,6 +227,8 @@
               </select>
             </div>
           </div>
+          <button type="button" id="recoveryFetchBtn" class="secondary-btn" style="margin-top:10px">查詢另一腿，自動帶入相同資料</button>
+          <p class="hint" id="recoveryFetchHint" style="margin-top:6px"></p>
         </div>
       </section>
 
@@ -515,7 +517,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.68"; // 新增「補建遺漏的去程/回程」補救工具：來回預約其中一腿因異常沒寫入、另一腿已經成功時，可以直接補上缺的那一腿、掛在既有單號底下(維持-A/-B配對關係)，不用客人重填整份表單。對應gas.html v2.2.245新增的insertMissingLeg_
+    const APP_VERSION = "manual-booking-v1.0.69"; // 「補建遺漏的去程/回程」新增「查詢另一腿，自動帶入相同資料」按鈕：填好既有單號跟腿別後，會自動抓另一腿的客人姓名/電話/地址/車型/人數/行李/座椅/舉牌/付款方式/備註帶進主表單，行程類型自動反向(送機↔接機)，不用再手動翻另一筆單照抄。日期/時間/航班這幾個兩腿本來就會不同的欄位留給客服自己填
     // 不再用 Google callback 機制初始化地圖（callback 容易撞上 async 腳本執行時機競速問題，
     // 之前就是這樣導致 initManualMapReady is not a function），距離計算改成呼叫當下才檢查
     // window.google.maps 是否就緒即可，不需要額外的載入完成回呼。
@@ -557,6 +559,7 @@
     document.addEventListener("DOMContentLoaded", () => {
       $("versionDisplay").textContent = APP_VERSION;
       $("recoveryToggle").addEventListener("click", () => $("recoveryBody").classList.toggle("hidden"));
+      $("recoveryFetchBtn").addEventListener("click", fetchRecoveryAutoFill);
       initTimeSelects();
       $("source").addEventListener("change", handleSourceChange);
       $("hasReturn").addEventListener("change", handleReturnToggle);
@@ -2122,6 +2125,57 @@
       toggleServiceTypeFields();
       handleReturnToggle();
       updateSummary();
+    }
+
+    async function fetchRecoveryAutoFill() {
+      const baseId = $("recoveryBaseId").value.trim();
+      const legSuffix = $("recoveryLegSuffix").value;
+      const hint = $("recoveryFetchHint");
+      if (!baseId || !legSuffix) { hint.textContent = "請先填單號、選好要補的腿別"; hint.style.color = "#b03060"; return; }
+      hint.textContent = "查詢中...";
+      hint.style.color = "#93889b";
+      try {
+        const res = await fetch(`${GAS_URL}?action=getManualBookingTextData&reservationId=${encodeURIComponent(baseId)}&t=${Date.now()}`).then(r => safeJsonParse(r));
+        if (!res.success) throw new Error(res.error || "查無此單號");
+        const otherSuffix = legSuffix === "A" ? "B" : "A";
+        const otherLabel = otherSuffix === "A" ? "去程" : "回程";
+        const other = (res.orders || []).find(o => o.reservationId.endsWith("-" + otherSuffix)) || (res.orders || []).find(o => o.label === otherLabel);
+        if (!other) throw new Error(`找不到${otherLabel}那一腿的資料，請確認單號是否正確`);
+        // 跟applyTemplate()同一套填值方式：把另一腿的客人資料/車輛/付款方式帶進來，
+        // 日期/時間/航班/行程類型(接機↔送機自動反向)這幾個「兩腿本來就會不同」的欄位不動，留給客服自己填。
+        const known = knownSources();
+        setValue("source", known.includes(other.source) ? other.source : (other.source ? "其他" : $("source").value));
+        setValue("customSource", known.includes(other.source) ? "" : other.source);
+        handleSourceChange();
+        setValue("airport", other.airport || $("airport").value);
+        setValue("address", other.address);
+        extraStops = String(other.extraLocation || "").split(/\n|[；;]/).map(s => s.trim()).filter(Boolean);
+        renderExtraStops();
+        setValue("customerName", other.customerName);
+        setValue("phone", formatPhoneNumber(other.phone));
+        setValue("carType", other.carType || "小車");
+        setPaxFieldsFromText(other.paxCount || "1大 0中 0小");
+        setLuggageFieldsFromText(other.luggageCount || "0大 0登機");
+        setValue("seatDetails", other.seatDetails || "無");
+        const otherSignboard = String(other.signboard || "無").trim();
+        const signboardOn = otherSignboard && otherSignboard !== "無";
+        $("signboardNeeded").checked = signboardOn;
+        $("signboardContentWrap").classList.toggle("hidden", !signboardOn);
+        setValue("signboardContent", signboardOn && otherSignboard !== "需要" ? otherSignboard : "");
+        setValue("paymentMethod", other.paymentMethod || "現金");
+        setValue("remarks", other.remarks);
+        // 行程類型自動抓另一腿的反方向(送機↔接機)，單程沒有反方向的概念、原樣帶過去，客服可以自行調整。
+        const otherType = normalizeServiceType(other.serviceType);
+        if (otherType) setValue("serviceType", otherType === "接機" ? "送機" : "接機");
+        else setValue("serviceType", other.serviceType || $("serviceType").value);
+        toggleServiceTypeFields();
+        updateSummary();
+        hint.textContent = `已帶入${otherLabel}的客人資料，日期/時間/航班請自行填寫這次要補的內容`;
+        hint.style.color = "#553f62";
+      } catch (err) {
+        hint.textContent = err.message || "查詢失敗";
+        hint.style.color = "#b03060";
+      }
     }
 
     function setValue(id, value) {
