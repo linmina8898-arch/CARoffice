@@ -206,6 +206,30 @@
     </div>
 
     <form id="manualForm">
+      <!-- 補救工具：來回預約其中一腿因異常沒寫入、另一腿已經成功時，用這裡把缺的那一腿補上去，
+           掛在同一個既有單號底下(維持-A/-B配對關係)，不需要客人重新整個表單再填一次。
+           留空這個既有單號欄位的話，下面表單就照原本邏輯正常建立一筆全新的單。 -->
+      <section class="panel" style="border:1px solid #f0d6e2;background:#fff7fb">
+        <button type="button" id="recoveryToggle" class="section-title" style="cursor:pointer;background:none;border:none;padding:0;width:100%;text-align:left;color:#553f62">🔧 補建遺漏的去程/回程（點開）</button>
+        <div id="recoveryBody" class="hidden" style="margin-top:10px">
+          <p class="hint" style="margin-bottom:10px">用在「來回預約其中一腿已經成功、另一腿因異常沒寫入」的狀況。下面表單照常填這一腿的完整資料，送出時會自動掛在既有單號底下，不會產生一筆全新、對不起來的單號。</p>
+          <div class="grid-form">
+            <div>
+              <label for="recoveryBaseId">既有單號（不含 -A / -B）</label>
+              <input id="recoveryBaseId" placeholder="例如：AS-202608227259kMo">
+            </div>
+            <div>
+              <label for="recoveryLegSuffix">這次要補的是</label>
+              <select id="recoveryLegSuffix">
+                <option value="">-- 請選擇 --</option>
+                <option value="A">去程（-A）</option>
+                <option value="B">回程（-B）</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section class="panel">
         <div class="section-title">訂單來源</div>
         <div class="grid-form">
@@ -491,7 +515,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.67"; // ①付款方式補回「刷卡(限街口/全支付)」選項(原本漏掉，跟index.html客人端AS頻道不一致)。②單程(不經機場的定點接送)原本被直接停用「同時預約回程」，改成可以勾選：回程自動反向(終點→起點)，隱藏不適用的回程行程/航班欄位改顯示提示文字
+    const APP_VERSION = "manual-booking-v1.0.68"; // 新增「補建遺漏的去程/回程」補救工具：來回預約其中一腿因異常沒寫入、另一腿已經成功時，可以直接補上缺的那一腿、掛在既有單號底下(維持-A/-B配對關係)，不用客人重填整份表單。對應gas.html v2.2.245新增的insertMissingLeg_
     // 不再用 Google callback 機制初始化地圖（callback 容易撞上 async 腳本執行時機競速問題，
     // 之前就是這樣導致 initManualMapReady is not a function），距離計算改成呼叫當下才檢查
     // window.google.maps 是否就緒即可，不需要額外的載入完成回呼。
@@ -532,6 +556,7 @@
 
     document.addEventListener("DOMContentLoaded", () => {
       $("versionDisplay").textContent = APP_VERSION;
+      $("recoveryToggle").addEventListener("click", () => $("recoveryBody").classList.toggle("hidden"));
       initTimeSelects();
       $("source").addEventListener("change", handleSourceChange);
       $("hasReturn").addEventListener("change", handleReturnToggle);
@@ -1541,9 +1566,14 @@
       }
       payload.idempotencyKey = manualBookingIdemKey;
       try {
+        const recoveryBaseId = $("recoveryBaseId").value.trim();
+        const recoveryLegSuffix = $("recoveryLegSuffix").value;
+        const isRecoveryMode = Boolean(recoveryBaseId && recoveryLegSuffix);
+        const actionName = isRecoveryMode ? "insertMissingLeg" : "createManualBooking";
+        if (isRecoveryMode) { payload.existingBaseId = recoveryBaseId; payload.legSuffix = recoveryLegSuffix; }
         const res = await fetch(GAS_URL, {
           method: "POST",
-          body: JSON.stringify({ action: "createManualBooking", data: payload }),
+          body: JSON.stringify({ action: actionName, data: payload }),
           headers: { "Content-Type": "text/plain;charset=utf-8" }
         }).then(r => safeJsonParse(r));
         if (!res.success) throw new Error(res.error || "建立失敗");
