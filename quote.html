@@ -187,7 +187,7 @@
     </div>
   </div>
   <script>
-    const APP_VERSION = "quote-v1.0.14"; // 特殊節日加價改成依車型查對應金額(跟後端gas.html v2.2.208的amounts陣列格式對齊)；特殊節日恕無法使用早鳥/預約來回優惠，改顯示「特殊節日恕無法使用優惠折抵」
+    const APP_VERSION = "quote-v1.0.18"; // ①紫色標題區塊改成跟正式預約卡片一樣扁平的單行樣式(比照gas.html的noticeHeader_，16px padding、一行文字，不再是三行堆疊的大標題)。②「本報價單24小時內有效」提示框原本是橘色/米色系，跟系統固定的紫/粉紅配色不符，改成粉紅色系(背景#FBF0F5、文字#a6396d)
     const GAS_URL = "https://script.google.com/macros/s/AKfycbww3Pr0IcOABPvTteIWHo9j6MWRQvNjpf_MZRE7NgDp3Nt69Upx8VhVnCVMcbUvjJwI/exec";
     const BOOKING_URL = location.href.includes("quote.html") ? location.href.replace("quote.html", "index.html") : "index.html";
     let priceRows = [];
@@ -368,7 +368,10 @@
       const zones = [...new Map(priceRows.map(r => [`${clean(r.b)} ${clean(r.c)}`.trim(), `${clean(r.b)} ${clean(r.c)}`.trim()])).values()].filter(Boolean);
       $("zoneList").innerHTML = zones.map(z => `<option value="${z}"></option>`).join("");
       if (!$("mainZone").value && zones.length) $("mainZone").value = zones[0];
-      if (!$("returnZone").value && zones.length) $("returnZone").value = zones[0];
+      // 回程地區原本預設帶入「地區清單第一筆」(剛好是臺北市中正區)，跟去程選的地區完全無關，
+      // 而且去程改選之後回程也不會跟著更新，導致回程一直停留在錯誤的預設地區、報價異常偏高。
+      // 改成回程地區預設直接沿用去程，不再各自獨立預設。
+      if (!$("returnZone").value && zones.length) $("returnZone").value = $("mainZone").value || zones[0];
     }
     function buildPayload() {
       const paxText = `${$("adult").value}大 ${$("child").value}中 ${$("infant").value}小`;
@@ -469,6 +472,7 @@
       lines.push("");
       lines.push("📍以上為依據目前提供資訊試算之參考報價。");
       lines.push("實際費用仍將依完整上下車地址、是否加點、行李數量及實際安排車型後確認。");
+      lines.push("如有活動優惠折抵請洽詢客服。");
       lines.push("");
       lines.push("");
       lines.push("📍本公司採預約保留制，完成預約後將為您安排車輛與司機。");
@@ -484,7 +488,7 @@
       lines.push("期待為您提供安全、舒適、準時的接送服務。");
       lines.push("");
       lines.push("安興專車接送｜深耕新竹・服務全台");
-      lines.push("— 合法營運｜專業接送｜安心抵達 —");
+      lines.push("合法營運︱專業接送∣安心搭乘安全抵達");
       return lines.join("\n");
     }
     function renderQuote(payload, result) {
@@ -516,15 +520,13 @@
       const sectionLabel = (text) => `<div style="font-size:14.5px;font-weight:700;color:#993556;letter-spacing:1px;margin-bottom:8px;">${text}</div>`;
       return `
         <div style="width:480px;background:#fff;font-family:-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif;">
-          <div style="background:#553f62;padding:30px 30px 26px;text-align:center;color:#fff;">
-            <div style="font-size:26px;font-weight:700;letter-spacing:2px;">安興租車</div>
-            <div style="font-size:14px;opacity:.85;margin-top:6px;letter-spacing:1px;">機場接送．商務用車．包車旅遊</div>
-            <div style="display:inline-block;margin-top:16px;background:rgba(255,255,255,.15);border-radius:20px;padding:6px 18px;font-size:14px;">預估報價單</div>
+          <div style="background:#574266;padding:16px 30px;text-align:center;color:#fff;">
+            <div style="font-size:17px;font-weight:700;letter-spacing:2px;">安興租車｜預估報價單</div>
           </div>
 
-          <div style="background:#FFF7EC;border-bottom:1px solid #F5E3C6;padding:14px 30px;text-align:center;">
-            <div style="font-size:14.5px;color:#9a6a1f;font-weight:700;">⏰ 本報價單自產生起 24 小時內有效</div>
-            <div style="font-size:13px;color:#b08a4a;margin-top:3px;">僅為預估費用參考，尚未完成正式預約，車輛與司機需另行預約保留</div>
+          <div style="background:#FBF0F5;border-bottom:1px solid #F3D9E6;padding:14px 30px;text-align:center;">
+            <div style="font-size:14.5px;color:#a6396d;font-weight:700;">⏰ 本報價單自產生起 24 小時內有效</div>
+            <div style="font-size:13px;color:#c07ba0;margin-top:3px;">僅為預估費用參考，尚未完成正式預約，車輛與司機需另行預約保留</div>
           </div>
 
           <div style="padding:26px 30px;">
@@ -557,10 +559,10 @@
               <span style="font-size:16px;font-weight:600;color:#553f62;">預估總額</span>
               <span style="font-size:30px;font-weight:700;color:#993556;">$${Number(result.total || 0).toLocaleString("en-US")}</span>
             </div>
-            <div style="font-size:13px;color:#a89fb0;margin-top:14px;line-height:1.6;">＊實際費用仍將依完整上下車地址、是否加點、行李數量及實際安排車型後確認。</div>
+            <div style="font-size:13px;color:#a89fb0;margin-top:14px;line-height:1.6;">＊實際費用仍將依完整上下車地址、是否加點、行李數量及實際安排車型後確認。如有活動優惠折抵請洽詢客服。</div>
           </div>
 
-          <div style="background:#FBF7FA;padding:16px 30px;font-size:13px;color:#8a8291;text-align:center;">如報價無誤，歡迎透過官方 LINE 完成正式預約｜合法營運．專業接送．安心抵達</div>
+          <div style="background:#FBF7FA;padding:16px 30px;font-size:13px;color:#8a8291;text-align:center;line-height:1.9;">如報價無誤，歡迎透過官方 LINE 完成正式預約<br>合法營運︱專業接送∣安心搭乘安全抵達</div>
         </div>`;
     }
     async function generateQuoteImage() {
@@ -653,6 +655,13 @@
       $("hasReturn").addEventListener("change", () => $("returnBlock").classList.toggle("hidden", !$("hasReturn").checked));
       $("serviceType").addEventListener("change", () => {
         $("returnServiceType").value = $("serviceType").value === "送機" ? "接機" : "送機";
+      });
+      // 去程地區變更時，回程地區跟著同步更新——除非客服自己手動改過回程地區(returnZoneManuallyEdited)，
+      // 才不會再被去程蓋過去。修正回程地區原本各自獨立預設(跟去程完全無關)、去程改了回程也不會跟著換的問題。
+      let returnZoneManuallyEdited = false;
+      $("returnZone").addEventListener("input", () => { returnZoneManuallyEdited = true; });
+      $("mainZone").addEventListener("input", () => {
+        if (!returnZoneManuallyEdited) $("returnZone").value = $("mainZone").value;
       });
       $("btnQuote").addEventListener("click", getQuote);
       $("btnCopy").addEventListener("click", copyQuote);
