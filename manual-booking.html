@@ -97,6 +97,54 @@
       line-height: 1.6;
       margin-top: 6px;
     }
+    .template-results {
+      max-height: 320px;
+      overflow-y: auto;
+      border: 1px solid #e7dde8;
+      border-radius: 10px;
+      margin-top: 4px;
+    }
+    .template-results .tpl-row {
+      padding: 10px 12px;
+      border-bottom: 1px solid #f0e9f2;
+      cursor: pointer;
+    }
+    .template-results .tpl-row:last-child { border-bottom: none; }
+    .template-results .tpl-row:active,
+    .template-results .tpl-row.selected { background: #f7eef7; }
+    .template-results .tpl-row .tpl-top {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #553f62;
+    }
+    .template-results .tpl-row .tpl-source {
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      background: #f07cad;
+      border-radius: 4px;
+      padding: 1px 6px;
+      flex-shrink: 0;
+    }
+    .template-results .tpl-row .tpl-phone {
+      font-size: 12.5px;
+      color: #8a7b92;
+      font-weight: 400;
+    }
+    .template-results .tpl-row .tpl-addr {
+      font-size: 12.5px;
+      color: #6b6270;
+      margin-top: 2px;
+    }
+    .template-results .tpl-empty {
+      padding: 16px 12px;
+      text-align: center;
+      color: #a698ac;
+      font-size: 13px;
+    }
     .pill {
       display: inline-flex;
       align-items: center;
@@ -258,15 +306,16 @@
 
       <section class="panel">
         <div class="section-title">固定客戶範本</div>
-        <label for="templateSelect">選擇範本</label>
+        <label for="templateSearch">選擇範本</label>
         <input id="templateSearch" type="search" placeholder="搜尋姓名、電話、來源或客戶代碼，例如：陳" class="mb-2">
         <select id="templateSourceFilter" class="mb-2" aria-label="固定客戶範本來源篩選">
           <option value="">全部來源</option>
         </select>
-        <div class="hint !mt-0 mb-2">這裡只用來篩選固定客戶範本，不會寫入預約單。</div>
-        <select id="templateSelect">
+        <div class="hint !mt-0 mb-2">這裡只用來篩選固定客戶範本，不會寫入預約單。點下面任一筆客戶資料即可帶入。</div>
+        <select id="templateSelect" class="hidden" aria-hidden="true">
           <option value="">手動填寫，或選擇固定客戶</option>
         </select>
+        <div id="templateResultsList" class="template-results"></div>
         <div id="templateHint" class="hint">讀取固定客戶中...</div>
       </section>
 
@@ -525,7 +574,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.70"; // 新增「加值服務項目」區塊(比照折扣項目的做法)：可以疊加多筆「項目名稱+金額」(例如接機服務+$200)，車資欄位改成只填基本車資，加值服務會自動加總進去，也會正確列進卡片費用明細，不再是含糊的一個總金額
+    const APP_VERSION = "manual-booking-v1.0.71"; // 「固定客戶範本」選擇改成自訂清單，不再用原生下拉選單(在手機上選項一長就變成一長串塞在一起完全看不清楚)。改成一張張獨立卡片：來源標籤(粉紅底)+姓名+電話在同一行，地址另起一行，點擊即可帶入，選中的那筆會highlight。原本的select仍保留(隱藏)當作資料狀態，不影響既有的applyTemplate等邏輯
     // 不再用 Google callback 機制初始化地圖（callback 容易撞上 async 腳本執行時機競速問題，
     // 之前就是這樣導致 initManualMapReady is not a function），距離計算改成呼叫當下才檢查
     // window.google.maps 是否就緒即可，不需要額外的載入完成回呼。
@@ -695,6 +744,28 @@
         const label = [formatTemplateSourceLabel(tpl.source), tpl.name, tpl.phone, tpl.address].filter(Boolean).join("︱");
         return `<option value="${idx}">${escapeHtml(label)}</option>`;
       }).join("");
+      const currentIdx = $("templateSelect").value;
+      const listEl = $("templateResultsList");
+      if (!matched.length) {
+        listEl.innerHTML = '<div class="tpl-empty">沒有符合的固定客戶</div>';
+      } else {
+        listEl.innerHTML = matched.map(({ tpl, idx }) => `
+          <div class="tpl-row${String(idx) === String(currentIdx) ? " selected" : ""}" data-tpl-idx="${idx}">
+            <div class="tpl-top">
+              <span class="tpl-source">${escapeHtml(formatTemplateSourceLabel(tpl.source) || "-")}</span>
+              <span>${escapeHtml(tpl.name || tpl.code || "（未命名）")}</span>
+              ${tpl.phone ? `<span class="tpl-phone">${escapeHtml(tpl.phone)}</span>` : ""}
+            </div>
+            ${tpl.address ? `<div class="tpl-addr">${escapeHtml(tpl.address)}</div>` : ""}
+          </div>`).join("");
+        listEl.querySelectorAll("[data-tpl-idx]").forEach(row => {
+          row.addEventListener("click", () => {
+            $("templateSelect").value = row.dataset.tplIdx;
+            applyTemplate();
+            listEl.querySelectorAll(".tpl-row").forEach(r => r.classList.toggle("selected", r === row));
+          });
+        });
+      }
       $("templateHint").textContent = keyword || sourceFilter
         ? `符合${sourceFilter ? `「${formatSourceLabel(sourceFilter)}」來源` : ""}${keyword ? `「${$("templateSearch").value}」` : ""}的固定客戶：${matched.length} 筆`
         : templates.length
@@ -2187,6 +2258,7 @@
       manualBookingIdemKey = null; // 開始填一筆全新的訂單，之前失敗未清空的 key 不該沿用到這筆
       $("manualForm").reset();
       $("templateSelect").value = "";
+      $("templateResultsList").querySelectorAll(".tpl-row.selected").forEach(r => r.classList.remove("selected"));
       $("rideHour").value = "08";
       $("rideMinute").value = "00";
       $("returnHour").value = "08";
