@@ -27,7 +27,7 @@
     .status-badge { display:inline-flex; align-items:center; justify-content:center; min-width:68px; white-space:nowrap; }
     .order-card { padding:12px; margin-bottom:10px; }
     .muted { color:#6b7280; }
-    .call-link { color:#f07cad; font-weight:700; text-decoration:none; }
+    .call-link { color:#553f62; font-weight:700; text-decoration:underline; text-decoration-style:dotted; text-underline-offset:2px; }
     .call-link:active { opacity:.7; }
     .tiny { font-size:11px; }
     @media (max-width:640px) {
@@ -83,7 +83,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "report-check-v1.0.8"; // ①新增司機電話撥號連結(對應gas.html v2.2.248新增的driverPhone)：客人跟司機的電話都做成tel:連結、用粉紅色加粗字標示，點下去直接撥號，不用另外查號碼。②簡化視覺層級：原本客人/司機姓名都用深色粗體，畫面每一行都在搶注意力，改成只有「未確實回報」徽章跟「需收現」金額維持強調色/粗體，其他資訊(姓名、狀態)改用一般文字，真正該注意的地方才會跳出來
+    const APP_VERSION = "report-check-v1.0.9"; // ①路線文字用\n改用<br>渲染，跟gas.html v2.2.249同步，不再依賴瀏覽器自然斷行(送機/接機兩種方向斷行位置不一致、接機常常斷在地址中間很亂)，現在兩種方向都固定「起點/終點各自一行」。②配色收斂：電話號碼原本用亮粉紅+無底線，跟「需收現」的紅色混在一起太搶眼、整頁看起來紅通通的。改成深紫色+虛線底線(有明確的可點擊感、但不會搶過真正該注意的地方)，紅/粉紅只留給「未確實回報」徽章跟「需收現」金額這兩個真正需要立即注意的資訊
     const GAS_URL = "https://script.google.com/macros/s/AKfycbww3Pr0IcOABPvTteIWHo9j6MWRQvNjpf_MZRE7NgDp3Nt69Upx8VhVnCVMcbUvjJwI/exec";
 
     async function safeJsonParse(r) {
@@ -190,7 +190,7 @@
         <div class="flex justify-between gap-2 items-start">
           <div>
             <div class="text-base font-bold text-[#553f62]">${escapeHtml(o.date)} ${escapeHtml(o.time)} ${escapeHtml(o.type)}${flight}</div>
-            <div class="text-sm text-gray-600 mt-1">${escapeHtml(o.route)}</div>
+            <div class="text-sm text-gray-600 mt-1">${escapeHtml(o.route).replace(/\n/g, "<br>")}</div>
           </div>
           <span class="tiny px-2 py-1 rounded border ${statusClass} status-badge">${escapeHtml(o.reportStatus)}</span>
         </div>
