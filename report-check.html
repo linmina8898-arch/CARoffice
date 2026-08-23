@@ -81,7 +81,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "report-check-v1.0.6";
+    const APP_VERSION = "report-check-v1.0.7"; // 卡片排版調整：客人姓名/電話改成上下兩行(電話縮排對齊姓名)，司機/狀態獨立成右側欄位、跟客人資訊左右對齊，不再是2欄grid(原本客人資訊一長就換行、司機欄位卻不換行，兩邊高度對不齊)
     const GAS_URL = "https://script.google.com/macros/s/AKfycbww3Pr0IcOABPvTteIWHo9j6MWRQvNjpf_MZRE7NgDp3Nt69Upx8VhVnCVMcbUvjJwI/exec";
 
     async function safeJsonParse(r) {
@@ -187,12 +187,17 @@
           </div>
           <span class="tiny px-2 py-1 rounded border ${statusClass} status-badge">${escapeHtml(o.reportStatus)}</span>
         </div>
-        <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-sm mt-3">
-          <div><span class="muted">客人</span> ${escapeHtml(o.custName)} / ${escapeHtml(o.custPhone)}</div>
-          <div><span class="muted">司機</span> ${escapeHtml(o.driverName)}</div>
-          <div><span class="muted">付款</span> ${cash}</div>
-          <div><span class="muted">狀態</span> ${escapeHtml(o.driverStatus)}</div>
+        <div class="flex justify-between items-start gap-3 text-sm mt-3">
+          <div>
+            <div><span class="muted">客人</span> <span class="font-semibold text-[#1A0B3D]">${escapeHtml(o.custName)}</span></div>
+            <div class="pl-7 text-gray-600 mt-0.5">${escapeHtml(o.custPhone)}</div>
+          </div>
+          <div class="text-right flex-shrink-0 ml-4">
+            <div><span class="muted">司機</span> <span class="font-semibold text-[#1A0B3D]">${escapeHtml(o.driverName)}</span></div>
+            <div class="text-gray-600 mt-0.5">${escapeHtml(o.driverStatus)}</div>
+          </div>
         </div>
+        <div class="text-sm mt-2"><span class="muted">付款</span> ${cash}</div>
         <div class="report-grid mt-3">
           ${reportChip("收", o.reports.accepted, getStatusMapUrl(o, "已收單"))}
           ${reportChip("發", o.reports.departed, getStatusMapUrl(o, "已出發"))}
