@@ -593,7 +593,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.75"; // 修正v1.0.74的錯誤：「早鳥優惠」固定金額寫成200，但實際上quickQuote報價試算裡早鳥優惠是固定300元(跟「預約來回優惠」共用同一個折抵變數，符合早鳥條件時金額從100變成300)，改成Math.min(300, total)，400元疊加折扣(早鳥優惠300+新客戶禮100)才能正確兜起來。跟gas.html v2.2.291 parseStoredDiscounts_、admin.html parseStoredPreviewDiscounts同一套邏輯
+    const APP_VERSION = "manual-booking-v1.0.76"; // 🚨修正buildOrderFeeRows來回程「來回總額」算錯的問題：客服用「補套用折扣碼」只對來回其中一腿單獨套用時(去程/回程的折扣碼/折扣金額欄位各自獨立)，原本只扣這一腿自己的discountAmount，另一腿單獨套用的那組折扣完全沒被扣到，導致來回總額比實際應付多。修正：合併去程/回程兩腿各自的discountAmt，「來回總額」的扣除改用合併後的金額。跟gas.html v2.2.292 buildBookingFeeContents_、admin.html buildReservationUpdateFeePreview同一套邏輯
     // v1.0.72 - 新增「複製舊單，快速建立新預約」功能：取消的訂單客人又想用同樣行程重新預約時(只是要換日期/時間)，不用整張表單重填，填舊單號查詢後，客人資料/地址/車型/人數行李/金額/加值折扣項目會整包帶入下面表單，唯獨日期時間留白由客服自行填寫新的時段。跟既有的「補建遺漏的去程/回程」是兩個獨立功能：那個查完會用recoveryBaseId/recoveryLegSuffix掛回舊單底下(維持-A/-B配對)，這個完全不動那兩個欄位，送出後一律是全新單號，不影響原本那筆舊單。實作參考fetchRecoveryAutoFill同一套用getManualBookingTextData查單、setValue逐欄位帶入的做法，額外處理了：單程行程起訖點分別對應到address/airport欄位、回程行程/金額/航班另外從回程那筆資料帶入、加值服務用parseStoredFeeExtras依去程/回程分別還原明細、折扣只取去程那筆避免兩腿重複記的折扣被加乘兩次、現場收現金額只在付款方式真的需要時才帶入
     // 「固定客戶範本」選擇改成自訂清單，不再用原生下拉選單(在手機上選項一長就變成一長串塞在一起完全看不清楚)。改成一張張獨立卡片：來源標籤(粉紅底)+姓名+電話在同一行，地址另起一行，點擊即可帶入，選中的那筆會highlight。原本的select仍保留(隱藏)當作資料狀態，不影響既有的applyTemplate等邏輯
     // 不再用 Google callback 機制初始化地圖（callback 容易撞上 async 腳本執行時機競速問題，
@@ -1990,10 +1990,14 @@
         if (other) {
           const outTotal = order.label === "去程" ? displayTotal : (other.tripAmt || money(other.fare));
           const retTotal = order.label === "回程" ? displayTotal : (other.tripAmt || money(other.fare));
-          const roundTotal = outTotal + retTotal - discountAmount;
+          // 🚨去程/回程的折扣碼/折扣金額是各自獨立的欄位，客服可以用「補套用折扣碼」只對其中一腿單獨套用，
+          // 「來回總額」要扣的是兩腿折扣金額的合計，只算這一腿自己的discountAmount會漏掉另一腿單獨套用的部分。
+          const otherDiscountAmount = Math.abs(Number(other.discountAmt || 0));
+          const combinedDiscountAmount = discountAmount + otherDiscountAmount;
+          const roundTotal = outTotal + retTotal - combinedDiscountAmount;
           rows.push({ label: "去程小計", value: `+$${outTotal.toLocaleString()}`, isMuted: true, isSectionStart: true });
           rows.push({ label: "回程小計", value: `+$${retTotal.toLocaleString()}`, isMuted: true });
-          if (discountAmount > 0) rows.push({ label: "優惠折扣", value: `-$${discountAmount.toLocaleString()}`, isMuted: true });
+          if (combinedDiscountAmount > 0) rows.push({ label: "優惠折扣", value: `-$${combinedDiscountAmount.toLocaleString()}`, isMuted: true });
           rows.push({ label: "來回總額", value: "$" + roundTotal.toLocaleString(), isTotal: true });
         }
       }
