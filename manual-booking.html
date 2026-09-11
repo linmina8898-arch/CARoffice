@@ -280,6 +280,25 @@
         </div>
       </section>
 
+      <!-- 複製舊單：客人行程一模一樣、只是要換日期/時間重新預約時(常見於原單被取消後客人又想訂)，
+           不用整張表單重填，帶單號進來把所有內容(客人資料/地址/車型/人數行李/金額/加值折扣...)整包
+           帶進來，客服只要改日期時間就好。跟上面「補建遺漏的去程/回程」不一樣：這裡送出時一律視為
+           全新單號，不會掛回舊單底下，所以完全不去動recoveryBaseId/recoveryLegSuffix這兩個欄位。 -->
+      <section class="panel" style="border:1px solid #d8e6f7;background:#f6fafe">
+        <button type="button" id="duplicateToggle" class="section-title" style="cursor:pointer;background:none;border:none;padding:0;width:100%;text-align:left;color:#2b5a8c">📋 複製舊單，快速建立新預約（點開）</button>
+        <div id="duplicateBody" class="hidden" style="margin-top:10px">
+          <p class="hint" style="margin-bottom:10px">用在客人行程一模一樣(常見於原單被取消後客人又要訂)，只是要換日期或時間的狀況。查詢後會把舊單的客人資料、地址、車型、人數行李、金額、加值/折扣項目整包帶入下面表單，唯獨日期和時間留白，請自行填上這次新的預約時段；送出後會是一筆全新的單號，不影響原本那筆舊單。</p>
+          <div class="grid-form">
+            <div class="full">
+              <label for="duplicateOrderId">舊單號（含或不含 -A / -B 皆可）</label>
+              <input id="duplicateOrderId" placeholder="例如：AS-202608227259kMo 或 AS-202608227259kMo-A">
+            </div>
+          </div>
+          <button type="button" id="duplicateFetchBtn" class="secondary-btn" style="margin-top:10px">查詢並帶入全部資料</button>
+          <p class="hint" id="duplicateFetchHint" style="margin-top:6px"></p>
+        </div>
+      </section>
+
       <section class="panel">
         <div class="section-title">訂單來源</div>
         <div class="grid-form">
@@ -574,7 +593,8 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.71"; // 「固定客戶範本」選擇改成自訂清單，不再用原生下拉選單(在手機上選項一長就變成一長串塞在一起完全看不清楚)。改成一張張獨立卡片：來源標籤(粉紅底)+姓名+電話在同一行，地址另起一行，點擊即可帶入，選中的那筆會highlight。原本的select仍保留(隱藏)當作資料狀態，不影響既有的applyTemplate等邏輯
+    const APP_VERSION = "manual-booking-v1.0.72"; // 新增「複製舊單，快速建立新預約」功能：取消的訂單客人又想用同樣行程重新預約時(只是要換日期/時間)，不用整張表單重填，填舊單號查詢後，客人資料/地址/車型/人數行李/金額/加值折扣項目會整包帶入下面表單，唯獨日期時間留白由客服自行填寫新的時段。跟既有的「補建遺漏的去程/回程」是兩個獨立功能：那個查完會用recoveryBaseId/recoveryLegSuffix掛回舊單底下(維持-A/-B配對)，這個完全不動那兩個欄位，送出後一律是全新單號，不影響原本那筆舊單。實作參考fetchRecoveryAutoFill同一套用getManualBookingTextData查單、setValue逐欄位帶入的做法，額外處理了：單程行程起訖點分別對應到address/airport欄位、回程行程/金額/航班另外從回程那筆資料帶入、加值服務用parseStoredFeeExtras依去程/回程分別還原明細、折扣只取去程那筆避免兩腿重複記的折扣被加乘兩次、現場收現金額只在付款方式真的需要時才帶入
+    // 「固定客戶範本」選擇改成自訂清單，不再用原生下拉選單(在手機上選項一長就變成一長串塞在一起完全看不清楚)。改成一張張獨立卡片：來源標籤(粉紅底)+姓名+電話在同一行，地址另起一行，點擊即可帶入，選中的那筆會highlight。原本的select仍保留(隱藏)當作資料狀態，不影響既有的applyTemplate等邏輯
     // 不再用 Google callback 機制初始化地圖（callback 容易撞上 async 腳本執行時機競速問題，
     // 之前就是這樣導致 initManualMapReady is not a function），距離計算改成呼叫當下才檢查
     // window.google.maps 是否就緒即可，不需要額外的載入完成回呼。
@@ -618,6 +638,8 @@
       $("versionDisplay").textContent = APP_VERSION;
       $("recoveryToggle").addEventListener("click", () => $("recoveryBody").classList.toggle("hidden"));
       $("recoveryFetchBtn").addEventListener("click", fetchRecoveryAutoFill);
+      $("duplicateToggle").addEventListener("click", () => $("duplicateBody").classList.toggle("hidden"));
+      $("duplicateFetchBtn").addEventListener("click", fetchDuplicateOrderAutoFill);
       initTimeSelects();
       $("source").addEventListener("change", handleSourceChange);
       $("hasReturn").addEventListener("change", handleReturnToggle);
@@ -2326,6 +2348,113 @@
         updateSummary();
         hint.textContent = `已帶入${otherLabel}的客人資料，日期/時間/航班請自行填寫這次要補的內容`;
         hint.style.color = "#553f62";
+      } catch (err) {
+        hint.textContent = err.message || "查詢失敗";
+        hint.style.color = "#b03060";
+      }
+    }
+
+    // 跟上面fetchRecoveryAutoFill用的normalizeServiceType不同：那個是刻意要「反向」(送機↔接機)
+    // 給另一腿用，這裡複製舊單要原封不動照抄，不能反向，只在原始文字剛好對不上三個選項時才用一個保底值。
+    function toDuplicateServiceType(raw) {
+      const v = String(raw || "").trim();
+      if (v === "送機" || v === "接機" || v === "單程") return v;
+      return normalizeServiceType(v) || "送機";
+    }
+
+    async function fetchDuplicateOrderAutoFill() {
+      const orderId = $("duplicateOrderId").value.trim();
+      const hint = $("duplicateFetchHint");
+      if (!orderId) { hint.textContent = "請先填舊單號"; hint.style.color = "#b03060"; return; }
+      hint.textContent = "查詢中...";
+      hint.style.color = "#93889b";
+      try {
+        const res = await fetch(`${GAS_URL}?action=getManualBookingTextData&reservationId=${encodeURIComponent(orderId)}&t=${Date.now()}`).then(r => safeJsonParse(r));
+        if (!res.success) throw new Error(res.error || "查無此單號");
+        const orders = res.orders || [];
+        const primary = orders.find(o => o.label !== "回程") || orders[0];
+        const returnLeg = orders.find(o => o.label === "回程");
+        if (!primary) throw new Error("查無此單號的行程資料");
+
+        // 先清空既有的加值/折扣/加點，避免跟剛剛手動填的舊資料混在一起
+        discountItems = [];
+        surchargeItems = [];
+        extraStops = [];
+        $("phoneDiscountResults").classList.add("hidden");
+        $("phoneDiscountResults").innerHTML = "";
+
+        const known = knownSources();
+        setValue("source", known.includes(primary.source) ? primary.source : (primary.source ? "其他" : $("source").value));
+        setValue("customSource", known.includes(primary.source) ? "" : primary.source);
+        handleSourceChange();
+
+        const serviceType = toDuplicateServiceType(primary.serviceType);
+        const isOneWay = serviceType === "單程";
+        setValue("serviceType", serviceType);
+        toggleServiceTypeFields();
+        if (isOneWay) {
+          // 單程的話，起點存在「接送地址」欄位、終點存在「機場」欄位(跟表單送出時的做法對稱)
+          setValue("oneWayStart", primary.address);
+          setValue("oneWayEnd", primary.airport);
+        } else {
+          setValue("airport", primary.airport || $("airport").value);
+          setValue("address", primary.address);
+          setValue("flightNumber", primary.flightNumber);
+        }
+        extraStops = String(primary.extraLocation || "").split(/\n|[；;]/).map(s => s.trim()).filter(Boolean);
+        renderExtraStops();
+
+        setValue("customerName", primary.customerName);
+        setValue("phone", formatPhoneNumber(primary.phone));
+        setValue("carType", primary.carType || "小車");
+        setPaxFieldsFromText(primary.paxCount || "1大 0中 0小");
+        setLuggageFieldsFromText(primary.luggageCount || "0大 0登機");
+        setValue("seatDetails", primary.seatDetails || "無");
+        const primarySignboard = String(primary.signboard || "無").trim();
+        const signboardOn = primarySignboard && primarySignboard !== "無";
+        $("signboardNeeded").checked = signboardOn;
+        $("signboardContentWrap").classList.toggle("hidden", !signboardOn);
+        setValue("signboardContent", signboardOn && primarySignboard !== "需要" ? primarySignboard : "");
+        setValue("paymentMethod", primary.paymentMethod || "現金");
+        setValue("fare", money(primary.fare) || "");
+        setValue("remarks", primary.remarks);
+
+        // 加值服務：去程自己的明細標「去程」，有回程的話回程自己的明細另外標「回程」，
+        // 各自對應各自那一筆的金額，不是憑空對分。
+        parseStoredFeeExtras(primary.surchargeDetails).forEach(item => {
+          surchargeItems.push({ label: item.label, amount: item.amount || 0, target: "outbound" });
+        });
+        // 折扣只取去程這筆的欄位（回程那筆理論上是同一組折扣重複記在兩邊，不要兩邊都加，
+        // 不然折扣金額會變兩倍），有回程的話標成「去回程各扣」對應整趟總額一起扣的原始邏輯。
+        parseStoredFeeDiscounts(primary.discountCode, Math.abs(Number(primary.discountAmt || 0))).forEach(d => {
+          discountItems.push({ label: d.label, amount: d.amount || 0, target: returnLeg ? "both" : "outbound" });
+        });
+
+        $("hasReturn").checked = Boolean(returnLeg);
+        handleReturnToggle();
+        if (returnLeg) {
+          if (!isOneWay) {
+            setValue("returnServiceType", toDuplicateServiceType(returnLeg.serviceType));
+            setValue("returnFlightNumber", returnLeg.flightNumber);
+          }
+          setValue("returnFare", money(returnLeg.fare) || "");
+          parseStoredFeeExtras(returnLeg.surchargeDetails).forEach(item => {
+            surchargeItems.push({ label: item.label, amount: item.amount || 0, target: "return" });
+          });
+        }
+        // 現場收現金額只在付款方式真的需要時才帶入(跟toggleManualCashFields同一套判斷)，
+        // 避免付款方式其實不需要收現、卻在隱藏欄位裡留著一個舊金額被一起送出去。
+        if (needsManualCash($("paymentMethod").value)) {
+          setValue("manualCashCollected", primary.manualCashCollected);
+          if (returnLeg) setValue("returnManualCashCollected", returnLeg.manualCashCollected);
+        }
+
+        renderSurchargeItems();
+        renderDiscountItems();
+        updateSummary();
+
+        hint.textContent = `已帶入「${primary.customerName || ""}」${returnLeg ? "來回" : ""}行程的完整資料，日期／時間請自行填寫這次新的預約時段，送出前請再次確認金額與內容是否正確。`;
+        hint.style.color = "#2b5a8c";
       } catch (err) {
         hint.textContent = err.message || "查詢失敗";
         hint.style.color = "#b03060";
