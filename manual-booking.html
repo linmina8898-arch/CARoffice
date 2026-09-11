@@ -593,7 +593,8 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.72"; // 新增「複製舊單，快速建立新預約」功能：取消的訂單客人又想用同樣行程重新預約時(只是要換日期/時間)，不用整張表單重填，填舊單號查詢後，客人資料/地址/車型/人數行李/金額/加值折扣項目會整包帶入下面表單，唯獨日期時間留白由客服自行填寫新的時段。跟既有的「補建遺漏的去程/回程」是兩個獨立功能：那個查完會用recoveryBaseId/recoveryLegSuffix掛回舊單底下(維持-A/-B配對)，這個完全不動那兩個欄位，送出後一律是全新單號，不影響原本那筆舊單。實作參考fetchRecoveryAutoFill同一套用getManualBookingTextData查單、setValue逐欄位帶入的做法，額外處理了：單程行程起訖點分別對應到address/airport欄位、回程行程/金額/航班另外從回程那筆資料帶入、加值服務用parseStoredFeeExtras依去程/回程分別還原明細、折扣只取去程那筆避免兩腿重複記的折扣被加乘兩次、現場收現金額只在付款方式真的需要時才帶入
+    const APP_VERSION = "manual-booking-v1.0.73"; // 修正parseStoredFeeDiscounts疊加兩組以上折扣碼時算錯明細的問題：原本不分青紅皂白把總金額平均切給每一組，改成優先讀每組自己標的$金額(對應gas.html v2.2.288：applyDiscountToReservation產生新折扣碼時會自動帶上這組實際折抵金額)，只有完全沒標金額的舊格式項目才用剩餘金額平均分配，順便修正單組時直接把原始文字(含"折扣碼(...)"跟"$金額"字樣)整段當標籤顯示的小bug。跟gas.html parseStoredDiscounts_、admin.html parseStoredPreviewDiscounts同一套邏輯
+    // v1.0.72 - 新增「複製舊單，快速建立新預約」功能：取消的訂單客人又想用同樣行程重新預約時(只是要換日期/時間)，不用整張表單重填，填舊單號查詢後，客人資料/地址/車型/人數行李/金額/加值折扣項目會整包帶入下面表單，唯獨日期時間留白由客服自行填寫新的時段。跟既有的「補建遺漏的去程/回程」是兩個獨立功能：那個查完會用recoveryBaseId/recoveryLegSuffix掛回舊單底下(維持-A/-B配對)，這個完全不動那兩個欄位，送出後一律是全新單號，不影響原本那筆舊單。實作參考fetchRecoveryAutoFill同一套用getManualBookingTextData查單、setValue逐欄位帶入的做法，額外處理了：單程行程起訖點分別對應到address/airport欄位、回程行程/金額/航班另外從回程那筆資料帶入、加值服務用parseStoredFeeExtras依去程/回程分別還原明細、折扣只取去程那筆避免兩腿重複記的折扣被加乘兩次、現場收現金額只在付款方式真的需要時才帶入
     // 「固定客戶範本」選擇改成自訂清單，不再用原生下拉選單(在手機上選項一長就變成一長串塞在一起完全看不清楚)。改成一張張獨立卡片：來源標籤(粉紅底)+姓名+電話在同一行，地址另起一行，點擊即可帶入，選中的那筆會highlight。原本的select仍保留(隱藏)當作資料狀態，不影響既有的applyTemplate等邏輯
     // 不再用 Google callback 機制初始化地圖（callback 容易撞上 async 腳本執行時機競速問題，
     // 之前就是這樣導致 initManualMapReady is not a function），距離計算改成呼叫當下才檢查
@@ -1911,13 +1912,37 @@
         return { label: plainLabel, note: plainLabel.indexOf("客服") !== -1 ? "客服報價" : "請洽客服確認金額", amount: 0 };
       });
     }
+    // 折扣碼欄位可能是多組用" + "串起來的疊加結果(客服在中控台可以無限疊加，見gas.html
+    // applyDiscountToReservation)，欄位裡只存一個「總折抵金額」，不是每組各自的金額，所以要靠
+    // 這裡從文字裡「猜」出每一組各自折了多少。優先讀每一組自己標的「$金額」(gas.html
+    // applyDiscountToReservation產生新折扣碼時，已經會自動帶上這組實際折抵的金額，格式是
+    // 「...）$100」)，只有完全沒標金額的舊格式項目，才用「總額-已知金額」去平均分配。
+    // 原本這裡是不管幾組一律平均切分，兩組以上、金額本來就不平均時會算錯；跟gas.html
+    // parseStoredDiscounts_、admin.html parseStoredPreviewDiscounts同一套邏輯。
     function parseStoredFeeDiscounts(code, amount) {
-      const text = String(code || "").trim();
-      if (!text || !amount) return [];
-      const parts = text.split("+").map(s => s.trim()).filter(Boolean);
-      if (parts.length <= 1) return [{ label: text || "折扣", amount: Number(amount) || 0 }];
-      const each = Math.round((Number(amount) || 0) / parts.length);
-      return parts.map((label, i) => ({ label, amount: i === parts.length - 1 ? (Number(amount) || 0) - each * (parts.length - 1) : each }));
+      const total = Math.abs(Number(amount) || 0);
+      const normalized = String(code || "").trim().replace(/折扣碼\(([^)]+)\)/g, "$1");
+      const rawParts = normalized.split(/\s*\+\s*|、|\n/).map(s => s.trim()).filter(Boolean);
+      if (!rawParts.length) return total ? [{ label: "折扣", amount: total }] : [];
+      const items = rawParts.map(part => {
+        const m = part.match(/-?\$\s*([\d,]+)\s*$/);
+        const explicitAmount = m ? Number(m[1].replace(/,/g, "")) : null;
+        const label = (explicitAmount != null ? part.replace(/\s*-?\$\s*[\d,]+\s*$/, "") : part).trim() || part;
+        return { label, explicitAmount };
+      });
+      const returnIndex = items.findIndex(item => item.label.indexOf("預約來回優惠") !== -1);
+      if (returnIndex >= 0 && items[returnIndex].explicitAmount == null) {
+        items[returnIndex].explicitAmount = Math.min(100, total);
+      }
+      const knownTotal = items.reduce((sum, item) => sum + (item.explicitAmount || 0), 0);
+      const unassigned = items.filter(item => item.explicitAmount == null);
+      const remainder = Math.max(0, total - knownTotal);
+      return items.map(item => {
+        if (item.explicitAmount != null) return { label: item.label, amount: item.explicitAmount };
+        if (!unassigned.length) return { label: item.label, amount: 0 };
+        const share = Math.round(remainder / unassigned.length);
+        return { label: item.label, amount: share };
+      });
     }
     function buildOrderFeeRows(order, siblingOrders) {
       let fee = {};
