@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AS派車 - 司機端</title>
+    <title>瑞陞汽車租賃有限公司 派車單 - 司機端(AS)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
@@ -37,7 +37,7 @@
 
     <!-- 頂部導航 -->
     <header class="bg-white shadow-sm z-10 px-4 py-3 flex justify-between items-center relative">
-        <div class="font-black text-xl text-[#553f62] tracking-widest">AS派車 <span class="text-sm font-bold text-[#f07cad]">Driver</span></div>
+        <div class="font-black text-xl text-[#553f62] tracking-widest">瑞陞汽車租賃有限公司 派車 <span class="text-sm font-bold text-[#f07cad]">Driver</span></div>
         <button onclick="window.location.href='tel:0955311306'" class="bg-red-50 text-red-600 px-3 py-1.5 rounded-full text-xs font-bold border border-red-200 shadow-sm flex items-center gap-1">
             聯絡客服
         </button>
@@ -183,7 +183,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.14.69"; // 單程(不經機場的定點接送)司機端畫面調整：原本沿用接送機場欄位配置，導致單程被標成「接送機場」很奇怪(其實顯示的是終點地址)、還會多顯示用不到的「航班編號」。改成單程專屬格式：「上車地址／下車地址」各自帶地圖連結方便導航，不顯示航班編號。只限定t.type==='單程'才套用，接機/送機畫面完全不受影響
+        const APP_VERSION = "v1.14.70"; // 依使用者要求，畫面抬頭改成公司全名：分頁標題「AS派車 - 司機端」→「瑞陞汽車租賃有限公司 派車單 - 司機端(AS)」，頁面上方標頭「AS派車 Driver」→「瑞陞汽車租賃有限公司 派車 Driver」。v1.14.69：單程(不經機場的定點接送)司機端畫面調整：原本沿用接送機場欄位配置，導致單程被標成「接送機場」很奇怪(其實顯示的是終點地址)、還會多顯示用不到的「航班編號」。改成單程專屬格式：「上車地址／下車地址」各自帶地圖連結方便導航，不顯示航班編號。只限定t.type==='單程'才套用，接機/送機畫面完全不受影響
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AS派車 - 臨時派遣任務</title>
+    <title>瑞陞汽車租賃有限公司 派車單 - 臨時派遣任務(AS)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
@@ -29,7 +29,7 @@
 </head>
 <body class="min-h-screen">
     <header class="bg-white shadow-sm px-4 py-3 flex items-center justify-between sticky top-0 z-20">
-        <div class="text-xl font-semibold text-[#553f62] tracking-wide">AS派車</div>
+        <div class="text-xl font-semibold text-[#553f62] tracking-wide">瑞陞汽車租賃有限公司 派車</div>
         <a href="tel:0955311306" class="border border-[#553f62] text-[#553f62] px-3 py-1.5 rounded-lg text-xs">聯絡調度</a>
     </header>
     <main class="p-4 max-w-md mx-auto">
@@ -81,7 +81,7 @@
         </div>
     </div>
     <script>
-        const APP_VERSION = "v1.0.39"; // 修正LIFF withLoginOnExternalBrowser登入流程導回頁面時，網址上的?token=有時候會遺失、導致顯示「無法開啟任務」的問題：進頁面時把token先存到sessionStorage，網址讀不到token時改用暫存的這份
+        const APP_VERSION = "v1.0.40"; // 依使用者要求，畫面抬頭改成公司全名：分頁標題「AS派車 - 臨時派遣任務」→「瑞陞汽車租賃有限公司 派車單 - 臨時派遣任務(AS)」，頁面上方標頭「AS派車」→「瑞陞汽車租賃有限公司 派車」。v1.0.39：修正LIFF withLoginOnExternalBrowser登入流程導回頁面時，網址上的?token=有時候會遺失、導致顯示「無法開啟任務」的問題：進頁面時把token先存到sessionStorage，網址讀不到token時改用暫存的這份
         const GAS_URL = "https://script.google.com/macros/s/AKfycbww3Pr0IcOABPvTteIWHo9j6MWRQvNjpf_MZRE7NgDp3Nt69Upx8VhVnCVMcbUvjJwI/exec";
         const LIFF_ID = "2009971109-EdjC9QlC";
         let lineUserId = "";
