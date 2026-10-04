@@ -183,7 +183,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.14.70"; // 依使用者要求，畫面抬頭改成公司全名：分頁標題「AS派車 - 司機端」→「瑞陞汽車租賃有限公司 派車單 - 司機端(AS)」，頁面上方標頭「AS派車 Driver」→「瑞陞汽車租賃有限公司 派車 Driver」。v1.14.69：單程(不經機場的定點接送)司機端畫面調整：原本沿用接送機場欄位配置，導致單程被標成「接送機場」很奇怪(其實顯示的是終點地址)、還會多顯示用不到的「航班編號」。改成單程專屬格式：「上車地址／下車地址」各自帶地圖連結方便導航，不顯示航班編號。只限定t.type==='單程'才套用，接機/送機畫面完全不受影響
+        const APP_VERSION = "v1.14.71"; // v1.14.71：依使用者要求，司機端「該收現金」的備援算法(後端沒給cashCollected時才會用到)改成原始車資扣掉折扣金額，要跟客人卡片付款欄的實付金額一致；主要算法在後端gas.html v2.2.329。v1.14.70：依使用者要求，畫面抬頭改成公司全名：分頁標題「AS派車 - 司機端」→「瑞陞汽車租賃有限公司 派車單 - 司機端(AS)」，頁面上方標頭「AS派車 Driver」→「瑞陞汽車租賃有限公司 派車 Driver」。v1.14.69：單程(不經機場的定點接送)司機端畫面調整：原本沿用接送機場欄位配置，導致單程被標成「接送機場」很奇怪(其實顯示的是終點地址)、還會多顯示用不到的「航班編號」。改成單程專屬格式：「上車地址／下車地址」各自帶地圖連結方便導航，不顯示航班編號。只限定t.type==='單程'才套用，接機/送機畫面完全不受影響
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -866,7 +866,7 @@
             const isTransfer = method.includes('轉帳');
             const manualCash = parseCashAmount(t.manualCashCollected);
             const backendCash = parseCashAmount(t.cashCollected);
-            const cashCollected = manualCash > 0 ? manualCash : (backendCash > 0 ? backendCash : (isCash ? parseCashAmount(t.tripAmt) : 0));
+            const cashCollected = manualCash > 0 ? manualCash : (backendCash > 0 ? backendCash : (isCash ? Math.max(parseCashAmount(t.tripAmt) - parseCashAmount(t.discountAmt), 0) : 0));
             const payoutAmount = parseCashAmount(t.driverPayout || t.payout);
             const cashReturn = cashCollected > 0 && payoutAmount > 0 ? cashCollected - payoutAmount : 0;
             const paymentStatus = isCash ? '司機收現' : (isBilling ? '月結簽單，客下請簽名' : (isTransfer ? '轉帳，不簽不收' : (method || '未標示')));
