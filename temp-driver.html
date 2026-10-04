@@ -81,7 +81,7 @@
         </div>
     </div>
     <script>
-        const APP_VERSION = "v1.0.40"; // 依使用者要求，畫面抬頭改成公司全名：分頁標題「AS派車 - 臨時派遣任務」→「瑞陞汽車租賃有限公司 派車單 - 臨時派遣任務(AS)」，頁面上方標頭「AS派車」→「瑞陞汽車租賃有限公司 派車」。v1.0.39：修正LIFF withLoginOnExternalBrowser登入流程導回頁面時，網址上的?token=有時候會遺失、導致顯示「無法開啟任務」的問題：進頁面時把token先存到sessionStorage，網址讀不到token時改用暫存的這份
+        const APP_VERSION = "v1.0.41"; // 依使用者要求：有現場收現且有給司機車資時，「付款方式」下面多一行「實拿車資 $X」，避免臨時司機看到「現場收現 $1,800」誤以為車資是1,800(收現備註按鈕保留)。 v1.0.40： 依使用者要求，畫面抬頭改成公司全名：分頁標題「AS派車 - 臨時派遣任務」→「瑞陞汽車租賃有限公司 派車單 - 臨時派遣任務(AS)」，頁面上方標頭「AS派車」→「瑞陞汽車租賃有限公司 派車」。v1.0.39：修正LIFF withLoginOnExternalBrowser登入流程導回頁面時，網址上的?token=有時候會遺失、導致顯示「無法開啟任務」的問題：進頁面時把token先存到sessionStorage，網址讀不到token時改用暫存的這份
         const GAS_URL = "https://script.google.com/macros/s/AKfycbww3Pr0IcOABPvTteIWHo9j6MWRQvNjpf_MZRE7NgDp3Nt69Upx8VhVnCVMcbUvjJwI/exec";
         const LIFF_ID = "2009971109-EdjC9QlC";
         let lineUserId = "";
@@ -193,6 +193,9 @@
             const cash = parseCashAmount(task.cashCollected);
             const basePayment = billing ? "月結簽單，客下請簽名" : (task.paymentStatus || task.paymentMethod || "-");
             const payment = cash > 0 ? `${basePayment}｜現場收現 $${cash.toLocaleString()}` : basePayment;
+            // 有現場收現且有給司機車資時，付款方式下面多一行「實拿車資」，司機一眼看出自己拿多少(收現金額≠車資，差額要回金)
+            const payoutAmt = parseCashAmount(task.driverPayout || task.payout);
+            const fareRowHtml = (cash > 0 && payoutAmt > 0) ? `<div class="field" style="background:#fff5f8;margin:0 -12px;padding-left:12px;padding-right:12px;border-top:1px solid #f4c9d9;border-bottom:0"><span class="field-label" style="color:#b63c6b;font-weight:700">實拿車資</span><span class="field-value" style="color:#553f62;font-weight:700;font-size:17px">$${payoutAmt.toLocaleString()}</span></div>` : "";
             const next = { "":"已收單", "未出發":"已收單", "已收單":"已出發", "已出發":"已抵達", "已抵達":"客上", "客上":"已結案" }[task.driverStatus || ""];
             const label = { "已收單":"確認收單", "已出發":"點我出發", "已抵達":"已抵達上車點", "客上":"客戶已上車", "已結案":"客下完成行程" }[next];
             const fields = [
@@ -220,7 +223,7 @@
                         <div class="text-xl text-[#553f62]">${esc(task.date.substring(5).replace("-", "/"))}　${esc(task.time)}</div>
                         <div class="text-xl ${task.type === "接機" ? "text-[#f07cad]" : "text-[#553f62]"}">${esc(task.type)}</div>
                     </div>
-                    <div class="bg-gray-50 border rounded-lg px-3">${fields.map(f => `<div class="field"><span class="field-label">${esc(f[0])}</span><span class="field-value">${fieldValueHtml(f[0], f[1])}</span></div>`).join("")}</div>
+                    <div class="bg-gray-50 border rounded-lg px-3">${fields.map(f => `<div class="field"><span class="field-label">${esc(f[0])}</span><span class="field-value">${fieldValueHtml(f[0], f[1])}</span></div>`).join("")}${fareRowHtml}</div>
                     <div class="text-xs text-gray-400 mt-3">連結有效至 ${esc(expiresAt)}，請勿轉傳他人。</div>
                 </div>
                 <div class="mt-4 space-y-3">
