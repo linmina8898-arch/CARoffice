@@ -231,6 +231,11 @@
       line-height: 1.5;
     }
     .hidden { display: none !important; }
+    /* 航班編號 + 航廈(桃園機場才出現) */
+    .flight-term-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .flight-term-row.no-terminal { grid-template-columns: 1fr; }
+    .flight-term-row.no-terminal .terminal-wrap { display: none; }
+    .flight-term-row select { white-space: nowrap; }
     @media (max-width: 640px) {
       .shell { padding-left: 10px; padding-right: 10px; }
       .grid-form { grid-template-columns: 1fr; gap: 10px; }
@@ -399,8 +404,12 @@
             </div>
           </div>
           <div id="flightNumberWrap">
-            <label for="flightNumber">航班編號</label>
-            <input id="flightNumber" name="flightNumber" placeholder="例如 BR7、CI11" style="text-transform: uppercase;">
+            <div class="flight-term-row">
+              <div><label for="flightNumber">航班編號</label>
+              <input id="flightNumber" name="flightNumber" placeholder="例如 BR7、CI11" style="text-transform: uppercase;"></div>
+              <div class="terminal-wrap"><label for="flightTerminal">航廈（桃園機場）</label>
+              <select id="flightTerminal" name="flightTerminal"><option value="">請選擇</option><option value="T1">第一航廈 T1</option><option value="T2">第二航廈 T2</option><option value="?">不確定，幫我查詢</option></select></div>
+            </div>
           </div>
           <div>
             <label for="fare">車資金額</label>
@@ -459,8 +468,12 @@
               </div>
             </div>
             <div class="full" id="returnFlightNumberWrap">
-              <label for="returnFlightNumber">回程航班</label>
-              <input id="returnFlightNumber" name="returnFlightNumber" placeholder="例如 BR7、CI11" style="text-transform: uppercase;">
+              <div class="flight-term-row">
+                <div><label for="returnFlightNumber">回程航班</label>
+                <input id="returnFlightNumber" name="returnFlightNumber" placeholder="例如 BR7、CI11" style="text-transform: uppercase;"></div>
+                <div class="terminal-wrap"><label for="returnFlightTerminal">回程航廈（桃園機場）</label>
+                <select id="returnFlightTerminal" name="returnFlightTerminal"><option value="">請選擇</option><option value="T1">第一航廈 T1</option><option value="T2">第二航廈 T2</option><option value="?">不確定，幫我查詢</option></select></div>
+              </div>
             </div>
           </div>
         </div>
@@ -593,7 +606,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.76"; // 🚨修正buildOrderFeeRows來回程「來回總額」算錯的問題：客服用「補套用折扣碼」只對來回其中一腿單獨套用時(去程/回程的折扣碼/折扣金額欄位各自獨立)，原本只扣這一腿自己的discountAmount，另一腿單獨套用的那組折扣完全沒被扣到，導致來回總額比實際應付多。修正：合併去程/回程兩腿各自的discountAmt，「來回總額」的扣除改用合併後的金額。跟gas.html v2.2.292 buildBookingFeeContents_、admin.html buildReservationUpdateFeePreview同一套邏輯
+    const APP_VERSION = "manual-booking-v1.0.77"; // v1.0.77：依使用者要求，航班編號旁邊新增「航廈」選單(第一航廈T1/第二航廈T2/不確定，幫我查詢)，只有選「桃園機場」才出現，有填航班編號就一定要選(沒選送出會跳出缺漏欄位提示)；去程/回程各一個；選了以「航班｜T1/T2/？」(例如CI108｜T2)接在航班編號後面送出，複製舊單/載入舊單時會把已存的「CI108｜T2」拆回兩個欄位。 v1.0.76： 🚨修正buildOrderFeeRows來回程「來回總額」算錯的問題：客服用「補套用折扣碼」只對來回其中一腿單獨套用時(去程/回程的折扣碼/折扣金額欄位各自獨立)，原本只扣這一腿自己的discountAmount，另一腿單獨套用的那組折扣完全沒被扣到，導致來回總額比實際應付多。修正：合併去程/回程兩腿各自的discountAmt，「來回總額」的扣除改用合併後的金額。跟gas.html v2.2.292 buildBookingFeeContents_、admin.html buildReservationUpdateFeePreview同一套邏輯
     // v1.0.72 - 新增「複製舊單，快速建立新預約」功能：取消的訂單客人又想用同樣行程重新預約時(只是要換日期/時間)，不用整張表單重填，填舊單號查詢後，客人資料/地址/車型/人數行李/金額/加值折扣項目會整包帶入下面表單，唯獨日期時間留白由客服自行填寫新的時段。跟既有的「補建遺漏的去程/回程」是兩個獨立功能：那個查完會用recoveryBaseId/recoveryLegSuffix掛回舊單底下(維持-A/-B配對)，這個完全不動那兩個欄位，送出後一律是全新單號，不影響原本那筆舊單。實作參考fetchRecoveryAutoFill同一套用getManualBookingTextData查單、setValue逐欄位帶入的做法，額外處理了：單程行程起訖點分別對應到address/airport欄位、回程行程/金額/航班另外從回程那筆資料帶入、加值服務用parseStoredFeeExtras依去程/回程分別還原明細、折扣只取去程那筆避免兩腿重複記的折扣被加乘兩次、現場收現金額只在付款方式真的需要時才帶入
     // 「固定客戶範本」選擇改成自訂清單，不再用原生下拉選單(在手機上選項一長就變成一長串塞在一起完全看不清楚)。改成一張張獨立卡片：來源標籤(粉紅底)+姓名+電話在同一行，地址另起一行，點擊即可帶入，選中的那筆會highlight。原本的select仍保留(隱藏)當作資料狀態，不影響既有的applyTemplate等邏輯
     // 不再用 Google callback 機制初始化地圖（callback 容易撞上 async 腳本執行時機競速問題，
@@ -645,6 +658,7 @@
       $("source").addEventListener("change", handleSourceChange);
       $("hasReturn").addEventListener("change", handleReturnToggle);
       $("serviceType").addEventListener("change", () => { syncReturnType(); toggleServiceTypeFields(); updateSummary(); });
+      $("airport").addEventListener("change", syncTerminalVisibility);
       $("paymentMethod").addEventListener("change", toggleManualCashFields);
       $("templateSelect").addEventListener("change", applyTemplate);
       $("templateSearch").addEventListener("input", renderTemplateOptions);
@@ -1199,7 +1213,35 @@
       updateSummary();
     }
 
+    // 航廈：只有「桃園機場」有 T1/T2；選了就以「航班｜T1/T2/？」(例如 CI108｜T2)接在航班編號後面一起送出，
+    // 行事曆/卡片/司機畫面都直接顯示這個字串。有填航班編號的桃園機場單一定要選航廈(不確定請選「不確定，幫我查詢」)。
+    function isTaoyuanSelected() { return $("serviceType").value !== "單程" && $("airport").value === "桃園機場"; }
+    function syncTerminalVisibility() {
+      const show = isTaoyuanSelected();
+      document.querySelectorAll(".flight-term-row").forEach(el => el.classList.toggle("no-terminal", !show));
+    }
+    function composeFlightWithTerminal(flightId, termId) {
+      const flight = $(flightId).value.trim().toUpperCase();
+      if (!flight || !isTaoyuanSelected()) return flight;
+      const tv = $(termId).value;
+      const tt = tv === "T1" ? "T1" : (tv === "T2" ? "T2" : (tv === "?" ? "？" : ""));
+      return tt ? `${flight}｜${tt}` : flight;
+    }
+    // 把已存的航班字串(例如「CI108｜T2」或舊單手打的「CI108(T2)」)拆回「航班編號」和「航廈」兩個欄位
+    function setFlightFromStored(flightId, termId, stored) {
+      const text = String(stored || "").trim();
+      const m = text.match(/^(.*?)\s*[｜|(（]\s*(T[12]|[？?])\s*[)）]?\s*$/i);
+      if (m && m[1]) {
+        setValue(flightId, m[1].trim());
+        const t = m[2].toUpperCase();
+        setValue(termId, t === "T1" ? "T1" : (t === "T2" ? "T2" : "?"));
+      } else {
+        setValue(flightId, text);
+        setValue(termId, "");
+      }
+    }
     function toggleServiceTypeFields() {
+      syncTerminalVisibility();
       const isOneWay = $("serviceType").value === "單程";
       $("airportWrap").classList.toggle("hidden", isOneWay);
       $("flightNumberWrap").classList.toggle("hidden", isOneWay);
@@ -1476,7 +1518,7 @@
         airport: isOneWay ? $("oneWayEnd").value.trim() : $("airport").value,
         rideDate: $("rideDate").value,
         rideTime: buildTime("ride"),
-        flightNumber: isOneWay ? "" : $("flightNumber").value.trim().toUpperCase(),
+        flightNumber: isOneWay ? "" : composeFlightWithTerminal("flightNumber", "flightTerminal"),
         address: isOneWay ? $("oneWayStart").value.trim() : $("address").value.trim(),
         extraLocation: collectExtraLocationText(),
         fare: $("fare").value,
@@ -1486,7 +1528,7 @@
         returnServiceType: isOneWay ? "單程" : $("returnServiceType").value,
         returnDate: $("returnDate").value,
         returnTime: buildTime("return"),
-        returnFlightNumber: isOneWay ? "" : $("returnFlightNumber").value.trim().toUpperCase(),
+        returnFlightNumber: isOneWay ? "" : composeFlightWithTerminal("returnFlightNumber", "returnFlightTerminal"),
         returnFare: $("returnFare").value,
         manualCashCollected: $("manualCashCollected").value,
         returnManualCashCollected: $("returnManualCashCollected").value,
@@ -1638,6 +1680,10 @@
       if (!p.address) errors.push(isOneWay ? "起點地址" : "接送地址");
       if (isOneWay && !p.airport) errors.push("終點地址");
       if (!money(p.fare)) errors.push("車資金額");
+      if (!isOneWay && p.airport === "桃園機場") {
+        if ($("flightNumber").value.trim() && !$("flightTerminal").value) errors.push("去程航廈（不確定請選「不確定，幫我查詢」）");
+        if (p.hasReturn && $("returnFlightNumber").value.trim() && !$("returnFlightTerminal").value) errors.push("回程航廈（不確定請選「不確定，幫我查詢」）");
+      }
       if (!p.paxCount) errors.push("人數");
       if (!p.luggageCount) errors.push("行李");
       if (needsManualCash(p.paymentMethod)) {
@@ -1789,6 +1835,7 @@
     }
 
     function updateSummary(doneText) {
+      syncTerminalVisibility();
       if (typeof doneText === "string" && doneText) {
         $("summaryText").textContent = doneText;
         return;
@@ -2436,7 +2483,7 @@
         } else {
           setValue("airport", primary.airport || $("airport").value);
           setValue("address", primary.address);
-          setValue("flightNumber", primary.flightNumber);
+          setFlightFromStored("flightNumber", "flightTerminal", primary.flightNumber);
         }
         extraStops = String(primary.extraLocation || "").split(/\n|[；;]/).map(s => s.trim()).filter(Boolean);
         renderExtraStops();
@@ -2472,7 +2519,7 @@
         if (returnLeg) {
           if (!isOneWay) {
             setValue("returnServiceType", toDuplicateServiceType(returnLeg.serviceType));
-            setValue("returnFlightNumber", returnLeg.flightNumber);
+            setFlightFromStored("returnFlightNumber", "returnFlightTerminal", returnLeg.flightNumber);
           }
           setValue("returnFare", money(returnLeg.fare) || "");
           parseStoredFeeExtras(returnLeg.surchargeDetails).forEach(item => {
