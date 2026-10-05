@@ -183,7 +183,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.14.71"; // v1.14.71：依使用者要求，司機端「該收現金」的備援算法(後端沒給cashCollected時才會用到)改成原始車資扣掉折扣金額，要跟客人卡片付款欄的實付金額一致；主要算法在後端gas.html v2.2.329。v1.14.70：依使用者要求，畫面抬頭改成公司全名：分頁標題「AS派車 - 司機端」→「瑞陞汽車租賃有限公司 派車單 - 司機端(AS)」，頁面上方標頭「AS派車 Driver」→「瑞陞汽車租賃有限公司 派車 Driver」。v1.14.69：單程(不經機場的定點接送)司機端畫面調整：原本沿用接送機場欄位配置，導致單程被標成「接送機場」很奇怪(其實顯示的是終點地址)、還會多顯示用不到的「航班編號」。改成單程專屬格式：「上車地址／下車地址」各自帶地圖連結方便導航，不顯示航班編號。只限定t.type==='單程'才套用，接機/送機畫面完全不受影響
+        const APP_VERSION = "v1.14.72"; // v1.14.72：依使用者回報，司機連續按好幾筆「確認收單」都成功，過不久畫面又跳回「待收單」逼司機重按：剛回報成功的保護時間由15秒拉長到3分鐘、存進手機(localStorage，重新開啟App也有效)，且只在後端回來的狀態比剛回報的還早時才蓋回去(後端已一樣或更後面不動)；配合gas.html v2.2.337(寫入後flush＋收尾再清快取)。 v1.14.71：依使用者要求，司機端「該收現金」的備援算法(後端沒給cashCollected時才會用到)改成原始車資扣掉折扣金額，要跟客人卡片付款欄的實付金額一致；主要算法在後端gas.html v2.2.329。v1.14.70：依使用者要求，畫面抬頭改成公司全名：分頁標題「AS派車 - 司機端」→「瑞陞汽車租賃有限公司 派車單 - 司機端(AS)」，頁面上方標頭「AS派車 Driver」→「瑞陞汽車租賃有限公司 派車 Driver」。v1.14.69：單程(不經機場的定點接送)司機端畫面調整：原本沿用接送機場欄位配置，導致單程被標成「接送機場」很奇怪(其實顯示的是終點地址)、還會多顯示用不到的「航班編號」。改成單程專屬格式：「上車地址／下車地址」各自帶地圖連結方便導航，不顯示航班編號。只限定t.type==='單程'才套用，接機/送機畫面完全不受影響
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -206,6 +206,40 @@
         let tasksLoading = false;
         let pendingLoadTasksOptions = null; // loadTasks 被擋住時記下的補跑參數，見 loadTasks() 內的說明
         let recentStatusOverrides = {}; // orderId -> {status, until}：剛回報成功的單，短時間內不能被舊資料蓋回去，見 updateStatus()/loadTasks() 內的說明
+        const STATUS_OVERRIDE_MS = 3 * 60 * 1000; // v1.14.72：保護時間3分鐘(原本15秒)
+        const STATUS_STEP_RANK = { '': 0, '未出發': 0, '已收單': 1, '已出發': 2, '已抵達': 3, '客上': 4, '已結案': 5 };
+        let statusOverridesLoaded = false;
+        function statusOverridesKey() { return driverData && driverData.lineId ? `driverStatusOverrides:${driverData.lineId}` : ''; }
+        function saveStatusOverrides() {
+            try { const k = statusOverridesKey(); if (k) localStorage.setItem(k, JSON.stringify(recentStatusOverrides)); } catch (e) {}
+        }
+        function loadStoredStatusOverrides() {
+            if (statusOverridesLoaded) return;
+            const k = statusOverridesKey();
+            if (!k) return;
+            statusOverridesLoaded = true;
+            try {
+                const stored = JSON.parse(localStorage.getItem(k) || 'null') || {};
+                Object.keys(stored).forEach(id => { if (!recentStatusOverrides[id]) recentStatusOverrides[id] = stored[id]; });
+            } catch (e) {}
+        }
+        // 把「剛回報成功」的狀態套回清單：只有當後端回來的狀態「比剛回報的還早」(例如還是未出發)才蓋回去；
+        // 後端已經一樣或更後面(例如司機又按了下一步、或調度從中控台推進)就不動它，不會把較新的狀態壓回舊的。
+        function applyStatusOverrides(list) {
+            loadStoredStatusOverrides();
+            const now = Date.now();
+            let changed = false;
+            Object.keys(recentStatusOverrides).forEach(orderId => {
+                const ov = recentStatusOverrides[orderId];
+                if (!ov || now > ov.until) { delete recentStatusOverrides[orderId]; changed = true; return; }
+                const t = (list || []).find(x => x.orderId === orderId);
+                if (!t) return;
+                const serverRank = STATUS_STEP_RANK[String(t.driverStatus || '').trim()];
+                const overrideRank = STATUS_STEP_RANK[String(ov.status || '').trim()];
+                if (serverRank !== undefined && overrideRank !== undefined && serverRank < overrideRank) t.driverStatus = ov.status;
+            });
+            if (changed) saveStatusOverrides();
+        }
         let historyLoadedMonth = "";
         const DRIVER_AUTH_CACHE_KEY = "asDriverAuthCacheV1";
         const DRIVER_AUTH_CACHE_TTL_MS = 12 * 60 * 60 * 1000;
@@ -603,6 +637,7 @@
                 if (Date.now() - Number(cached.savedAt || 0) > 10 * 60 * 1000) return;
                 if (normalizeDriverTaskMode(cached.loadMode) !== normalizeDriverTaskMode(requiredMode)) return;
                 tasks = cached.tasks;
+                applyStatusOverrides(tasks); // v1.14.72：重新開啟App時，暫存清單也要套用「剛回報成功」的保護
                 driverTaskLoadMode = normalizeDriverTaskMode(cached.loadMode);
                 if (cached.monthCount !== undefined) {
                     document.getElementById('profCount').innerText = cached.monthCount;
@@ -700,13 +735,7 @@
                 tasks = Array.isArray(res.tasks) ? res.tasks : [];
                 // 剛回報成功、還在保護時間內的單，如果這次抓回來的資料看起來比較舊（後端試算表/快取還沒跟上），
                 // 用剛剛回報成功時記下的狀態蓋回去，不要讓畫面倒退回報成功前的按鈕。
-                const now = Date.now();
-                Object.keys(recentStatusOverrides).forEach(orderId => {
-                    const ov = recentStatusOverrides[orderId];
-                    if (!ov || now > ov.until) { delete recentStatusOverrides[orderId]; return; }
-                    const t = tasks.find(x => x.orderId === orderId);
-                    if (t && t.driverStatus !== ov.status) t.driverStatus = ov.status;
-                });
+                applyStatusOverrides(tasks);
                 if(res.monthCount !== undefined) {
                     document.getElementById('profCount').innerText = res.monthCount;
                 }
@@ -1314,7 +1343,8 @@
                 }, 60000);
                 
                 if (task) task.driverStatus = newStatus;
-                recentStatusOverrides[orderId] = { status: newStatus, until: Date.now() + 15000 }; // 15 秒保護窗，避免緊接著的 loadTasks() 抓到還沒跟上的舊資料把畫面蓋回去
+                recentStatusOverrides[orderId] = { status: newStatus, until: Date.now() + STATUS_OVERRIDE_MS }; // v1.14.72：保護窗由15秒拉長到3分鐘並存進手機，避免後端偶爾還讀到舊資料、或重新開啟App時用到舊暫存，把畫面蓋回「待收單」
+                saveStatusOverrides();
                 renderTasks();
                 if (currentDetailOrderId === orderId) openTaskDetail(orderId);
                 Swal.fire({ title: '成功', text: `狀態更新為：${newStatus}`, icon: 'success', timer: 1000, showConfirmButton: false });
