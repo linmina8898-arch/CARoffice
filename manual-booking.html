@@ -606,7 +606,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.77"; // v1.0.77：依使用者要求，航班編號旁邊新增「航廈」選單(第一航廈T1/第二航廈T2/不確定，幫我查詢)，只有選「桃園機場」才出現，有填航班編號就一定要選(沒選送出會跳出缺漏欄位提示)；去程/回程各一個；選了以「航班｜T1/T2/？」(例如CI108｜T2)接在航班編號後面送出，複製舊單/載入舊單時會把已存的「CI108｜T2」拆回兩個欄位。 v1.0.76： 🚨修正buildOrderFeeRows來回程「來回總額」算錯的問題：客服用「補套用折扣碼」只對來回其中一腿單獨套用時(去程/回程的折扣碼/折扣金額欄位各自獨立)，原本只扣這一腿自己的discountAmount，另一腿單獨套用的那組折扣完全沒被扣到，導致來回總額比實際應付多。修正：合併去程/回程兩腿各自的discountAmt，「來回總額」的扣除改用合併後的金額。跟gas.html v2.2.292 buildBookingFeeContents_、admin.html buildReservationUpdateFeePreview同一套邏輯
+    const APP_VERSION = "manual-booking-v1.0.78"; // v1.0.78：依使用者要求，同時預約來回有加點時，回程的行程順序要跟去程相反(去程 新竹→竹北(加點)→機場，回程 機場→竹北→新竹)：送出前的確認預覽，回程那腿的行程/加點改成顯示反轉後的順序(跟後端gas.html v2.2.345實際寫入一致)，去程與沒有加點的預約不變。 v1.0.77：依使用者要求，航班編號旁邊新增「航廈」選單(第一航廈T1/第二航廈T2/不確定，幫我查詢)，只有選「桃園機場」才出現，有填航班編號就一定要選(沒選送出會跳出缺漏欄位提示)；去程/回程各一個；選了以「航班｜T1/T2/？」(例如CI108｜T2)接在航班編號後面送出，複製舊單/載入舊單時會把已存的「CI108｜T2」拆回兩個欄位。 v1.0.76： 🚨修正buildOrderFeeRows來回程「來回總額」算錯的問題：客服用「補套用折扣碼」只對來回其中一腿單獨套用時(去程/回程的折扣碼/折扣金額欄位各自獨立)，原本只扣這一腿自己的discountAmount，另一腿單獨套用的那組折扣完全沒被扣到，導致來回總額比實際應付多。修正：合併去程/回程兩腿各自的discountAmt，「來回總額」的扣除改用合併後的金額。跟gas.html v2.2.292 buildBookingFeeContents_、admin.html buildReservationUpdateFeePreview同一套邏輯
     // v1.0.72 - 新增「複製舊單，快速建立新預約」功能：取消的訂單客人又想用同樣行程重新預約時(只是要換日期/時間)，不用整張表單重填，填舊單號查詢後，客人資料/地址/車型/人數行李/金額/加值折扣項目會整包帶入下面表單，唯獨日期時間留白由客服自行填寫新的時段。跟既有的「補建遺漏的去程/回程」是兩個獨立功能：那個查完會用recoveryBaseId/recoveryLegSuffix掛回舊單底下(維持-A/-B配對)，這個完全不動那兩個欄位，送出後一律是全新單號，不影響原本那筆舊單。實作參考fetchRecoveryAutoFill同一套用getManualBookingTextData查單、setValue逐欄位帶入的做法，額外處理了：單程行程起訖點分別對應到address/airport欄位、回程行程/金額/航班另外從回程那筆資料帶入、加值服務用parseStoredFeeExtras依去程/回程分別還原明細、折扣只取去程那筆避免兩腿重複記的折扣被加乘兩次、現場收現金額只在付款方式真的需要時才帶入
     // 「固定客戶範本」選擇改成自訂清單，不再用原生下拉選單(在手機上選項一長就變成一長串塞在一起完全看不清楚)。改成一張張獨立卡片：來源標籤(粉紅底)+姓名+電話在同一行，地址另起一行，點擊即可帶入，選中的那筆會highlight。原本的select仍保留(隱藏)當作資料狀態，不影響既有的applyTemplate等邏輯
     // 不再用 Google callback 機制初始化地圖（callback 容易撞上 async 腳本執行時機競速問題，
@@ -1720,12 +1720,23 @@
       const flight = isReturn ? p.returnFlightNumber : p.flightNumber;
       const fare = getManualTripFare(p, isReturn ? "return" : "outbound");
       const cashCollected = isReturn ? p.returnManualCashCollected : p.manualCashCollected;
-      const route = type === "接機" ? `${p.airport} → ${p.address}` : `${p.address} → ${p.airport}`;
+      // 回程：加點順序跟去程相反(跟後端gas.html reverseManualStops_一致)。去程維持原樣。
+      let legMain = p.address, legEnd = p.airport, legExtra = p.extraLocation;
+      if (isReturn) {
+        const stops = String(p.extraLocation || "").split(/\n|[；;]/).map(s => s.trim()).filter(Boolean);
+        if (type === "單程") {
+          legMain = p.airport; legEnd = p.address; legExtra = stops.slice().reverse().join("\n");
+        } else if (stops.length) {
+          const path = [p.address].concat(stops).filter(Boolean).reverse();
+          legMain = path[0]; legExtra = path.slice(1).join("\n");
+        }
+      }
+      const route = type === "接機" ? `${legEnd} → ${legMain}` : `${legMain} → ${legEnd}`;
       return `
         <div class="border border-gray-200 rounded-lg p-2.5 ${isReturn ? "mt-2" : ""}">
           <div class="font-bold text-[#553f62] text-sm mb-1">${isReturn ? "回程" : "去程"}｜${escapeManualHtml(date)} ${escapeManualHtml(time)} ${escapeManualHtml(type)}${flight ? "｜" + escapeManualHtml(flight) : ""}</div>
           <div class="text-xs text-gray-600 mb-1.5">${escapeManualHtml(route)}</div>
-          ${confirmRow("加點", p.extraLocation)}
+          ${confirmRow("加點", legExtra)}
           ${confirmRow("車型", p.carType)}
           ${confirmRow("人數", p.paxCount)}
           ${confirmRow("行李", p.luggageCount)}
