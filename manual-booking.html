@@ -243,6 +243,9 @@
       .submit-inner { align-items: stretch; flex-direction: column; }
       .primary-btn, .secondary-btn { width: 100%; }
     }
+      /* v1.0.79：金額欄位不要右邊的上下箭頭(滑鼠滾輪/點到會讓金額跑掉)，直接打數字 */
+    input[type=number] { -moz-appearance: textfield; appearance: textfield; }
+    input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   </style>
 </head>
 <body>
@@ -606,7 +609,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.78"; // v1.0.78：依使用者要求，同時預約來回有加點時，回程的行程順序要跟去程相反(去程 新竹→竹北(加點)→機場，回程 機場→竹北→新竹)：送出前的確認預覽，回程那腿的行程/加點改成顯示反轉後的順序(跟後端gas.html v2.2.345實際寫入一致)，去程與沒有加點的預約不變。 v1.0.77：依使用者要求，航班編號旁邊新增「航廈」選單(第一航廈T1/第二航廈T2/不確定，幫我查詢)，只有選「桃園機場」才出現，有填航班編號就一定要選(沒選送出會跳出缺漏欄位提示)；去程/回程各一個；選了以「航班｜T1/T2/？」(例如CI108｜T2)接在航班編號後面送出，複製舊單/載入舊單時會把已存的「CI108｜T2」拆回兩個欄位。 v1.0.76： 🚨修正buildOrderFeeRows來回程「來回總額」算錯的問題：客服用「補套用折扣碼」只對來回其中一腿單獨套用時(去程/回程的折扣碼/折扣金額欄位各自獨立)，原本只扣這一腿自己的discountAmount，另一腿單獨套用的那組折扣完全沒被扣到，導致來回總額比實際應付多。修正：合併去程/回程兩腿各自的discountAmt，「來回總額」的扣除改用合併後的金額。跟gas.html v2.2.292 buildBookingFeeContents_、admin.html buildReservationUpdateFeePreview同一套邏輯
+    const APP_VERSION = "manual-booking-v1.0.79"; // v1.0.79：①不填航班編號、只選航廈時，航廈也會送出(顯示「航廈 T2」)，編輯舊單時會拆回航廈欄位 ②金額欄位拿掉右邊上下箭頭、滾輪不會再改到金額。 v1.0.78：依使用者要求，同時預約來回有加點時，回程的行程順序要跟去程相反(去程 新竹→竹北(加點)→機場，回程 機場→竹北→新竹)：送出前的確認預覽，回程那腿的行程/加點改成顯示反轉後的順序(跟後端gas.html v2.2.345實際寫入一致)，去程與沒有加點的預約不變。 v1.0.77：依使用者要求，航班編號旁邊新增「航廈」選單(第一航廈T1/第二航廈T2/不確定，幫我查詢)，只有選「桃園機場」才出現，有填航班編號就一定要選(沒選送出會跳出缺漏欄位提示)；去程/回程各一個；選了以「航班｜T1/T2/？」(例如CI108｜T2)接在航班編號後面送出，複製舊單/載入舊單時會把已存的「CI108｜T2」拆回兩個欄位。 v1.0.76： 🚨修正buildOrderFeeRows來回程「來回總額」算錯的問題：客服用「補套用折扣碼」只對來回其中一腿單獨套用時(去程/回程的折扣碼/折扣金額欄位各自獨立)，原本只扣這一腿自己的discountAmount，另一腿單獨套用的那組折扣完全沒被扣到，導致來回總額比實際應付多。修正：合併去程/回程兩腿各自的discountAmt，「來回總額」的扣除改用合併後的金額。跟gas.html v2.2.292 buildBookingFeeContents_、admin.html buildReservationUpdateFeePreview同一套邏輯
     // v1.0.72 - 新增「複製舊單，快速建立新預約」功能：取消的訂單客人又想用同樣行程重新預約時(只是要換日期/時間)，不用整張表單重填，填舊單號查詢後，客人資料/地址/車型/人數行李/金額/加值折扣項目會整包帶入下面表單，唯獨日期時間留白由客服自行填寫新的時段。跟既有的「補建遺漏的去程/回程」是兩個獨立功能：那個查完會用recoveryBaseId/recoveryLegSuffix掛回舊單底下(維持-A/-B配對)，這個完全不動那兩個欄位，送出後一律是全新單號，不影響原本那筆舊單。實作參考fetchRecoveryAutoFill同一套用getManualBookingTextData查單、setValue逐欄位帶入的做法，額外處理了：單程行程起訖點分別對應到address/airport欄位、回程行程/金額/航班另外從回程那筆資料帶入、加值服務用parseStoredFeeExtras依去程/回程分別還原明細、折扣只取去程那筆避免兩腿重複記的折扣被加乘兩次、現場收現金額只在付款方式真的需要時才帶入
     // 「固定客戶範本」選擇改成自訂清單，不再用原生下拉選單(在手機上選項一長就變成一長串塞在一起完全看不清楚)。改成一張張獨立卡片：來源標籤(粉紅底)+姓名+電話在同一行，地址另起一行，點擊即可帶入，選中的那筆會highlight。原本的select仍保留(隱藏)當作資料狀態，不影響既有的applyTemplate等邏輯
     // 不再用 Google callback 機制初始化地圖（callback 容易撞上 async 腳本執行時機競速問題，
@@ -659,6 +662,8 @@
       $("hasReturn").addEventListener("change", handleReturnToggle);
       $("serviceType").addEventListener("change", () => { syncReturnType(); toggleServiceTypeFields(); updateSummary(); });
       $("airport").addEventListener("change", syncTerminalVisibility);
+      // v1.0.79：游標停在數字欄位時滾動滑鼠滾輪，瀏覽器會直接把金額加減(這就是「金額每次都會跑掉」)，滾動時先讓欄位失焦就不會改到
+      document.addEventListener("wheel", () => { const a = document.activeElement; if (a && a.tagName === "INPUT" && a.type === "number") a.blur(); }, { passive: true });
       $("paymentMethod").addEventListener("change", toggleManualCashFields);
       $("templateSelect").addEventListener("change", applyTemplate);
       $("templateSearch").addEventListener("input", renderTemplateOptions);
@@ -1222,14 +1227,23 @@
     }
     function composeFlightWithTerminal(flightId, termId) {
       const flight = $(flightId).value.trim().toUpperCase();
-      if (!flight || !isTaoyuanSelected()) return flight;
+      if (!isTaoyuanSelected()) return flight;
       const tv = $(termId).value;
       const tt = tv === "T1" ? "T1" : (tv === "T2" ? "T2" : (tv === "?" ? "？" : ""));
+      // v1.0.79：不填航班編號、只選航廈時，也要把航廈送出去(顯示成「航廈 T2」)，原本沒有航班就整個丟掉航廈
+      if (!flight) return tt ? `航廈 ${tt}` : "";
       return tt ? `${flight}｜${tt}` : flight;
     }
     // 把已存的航班字串(例如「CI108｜T2」或舊單手打的「CI108(T2)」)拆回「航班編號」和「航廈」兩個欄位
     function setFlightFromStored(flightId, termId, stored) {
       const text = String(stored || "").trim();
+      const onlyTerm = text.match(/^航廈\s*(T[12]|[？?])$/i);
+      if (onlyTerm) { // v1.0.79：只有航廈沒有航班編號
+        setValue(flightId, "");
+        const t0 = onlyTerm[1].toUpperCase();
+        setValue(termId, t0 === "T1" ? "T1" : (t0 === "T2" ? "T2" : "?"));
+        return;
+      }
       const m = text.match(/^(.*?)\s*[｜|(（]\s*(T[12]|[？?])\s*[)）]?\s*$/i);
       if (m && m[1]) {
         setValue(flightId, m[1].trim());
