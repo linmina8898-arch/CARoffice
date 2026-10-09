@@ -82,7 +82,7 @@
     </div>
     <script>
         const APP_VERSION = "v1.0.42"; // 依使用者要求(先確認過示意圖)：畫面最後面新增「本趟車輛」一行(車號︱車型︱車色)，放在付款方式(含實拿車資)後面、中間空一格(空格高度跟其他每一行一樣)；沒填車色就只顯示車號︱車型，三項都沒有時整行(含空格)不顯示；車色已包含在車型文字裡時不重複顯示。配合gas.html v2.2.344。 依使用者要求：有現場收現且有給司機車資時，「付款方式」下面多一行「實拿車資 $X」，避免臨時司機看到「現場收現 $1,800」誤以為車資是1,800(收現備註按鈕保留)。 v1.0.40： 依使用者要求，畫面抬頭改成公司全名：分頁標題「AS派車 - 臨時派遣任務」→「瑞陞汽車租賃有限公司 派車單 - 臨時派遣任務(AS)」，頁面上方標頭「AS派車」→「瑞陞汽車租賃有限公司 派車」。v1.0.39：修正LIFF withLoginOnExternalBrowser登入流程導回頁面時，網址上的?token=有時候會遺失、導致顯示「無法開啟任務」的問題：進頁面時把token先存到sessionStorage，網址讀不到token時改用暫存的這份
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbww3Pr0IcOABPvTteIWHo9j6MWRQvNjpf_MZRE7NgDp3Nt69Upx8VhVnCVMcbUvjJwI/exec";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbz6wgk6T8ypEI1pW5ih7M3Bom54Tu7unv-sc_ldFtPSBWw4yAbahs70GErKGpsRqcG3/exec";
         const LIFF_ID = "2009971109-EdjC9QlC";
         let lineUserId = "";
 
