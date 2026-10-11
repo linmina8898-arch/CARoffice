@@ -188,7 +188,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.15.0"; // v1.15.0：①手機返回鍵/滑動返回改為退回系統主頁（不再跳出到官方LINE）②任務明細縮成一頁，回報按鈕固定在畫面下方；v1.14.72：v1.14.72：依使用者回報，司機連續按好幾筆「確認收單」都成功，過不久畫面又跳回「待收單」逼司機重按：剛回報成功的保護時間由15秒拉長到3分鐘、存進手機(localStorage，重新開啟App也有效)，且只在後端回來的狀態比剛回報的還早時才蓋回去(後端已一樣或更後面不動)；配合gas.html v2.2.337(寫入後flush＋收尾再清快取)。 v1.14.71：依使用者要求，司機端「該收現金」的備援算法(後端沒給cashCollected時才會用到)改成原始車資扣掉折扣金額，要跟客人卡片付款欄的實付金額一致；主要算法在後端gas.html v2.2.329。v1.14.70：依使用者要求，畫面抬頭改成公司全名：分頁標題「AS派車 - 司機端」→「瑞陞汽車租賃有限公司 派車單 - 司機端(AS)」，頁面上方標頭「AS派車 Driver」→「瑞陞汽車租賃有限公司 派車 Driver」。v1.14.69：單程(不經機場的定點接送)司機端畫面調整：原本沿用接送機場欄位配置，導致單程被標成「接送機場」很奇怪(其實顯示的是終點地址)、還會多顯示用不到的「航班編號」。改成單程專屬格式：「上車地址／下車地址」各自帶地圖連結方便導航，不顯示航班編號。只限定t.type==='單程'才套用，接機/送機畫面完全不受影響
+        const APP_VERSION = "v1.15.1"; // v1.15.1：加點地址改粉底醒目，單程放在上車/下車地址中間；v1.15.0：v1.15.0：①手機返回鍵/滑動返回改為退回系統主頁（不再跳出到官方LINE）②任務明細縮成一頁，回報按鈕固定在畫面下方；v1.14.72：v1.14.72：依使用者回報，司機連續按好幾筆「確認收單」都成功，過不久畫面又跳回「待收單」逼司機重按：剛回報成功的保護時間由15秒拉長到3分鐘、存進手機(localStorage，重新開啟App也有效)，且只在後端回來的狀態比剛回報的還早時才蓋回去(後端已一樣或更後面不動)；配合gas.html v2.2.337(寫入後flush＋收尾再清快取)。 v1.14.71：依使用者要求，司機端「該收現金」的備援算法(後端沒給cashCollected時才會用到)改成原始車資扣掉折扣金額，要跟客人卡片付款欄的實付金額一致；主要算法在後端gas.html v2.2.329。v1.14.70：依使用者要求，畫面抬頭改成公司全名：分頁標題「AS派車 - 司機端」→「瑞陞汽車租賃有限公司 派車單 - 司機端(AS)」，頁面上方標頭「AS派車 Driver」→「瑞陞汽車租賃有限公司 派車 Driver」。v1.14.69：單程(不經機場的定點接送)司機端畫面調整：原本沿用接送機場欄位配置，導致單程被標成「接送機場」很奇怪(其實顯示的是終點地址)、還會多顯示用不到的「航班編號」。改成單程專屬格式：「上車地址／下車地址」各自帶地圖連結方便導航，不顯示航班編號。只限定t.type==='單程'才套用，接機/送機畫面完全不受影響
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -1127,6 +1127,10 @@
 
             let addressHtml = mapLinkHtml(t.address);
             let extraStopHtml = mapLinkHtml(t.extraStop);
+            // v1.15.1：加點地址用粉底醒目標示，單程放在「上車」「下車」中間，避免司機漏看
+            const extraStopRowHtml = cleanVal(t.extraStop)
+                ? `<div class="driver-field bg-[#fff5f8] -mx-3 px-3 border-y border-[#f07cad]/20"><span class="driver-field-label text-[#b63c6b]" style="font-weight:700;">加點地址</span><span class="driver-field-value">${extraStopHtml}</span></div>`
+                : '';
             const tripVehicleText = [cleanVal(t.tripCarNo), cleanVal(t.tripCarType), cleanVal(t.tripCarColor)].filter(Boolean).join(' / ');
             const tripVehicleHtml = tripVehicleText ? `<div class="driver-field bg-[#f8f5fa] -mx-3 px-3 border-y border-[#553f62]/10"><span class="driver-field-label text-[#553f62]">本趟車輛</span><span class="driver-field-value text-[#553f62]">${tripVehicleText}${cleanVal(t.tripVehicleNote) ? `<br><span class="text-xs text-gray-500">${cleanVal(t.tripVehicleNote)}</span>` : ''}</span></div>` : '';
 
@@ -1144,6 +1148,7 @@
                     <div class="space-y-0 text-sm bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
                         ${t.type === '單程'
                           ? `<div class="driver-field"><span class="driver-field-label">上車地址</span><span class="driver-field-value">${mapLinkHtml(t.address)}</span></div>
+                             ${extraStopRowHtml}
                              <div class="driver-field"><span class="driver-field-label">下車地址</span><span class="driver-field-value">${mapLinkHtml(t.airport)}</span></div>`
                           : `<div class="driver-field"><span class="driver-field-label">接送機場</span><span class="driver-field-value">${cleanVal(t.airport)}</span></div>
                              <div class="driver-field"><span class="driver-field-label">航班編號</span><span class="driver-field-value text-gray-800">${cleanVal(t.flightNo)}</span></div>`}
@@ -1152,7 +1157,7 @@
                             <div class="driver-field-value flex items-center justify-end"><span>${cleanVal(t.custName)}</span>${callBtn}</div>
                         </div>
                         ${t.type !== '單程' ? `<div class="driver-field"><span class="driver-field-label">接送地址</span><span class="driver-field-value">${addressHtml}</span></div>` : ''}
-                        ${cleanVal(t.extraStop) ? `<div class="driver-field"><span class="driver-field-label">加點地址</span><span class="driver-field-value">${extraStopHtml}</span></div>` : ''}
+                        ${t.type !== '單程' ? extraStopRowHtml : ''}
                         <div class="driver-field"><span class="driver-field-label">乘車人數</span><span class="driver-field-value">${formatPassengerCount(t.paxCount)}</span></div>
                         ${luggageText === '無'
                           ? `<div class="driver-field bg-[#fff5f8] -mx-3 px-3 border-y border-[#f07cad]/20"><span class="driver-field-label text-[#b63c6b]">行李件數</span><span class="driver-field-value text-[#b63c6b]" style="font-weight:700;">無：出來快，勿遲到！</span></div>`
