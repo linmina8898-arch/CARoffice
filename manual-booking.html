@@ -215,6 +215,10 @@
       font-weight: 700;
       cursor: pointer;
     }
+    .contact-toggle { background: none; border: 0; padding: 4px 0; margin-top: 4px; color: #b63c6b; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+    .contact-box { margin-top: 4px; padding: 8px; border: 1px dashed #efcad8; border-radius: 12px; background: #fffafc; }
+    .contact-box .contact-grid { display: grid; grid-template-columns: 1fr 1.4fr; gap: 6px; }
+    .contact-box input { min-height: 40px; }
     .secondary-btn {
       border: 1px solid var(--line);
       border-radius: 12px;
@@ -423,12 +427,15 @@
           <div class="full" id="airportAddressWrap">
             <label for="address">接送地址</label>
             <input id="address" name="address" placeholder="完整地址">
+            <div class="contact-slot" data-slot="main"></div>
           </div>
           <div class="full hidden" id="oneWayAddressWrap">
             <label for="oneWayStart">起點地址</label>
             <input id="oneWayStart" placeholder="上車地點完整地址">
+            <div class="contact-slot" data-slot="start"></div>
             <label for="oneWayEnd" class="mt-2">終點地址</label>
             <input id="oneWayEnd" placeholder="下車地點完整地址">
+            <div class="contact-slot" data-slot="end"></div>
           </div>
           <div class="full" id="extraLocationWrap">
             <label id="extraLocationLabel">加點</label>
@@ -625,7 +632,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.84"; // v1.0.84：建立成功後的「客人確認文字」來回單可分開複製「去程」「回程」或「兩則合併」(單台來回、多台車每一台都適用)；v1.0.83：修正「其他車輛設定」(C2起各台車型/車資/折扣)原本放在頁面上方、往下捲看不到，改放在「車輛台數」正下方，選台數後自動捲到那裡；v1.0.82：新增「車輛台數」(多台車)：C2 起各自車型/車資/回程車資/現收/折扣/加值，確認視窗逐台列出，建立後每台一份客人確認文字，單號=基底-C1/-C2…(需gas v2.2.360)；v1.0.81：電話可填分機(ext.56082、#13、分機13、轉13 都會整理成「03-571-2121 #56082」)，司機撥號會自動帶分機；v1.0.80：電話欄可輸入市話(02-1234-5678、03-123-4567…)，新增「客人沒有電話」勾選(記為0900-000-000，司機端顯示無電話，客人確認文字顯示「無」)；v1.0.79：①不填航班編號、只選航廈時，航廈也會送出(顯示「航廈 T2」)，編輯舊單時會拆回航廈欄位 ②金額欄位拿掉右邊上下箭頭、滾輪不會再改到金額。 v1.0.78：依使用者要求，同時預約來回有加點時，回程的行程順序要跟去程相反(去程 新竹→竹北(加點)→機場，回程 機場→竹北→新竹)：送出前的確認預覽，回程那腿的行程/加點改成顯示反轉後的順序(跟後端gas.html v2.2.345實際寫入一致)，去程與沒有加點的預約不變。 v1.0.77：依使用者要求，航班編號旁邊新增「航廈」選單(第一航廈T1/第二航廈T2/不確定，幫我查詢)，只有選「桃園機場」才出現，有填航班編號就一定要選(沒選送出會跳出缺漏欄位提示)；去程/回程各一個；選了以「航班｜T1/T2/？」(例如CI108｜T2)接在航班編號後面送出，複製舊單/載入舊單時會把已存的「CI108｜T2」拆回兩個欄位。 v1.0.76： 🚨修正buildOrderFeeRows來回程「來回總額」算錯的問題：客服用「補套用折扣碼」只對來回其中一腿單獨套用時(去程/回程的折扣碼/折扣金額欄位各自獨立)，原本只扣這一腿自己的discountAmount，另一腿單獨套用的那組折扣完全沒被扣到，導致來回總額比實際應付多。修正：合併去程/回程兩腿各自的discountAmt，「來回總額」的扣除改用合併後的金額。跟gas.html v2.2.292 buildBookingFeeContents_、admin.html buildReservationUpdateFeePreview同一套邏輯
+    const APP_VERSION = "manual-booking-v1.0.86"; // v1.0.86：客人確認文字改成顯示每個地址下面的「聯絡人 電話」(原本會拿掉)，聯絡人欄提示字改成「客人確認文字會顯示此聯絡人與電話；司機端只看得到電話圖示」(需gas v2.2.367)； v1.0.85：每個地址(接送地址/起點/終點/各加點)可展開填「聯絡人稱呼＋電話」，存成「地址（聯絡：王小姐 0912-345-678）」，司機端自動拆成獨立一行可直接撥打；客人確認文字會拿掉這段，不外流；v1.0.84：建立成功後的「客人確認文字」來回單可分開複製「去程」「回程」或「兩則合併」(單台來回、多台車每一台都適用)；v1.0.83：修正「其他車輛設定」(C2起各台車型/車資/折扣)原本放在頁面上方、往下捲看不到，改放在「車輛台數」正下方，選台數後自動捲到那裡；v1.0.82：新增「車輛台數」(多台車)：C2 起各自車型/車資/回程車資/現收/折扣/加值，確認視窗逐台列出，建立後每台一份客人確認文字，單號=基底-C1/-C2…(需gas v2.2.360)；v1.0.81：電話可填分機(ext.56082、#13、分機13、轉13 都會整理成「03-571-2121 #56082」)，司機撥號會自動帶分機；v1.0.80：電話欄可輸入市話(02-1234-5678、03-123-4567…)，新增「客人沒有電話」勾選(記為0900-000-000，司機端顯示無電話，客人確認文字顯示「無」)；v1.0.79：①不填航班編號、只選航廈時，航廈也會送出(顯示「航廈 T2」)，編輯舊單時會拆回航廈欄位 ②金額欄位拿掉右邊上下箭頭、滾輪不會再改到金額。 v1.0.78：依使用者要求，同時預約來回有加點時，回程的行程順序要跟去程相反(去程 新竹→竹北(加點)→機場，回程 機場→竹北→新竹)：送出前的確認預覽，回程那腿的行程/加點改成顯示反轉後的順序(跟後端gas.html v2.2.345實際寫入一致)，去程與沒有加點的預約不變。 v1.0.77：依使用者要求，航班編號旁邊新增「航廈」選單(第一航廈T1/第二航廈T2/不確定，幫我查詢)，只有選「桃園機場」才出現，有填航班編號就一定要選(沒選送出會跳出缺漏欄位提示)；去程/回程各一個；選了以「航班｜T1/T2/？」(例如CI108｜T2)接在航班編號後面送出，複製舊單/載入舊單時會把已存的「CI108｜T2」拆回兩個欄位。 v1.0.76： 🚨修正buildOrderFeeRows來回程「來回總額」算錯的問題：客服用「補套用折扣碼」只對來回其中一腿單獨套用時(去程/回程的折扣碼/折扣金額欄位各自獨立)，原本只扣這一腿自己的discountAmount，另一腿單獨套用的那組折扣完全沒被扣到，導致來回總額比實際應付多。修正：合併去程/回程兩腿各自的discountAmt，「來回總額」的扣除改用合併後的金額。跟gas.html v2.2.292 buildBookingFeeContents_、admin.html buildReservationUpdateFeePreview同一套邏輯
     // v1.0.72 - 新增「複製舊單，快速建立新預約」功能：取消的訂單客人又想用同樣行程重新預約時(只是要換日期/時間)，不用整張表單重填，填舊單號查詢後，客人資料/地址/車型/人數行李/金額/加值折扣項目會整包帶入下面表單，唯獨日期時間留白由客服自行填寫新的時段。跟既有的「補建遺漏的去程/回程」是兩個獨立功能：那個查完會用recoveryBaseId/recoveryLegSuffix掛回舊單底下(維持-A/-B配對)，這個完全不動那兩個欄位，送出後一律是全新單號，不影響原本那筆舊單。實作參考fetchRecoveryAutoFill同一套用getManualBookingTextData查單、setValue逐欄位帶入的做法，額外處理了：單程行程起訖點分別對應到address/airport欄位、回程行程/金額/航班另外從回程那筆資料帶入、加值服務用parseStoredFeeExtras依去程/回程分別還原明細、折扣只取去程那筆避免兩腿重複記的折扣被加乘兩次、現場收現金額只在付款方式真的需要時才帶入
     // 「固定客戶範本」選擇改成自訂清單，不再用原生下拉選單(在手機上選項一長就變成一長串塞在一起完全看不清楚)。改成一張張獨立卡片：來源標籤(粉紅底)+姓名+電話在同一行，地址另起一行，點擊即可帶入，選中的那筆會highlight。原本的select仍保留(隱藏)當作資料狀態，不影響既有的applyTemplate等邏輯
     // 不再用 Google callback 機制初始化地圖（callback 容易撞上 async 腳本執行時機競速問題，
@@ -691,6 +698,7 @@
       $("addDiscountItemBtn").addEventListener("click", () => addDiscountItem());
       $("addSurchargeItemBtn").addEventListener("click", () => addSurchargeItem());
       $("addExtraStopBtn").addEventListener("click", () => addExtraStop());
+      initContactSlots();
       $("signboardNeeded").addEventListener("change", () => {
         $("signboardContentWrap").classList.toggle("hidden", !$("signboardNeeded").checked);
         updateSummary();
@@ -758,7 +766,7 @@
       setValue("serviceType", normalizeServiceType(t.serviceType) || "送機");
       toggleServiceTypeFields();
       setValue("airport", t.airport || "桃園機場");
-      setValue("address", t.address);
+      setAddressWithContact("address", "main", t.address);
       extraStops = String(t.extraLocation || "").split(/\n|[；;]/).map(s => s.trim()).filter(Boolean);
       renderExtraStops();
       setValue("customerName", t.name);
@@ -1367,7 +1375,7 @@
       const hintEl = document.querySelector(`[data-stop-hint-idx="${idx}"]`);
       if (!hintEl) return;
       const addr1 = getManualMainAddressText();
-      const addr2 = (extraStops[idx] || "").trim();
+      const addr2 = stripStopContacts(extraStops[idx] || "");
       if (!addr1 || !addr2) { hintEl.textContent = ""; return; }
       if (!window.google?.maps?.DistanceMatrixService) { hintEl.textContent = "Google 地圖尚未載入完成"; return; }
       hintEl.textContent = "距離計算中…";
@@ -1411,23 +1419,138 @@
         hintEl.textContent = "距離計算發生錯誤";
       }
     }
+    /* ---------------- v1.0.85：站點聯絡人（每個地址可各自填聯絡人稱呼＋電話） ----------------
+     * 存法：寫進地址文字後面「（聯絡：王小姐 0912-345-678）」，司機端自動拆成獨立一行、可直接撥打；
+     * v1.0.86：客人確認文字／預約卡片／行事曆會完整顯示「聯絡人＋電話」(客人要再次確認)，司機端只看到聯絡人名字＋電話圖示。 */
+    const CONTACT_PRIVACY_TEXT = "客人確認文字會顯示此聯絡人與電話；司機端只看得到電話圖示。";
+    function stopTextWithContacts(text, indent) {
+      const raw = String(text || "").trim();
+      indent = indent || "";
+      if (!/[（(]\s*聯絡\s*[：:]/.test(raw)) return raw;
+      const out = [];
+      raw.split(/\r?\n|；/).forEach(function (t, i) {
+        const contacts = [];
+        const addr = t.replace(/[（(]\s*聯絡\s*[：:]([^）)]*)[）)]/g, function (m, inner) {
+          String(inner).split("、").forEach(function (c) { c = c.trim(); if (c) contacts.push(c); });
+          return "";
+        }).replace(/[ \t]{2,}/g, " ").trim();
+        if (!addr) return;
+        out.push((out.length ? indent : "") + addr);
+        contacts.forEach(function (c) { out.push(indent + "　" + c); });
+      });
+      return out.join("\n");
+    }
+    function stripStopContacts(text) {
+      return String(text || "").replace(/[（(]\s*聯絡\s*[：:][^）)]*[）)]/g, "").replace(/[ \t]{2,}/g, " ").trim();
+    }
+    function cleanContactName(v) { return String(v || "").replace(/[（）()；;、\n\r]/g, " ").replace(/\s{2,}/g, " ").trim().slice(0, 12); }
+    function parseStopContact(raw) {
+      const s = String(raw || "").trim();
+      const m = s.match(/[（(]\s*聯絡\s*[：:]\s*([^）)]*)[）)]/);
+      if (!m) return { addr: s, name: "", phone: "", more: [] };
+      const addr = stripStopContacts(s);
+      const items = m[1].split(/[；;、]/).map(x => x.trim()).filter(Boolean);
+      const first = items[0] || "";
+      const di = first.search(/[\d+(＋]/);
+      const name = di >= 0 ? first.slice(0, di).trim() : first;
+      const phone = di >= 0 ? first.slice(di).trim() : "";
+      return { addr, name, phone, more: items.slice(1) };
+    }
+    function composeStopContact(addr, name, phone, more) {
+      addr = String(addr || "").trim();
+      if (!addr) return "";
+      const ph = String(phone || "").trim() ? formatPhoneNumber(phone) : "";
+      const nm = cleanContactName(name);
+      const parts = [];
+      if (ph || nm) parts.push((nm + " " + ph).trim());
+      (more || []).forEach(x => { if (x) parts.push(x); });
+      return parts.length ? `${addr}（聯絡：${parts.join("、")}）` : addr;
+    }
+    function contactBoxMarkup(c, idAttr) {
+      const open = Boolean(c && (c.name || c.phone));
+      return `<button type="button" class="contact-toggle" data-contact-toggle="1">${open ? "－ 收起聯絡人" : "＋ 此站聯絡人（選填）"}</button>
+        <div class="contact-box${open ? "" : " hidden"}" ${idAttr}>
+          <div class="contact-grid">
+            <input type="text" data-contact="name" maxlength="12" placeholder="稱呼，例如 王小姐" value="${escapeHtml((c && c.name) || "")}">
+            <input type="tel" inputmode="tel" data-contact="phone" placeholder="手機／市話 #分機" value="${escapeHtml((c && c.phone) || "")}">
+          </div>
+          <div class="hint !mt-1">${CONTACT_PRIVACY_TEXT}</div>
+        </div>`;
+    }
+    function bindContactBox(root, onChange) {
+      const btn = root.querySelector("[data-contact-toggle]");
+      const box = root.querySelector(".contact-box");
+      if (btn && box) btn.addEventListener("click", () => {
+        const hide = !box.classList.contains("hidden");
+        box.classList.toggle("hidden", hide);
+        btn.textContent = hide ? "＋ 此站聯絡人（選填）" : "－ 收起聯絡人";
+      });
+      root.querySelectorAll("[data-contact]").forEach(el => el.addEventListener("input", () => { onChange(); }));
+    }
+    const slotMore = {};
+    function getSlotContact(key) {
+      const root = document.querySelector(`.contact-slot[data-slot="${key}"]`);
+      if (!root) return { name: "", phone: "", more: [] };
+      const g = (f) => (root.querySelector(`[data-contact="${f}"]`) || {}).value || "";
+      return { name: g("name"), phone: g("phone"), more: slotMore[key] || [] };
+    }
+    function setSlotContact(key, c) {
+      const root = document.querySelector(`.contact-slot[data-slot="${key}"]`);
+      if (!root) return;
+      slotMore[key] = (c && c.more) || [];
+      root.innerHTML = contactBoxMarkup(c || {}, "");
+      bindContactBox(root, () => updateSummary());
+    }
+    function initContactSlots() { ["main", "start", "end"].forEach(k => setSlotContact(k, {})); }
+    function setAddressWithContact(inputId, slot, raw) {
+      const pc = parseStopContact(raw);
+      setValue(inputId, pc.addr);
+      setSlotContact(slot, pc);
+    }
+    function composeFromSlot(inputId, slot) {
+      const c = getSlotContact(slot);
+      return composeStopContact($(inputId).value, c.name, c.phone, c.more);
+    }
+    // 檢查整串地址文字(含加點多行)裡的聯絡人：只有稱呼沒電話、或電話格式不對
+    function contactErrorsForText(label, text) {
+      const errs = [];
+      String(text || "").split("\n").forEach((line, i) => {
+        const c = parseStopContact(line);
+        if (c.name && !c.phone) errs.push(`${label}聯絡人「${c.name}」缺電話`);
+        else if (c.phone && !isValidPhoneDigits(c.phone)) errs.push(`${label}聯絡電話格式（手機需10碼，市話至少8碼）`);
+      });
+      return errs;
+    }
+
     function renderExtraStops() {
       const wrap = $("extraStopsList");
       if (!extraStops.length) {
         wrap.innerHTML = '<div class="hint !mt-0">尚未加入任何加點站</div>';
         return;
       }
-      wrap.innerHTML = extraStops.map((stop, idx) => `
-        <div class="mt-2">
+      wrap.innerHTML = extraStops.map((stop, idx) => {
+        const pc = parseStopContact(stop);
+        return `
+        <div class="mt-2 extra-stop-row" data-row="${idx}" data-more="${escapeHtml(JSON.stringify(pc.more || []))}">
           <div class="grid grid-cols-[1fr_36px] gap-2 items-center">
-            <input type="text" value="${escapeHtml(stop)}" data-idx="${idx}" class="extra-stop-field" placeholder="加點地址">
+            <input type="text" value="${escapeHtml(pc.addr)}" data-idx="${idx}" class="extra-stop-field" placeholder="加點地址">
             <button type="button" class="secondary-btn !min-h-[36px] !px-0" data-remove-stop-idx="${idx}" aria-label="刪除">✕</button>
           </div>
-          <div class="hint !mt-0.5" data-stop-hint-idx="${idx}"></div>
-        </div>`).join("");
-      wrap.querySelectorAll(".extra-stop-field").forEach(el => {
-        el.addEventListener("input", () => { extraStops[Number(el.dataset.idx)] = el.value; updateSummary(); });
-        el.addEventListener("blur", () => calcExtraStopDistanceHint(Number(el.dataset.idx)));
+          <div class="hint !mt-0.5" data-stop-hint-idx="${idx}" style="min-height:20px"></div>
+          <div class="contact-slot-extra">${contactBoxMarkup(pc, "")}</div>
+        </div>`;
+      }).join("");
+      const recompose = (row) => {
+        const idx = Number(row.dataset.row);
+        const g = (f) => (row.querySelector(`[data-contact="${f}"]`) || {}).value || "";
+        let more = []; try { more = JSON.parse(row.dataset.more || "[]"); } catch (e) {}
+        extraStops[idx] = composeStopContact(row.querySelector(".extra-stop-field").value, g("name"), g("phone"), more) || row.querySelector(".extra-stop-field").value;
+        updateSummary();
+      };
+      wrap.querySelectorAll(".extra-stop-row").forEach(row => {
+        row.querySelector(".extra-stop-field").addEventListener("input", () => recompose(row));
+        row.querySelector(".extra-stop-field").addEventListener("blur", () => calcExtraStopDistanceHint(Number(row.dataset.row)));
+        bindContactBox(row.querySelector(".contact-slot-extra"), () => recompose(row));
       });
       wrap.querySelectorAll("[data-remove-stop-idx]").forEach(btn => {
         btn.addEventListener("click", () => {
@@ -1753,11 +1876,11 @@
         source: currentSource(),
         templateCode: selectedTemplateCode(),
         serviceType: $("serviceType").value,
-        airport: isOneWay ? $("oneWayEnd").value.trim() : $("airport").value,
+        airport: isOneWay ? composeFromSlot("oneWayEnd", "end") : $("airport").value,
         rideDate: $("rideDate").value,
         rideTime: buildTime("ride"),
         flightNumber: isOneWay ? "" : composeFlightWithTerminal("flightNumber", "flightTerminal"),
-        address: isOneWay ? $("oneWayStart").value.trim() : $("address").value.trim(),
+        address: isOneWay ? composeFromSlot("oneWayStart", "start") : composeFromSlot("address", "main"),
         extraLocation: collectExtraLocationText(),
         fare: $("fare").value,
         discountItemsJson: JSON.stringify(discountItems.filter(item => money(item.amount) > 0 && item.label.trim())),
@@ -1919,8 +2042,11 @@
       else if (!isValidPhoneDigits(p.phone)) errors.push("電話格式（手機需10碼，市話至少8碼）");
       if (!p.rideDate) errors.push("日期");
       if (!p.rideTime) errors.push("時間");
-      if (!p.address) errors.push(isOneWay ? "起點地址" : "接送地址");
-      if (isOneWay && !p.airport) errors.push("終點地址");
+      if (!stripStopContacts(p.address)) errors.push(isOneWay ? "起點地址" : "接送地址");
+      if (isOneWay && !stripStopContacts(p.airport)) errors.push("終點地址");
+      contactErrorsForText(isOneWay ? "起點" : "接送地址", p.address).forEach(e => errors.push(e));
+      if (isOneWay) contactErrorsForText("終點", p.airport).forEach(e => errors.push(e));
+      contactErrorsForText("加點", p.extraLocation).forEach(e => errors.push(e));
       if (!money(p.fare)) errors.push("車資金額");
       if (!isOneWay && p.airport === "桃園機場") {
         if ($("flightNumber").value.trim() && !$("flightTerminal").value) errors.push("去程航廈（不確定請選「不確定，幫我查詢」）");
@@ -2467,7 +2593,7 @@
       return `<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:15.5px;${style}"><span>${escapeHtml(row.label)}</span><span>${escapeHtml(row.value)}</span></div>`;
     }
     function bookingInfoRow(label, value) {
-      return `<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:15.5px;color:#4b4553;"><span style="color:#8a8291;">${escapeHtml(label)}</span><span style="text-align:right;font-weight:700;color:#1A0B3D;">${escapeHtml(value || "無")}</span></div>`;
+      return `<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:15.5px;color:#4b4553;"><span style="color:#8a8291;">${escapeHtml(label)}</span><span style="white-space:pre-line;text-align:right;font-weight:700;color:#1A0B3D;">${escapeHtml(value || "無")}</span></div>`;
     }
     // 路線摘要只要抓到縣市即可（完整地址下面「地址」那一欄已經有了，這裡重複顯示反而太長）。
     const TW_CITIES_FOR_ROUTE = ["台北市", "新北市", "桃園市", "新竹市", "新竹縣", "苗栗縣", "台中市", "台南市", "高雄市", "基隆市", "嘉義市", "彰化縣", "南投縣", "雲林縣", "嘉義縣", "屏東縣", "宜蘭縣", "花蓮縣", "台東縣", "澎湖縣", "金門縣", "連江縣"];
@@ -2484,12 +2610,13 @@
     }
     function buildBookingImageOrderHtml(order, allOrders, isFirst) {
       const mainCity = extractCityFromAddress(order.address);
-      const route = order.serviceType === "接機" ? `${order.airport || ""} → ${mainCity}` : `${mainCity} → ${order.airport || ""}`;
+      const airportPlain = stripStopContacts(order.airport);
+      const route = order.serviceType === "接機" ? `${airportPlain} → ${mainCity}` : `${mainCity} → ${airportPlain}`;
       const feeRows = buildOrderFeeRows(order, allOrders);
       const infoRows = [
         ["單號", order.reservationId], ["姓名", order.customerName], ["電話", order.phone],
         ["車型", order.carType], ["人數", formatCustomerPax(order.paxCount)], ["行李", formatCustomerLuggage(order.luggageCount)],
-        ["地址", order.address], ["加點", order.extraLocation], ["付款", order.paymentMethod],
+        ["地址", stopTextWithContacts(order.address, "")], ["加點", stopTextWithContacts(order.extraLocation, "")], ["付款", order.paymentMethod],
         ["座椅", order.seatDetails], ["備註", order.remarks]
       ];
       return `
@@ -2581,7 +2708,7 @@
         `．日期時間：${dateText} ${order.rideTime || ""}`.trim(),
         `．服務項目：${service}`,
         `．航班編號：${order.flightNumber || "無"}`,
-        `．接送機場：${order.airport || "無"}`,
+        `．接送機場：${stopTextWithContacts(order.airport, "    ") || "無"}`,
         "",
         "▌乘車資訊────────",
         `．搭乘貴賓：${order.customerName || "無"}`,
@@ -2589,8 +2716,8 @@
         `．乘車人數：${formatCustomerPax(order.paxCount)}`,
         `．行李件數：${formatCustomerLuggage(order.luggageCount)}`,
         "．接送地址：",
-        `    ${order.address || "無"}`,
-        order.extraLocation ? `．加點地址：\n    ${order.extraLocation}` : null,
+        `    ${stopTextWithContacts(order.address, "    ") || "無"}`,
+        order.extraLocation ? `．加點地址：\n    ${stopTextWithContacts(order.extraLocation, "    ")}` : null,
         "",
         "▌費用資訊────────",
         `．乘車車型：${order.carType || "無"}`,
@@ -2608,14 +2735,14 @@
       const luggage = formatCustomerLuggage(p.luggageCount);
       const fareLine = formatCustomerFare(p.paymentMethod, trip.fare);
       const remarkText = formatCustomerRemarkText(p.remarks);
-      const extraLocation = String(p.extraLocation || "").trim();
+      const extraLocation = stopTextWithContacts(p.extraLocation, "    ");
       const title = "▌預約資訊────────";
       return [
         title,
         `．日期時間：${dateText} ${timeText}`,
         `．服務項目：${service}`,
         `．航班編號：${flight}`,
-        `．接送機場：${p.airport || "無"}`,
+        `．接送機場：${stopTextWithContacts(p.airport, "    ") || "無"}`,
         "",
         "▌乘車資訊────────",
         `．搭乘貴賓：${displayCustomerName(p)}`,
@@ -2623,7 +2750,7 @@
         `．乘車人數：${pax}`,
         `．行李件數：${luggage}`,
         "．接送地址：",
-        `    ${p.address || "無"}`,
+        `    ${stopTextWithContacts(p.address, "    ") || "無"}`,
         extraLocation ? `．加點地址：\n    ${extraLocation}` : null,
         "",
         "▌費用資訊────────",
@@ -2776,6 +2903,7 @@
       renderSurchargeItems();
       extraStops = [];
       renderExtraStops();
+      initContactSlots();
       vehicleCount = 1; extraCars = []; updateVehicleUi(); renderExtraCars();
       $("phoneDiscountResults").classList.add("hidden");
       $("phoneDiscountResults").innerHTML = "";
@@ -2807,7 +2935,7 @@
         setValue("customSource", known.includes(other.source) ? "" : other.source);
         handleSourceChange();
         setValue("airport", other.airport || $("airport").value);
-        setValue("address", other.address);
+        setAddressWithContact("address", "main", other.address);
         extraStops = String(other.extraLocation || "").split(/\n|[；;]/).map(s => s.trim()).filter(Boolean);
         renderExtraStops();
         setValue("customerName", other.customerName);
@@ -2877,11 +3005,11 @@
         toggleServiceTypeFields();
         if (isOneWay) {
           // 單程的話，起點存在「接送地址」欄位、終點存在「機場」欄位(跟表單送出時的做法對稱)
-          setValue("oneWayStart", primary.address);
-          setValue("oneWayEnd", primary.airport);
+          setAddressWithContact("oneWayStart", "start", primary.address);
+          setAddressWithContact("oneWayEnd", "end", primary.airport);
         } else {
           setValue("airport", primary.airport || $("airport").value);
-          setValue("address", primary.address);
+          setAddressWithContact("address", "main", primary.address);
           setFlightFromStored("flightNumber", "flightTerminal", primary.flightNumber);
         }
         extraStops = String(primary.extraLocation || "").split(/\n|[；;]/).map(s => s.trim()).filter(Boolean);

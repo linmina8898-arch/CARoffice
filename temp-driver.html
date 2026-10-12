@@ -16,6 +16,13 @@
         .map-link { color:#1f2937; text-decoration:none; display:inline-flex; align-items:center; justify-content:flex-end; gap:6px; }
         .map-chip { width:24px; height:24px; color:#553f62; background:#fbf7fa; border:1px solid #eadde8; border-radius:999px; display:inline-flex; align-items:center; justify-content:center; flex:0 0 auto; }
         .map-chip svg { width:13px; height:13px; display:block; }
+        .tel-link { color: #b63c6b; font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; vertical-align: middle; margin-left: 4px; }
+        .tel-none { color: #9ca3af; font-size: 12px; }
+        .tel-chip { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 999px; background: #fff5f8; border: 1px solid #efcad8; color: #b63c6b; font-size: 13px; line-height: 1; text-decoration: none; }
+        .stop-contacts { margin-top: 4px; text-align: right; }
+        .stop-block + .stop-block { margin-top: 8px; }
+        .stop-contact { font-size: 12.5px; color: #374151; line-height: 1.7; }
+        .stop-contact-label { display: inline-block; font-size: 10px; font-weight: 800; color: #fff; background: #b63c6b; border-radius: 6px; padding: 0 5px; margin-right: 6px; vertical-align: 1px; }
         .cash-note-popup { border-radius:16px !important; }
         .cash-note-title { color:#1a0b3d !important; font-size:28px !important; font-weight:700 !important; }
         .cash-note-confirm { background:#553f62 !important; color:#fff !important; border-radius:10px !important; padding:10px 28px !important; }
@@ -81,7 +88,7 @@
         </div>
     </div>
     <script>
-        const APP_VERSION = "v1.0.43"; // v1.0.43：客人電話帶分機時，致電按鈕先撥主號碼、停4秒再撥分機；依使用者要求(先確認過示意圖)：畫面最後面新增「本趟車輛」一行(車號︱車型︱車色)，放在付款方式(含實拿車資)後面、中間空一格(空格高度跟其他每一行一樣)；沒填車色就只顯示車號︱車型，三項都沒有時整行(含空格)不顯示；車色已包含在車型文字裡時不重複顯示。配合gas.html v2.2.344。 依使用者要求：有現場收現且有給司機車資時，「付款方式」下面多一行「實拿車資 $X」，避免臨時司機看到「現場收現 $1,800」誤以為車資是1,800(收現備註按鈕保留)。 v1.0.40： 依使用者要求，畫面抬頭改成公司全名：分頁標題「AS派車 - 臨時派遣任務」→「瑞陞汽車租賃有限公司 派車單 - 臨時派遣任務(AS)」，頁面上方標頭「AS派車」→「瑞陞汽車租賃有限公司 派車」。v1.0.39：修正LIFF withLoginOnExternalBrowser登入流程導回頁面時，網址上的?token=有時候會遺失、導致顯示「無法開啟任務」的問題：進頁面時把token先存到sessionStorage，網址讀不到token時改用暫存的這份
+        const APP_VERSION = "v1.0.45"; // v1.0.45：依使用者要求，任務明細不再顯示任何電話號碼，電話只留「☎ 電話圖示」點了直接撥號(跟司機端 v1.17.0 同一套)； v1.0.44：備註/司機提醒/地址裡的電話自動變撥號連結，站點聯絡人拆成獨立一行(跟司機端 v1.16.0 同一套)。v1.0.43：客人電話帶分機時，致電按鈕先撥主號碼、停4秒再撥分機；依使用者要求(先確認過示意圖)：畫面最後面新增「本趟車輛」一行(車號︱車型︱車色)，放在付款方式(含實拿車資)後面、中間空一格(空格高度跟其他每一行一樣)；沒填車色就只顯示車號︱車型，三項都沒有時整行(含空格)不顯示；車色已包含在車型文字裡時不重複顯示。配合gas.html v2.2.344。 依使用者要求：有現場收現且有給司機車資時，「付款方式」下面多一行「實拿車資 $X」，避免臨時司機看到「現場收現 $1,800」誤以為車資是1,800(收現備註按鈕保留)。 v1.0.40： 依使用者要求，畫面抬頭改成公司全名：分頁標題「AS派車 - 臨時派遣任務」→「瑞陞汽車租賃有限公司 派車單 - 臨時派遣任務(AS)」，頁面上方標頭「AS派車」→「瑞陞汽車租賃有限公司 派車」。v1.0.39：修正LIFF withLoginOnExternalBrowser登入流程導回頁面時，網址上的?token=有時候會遺失、導致顯示「無法開啟任務」的問題：進頁面時把token先存到sessionStorage，網址讀不到token時改用暫存的這份
         const GAS_URL = "https://script.google.com/macros/s/AKfycbz6wgk6T8ypEI1pW5ih7M3Bom54Tu7unv-sc_ldFtPSBWw4yAbahs70GErKGpsRqcG3/exec";
         const LIFF_ID = "2009971109-EdjC9QlC";
         let lineUserId = "";
@@ -242,7 +249,7 @@
             document.getElementById("taskView").classList.remove("hidden");
         }
         function fieldValueHtml(label, value) {
-            if (label.includes("地址")) return mapLinkHtml(value);
+            if (label.includes("地址")) return stopHtml(value);
             if (label === "客戶姓名") return `<div class="flex items-center justify-end gap-2"><span>${esc(value)}</span>${customerCallButtonHtml()}</div>`;
             if (label === "付款方式" && String(value || "").includes("現場收現")) {
                 const cash = parseCashAmount(task && task.cashCollected);
@@ -250,7 +257,7 @@
                 const noteBtn = payout > 0 ? `<button type="button" onclick="showCashSettlementNote(${cash}, ${payout})" class="ml-2 rounded-full border border-[#EADDE8] bg-[#FBF7FA] px-2 py-0.5 text-[11px] font-bold text-[#7A6A82]">收現備註</button>` : "";
                 return `<span class="text-[#553f62]" style="font-weight:700;">${esc(value)}</span>${noteBtn}`;
             }
-            return esc(value).replace(/\n/g, '<br>');
+            return linkifyPhonesHtml(value);
         }
         function isPlaceholderCustomerPhone(value) {
             return String(value || "").replace(/\D/g, "") === "0900000000";
@@ -304,10 +311,72 @@
                 }
             });
         }
-        function mapLinkHtml(value) {
+        function mapLinkHtml(value, queryText) {
             const text = clean(value);
             if (!text) return "";
-            return `<a class="map-link" target="_blank" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(text)}"><span>${esc(text)}</span><span class="map-chip" aria-label="開啟地圖"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s6-5.3 6-11a6 6 0 0 0-12 0c0 5.7 6 11 6 11Z"></path><circle cx="12" cy="10" r="2"></circle></svg></span></a>`;
+            return `<a class="map-link" target="_blank" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(queryText || text)}"><span>${esc(text)}</span><span class="map-chip" aria-label="開啟地圖"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s6-5.3 6-11a6 6 0 0 0-12 0c0 5.7 6 11 6 11Z"></path><circle cx="12" cy="10" r="2"></circle></svg></span></a>`;
+        }
+        // ===== v1.16.0：電話自動變撥號連結 + 站點聯絡人 =====
+        // 備註、司機提醒、地址文字裡的手機/市話(可帶分機 #56082 / ext.56082 / 分機56082 / 轉56082)自動變成可按的「撥號」連結；
+        // 站點聯絡人格式「地址（聯絡：王小姐 0912-345-678；李先生 03-571-2121 #56）」會把聯絡人另外拆成一行，地圖連結只吃純地址。
+        // 注意：不用 lookbehind(舊版iOS LINE內建瀏覽器不支援，會整支程式壞掉)。
+        const TEL_RE_ = /(^|[^\d])((?:09\d{2}[-\s]?\d{3}[-\s]?\d{3}|\(?0[2-8]\d?\)?[-\s]?\d{3,4}[-\s]?\d{4})(?!\d)(?:\s*(?:#|＃|ext\.?|EXT\.?|分機|轉)\s*\d{1,6})?)/g;
+        function telEsc_(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+        function telDial_(raw) {
+            const s = String(raw || '');
+            const i = s.search(/#|＃|分機|ext|EXT|轉/);
+            const main = (i >= 0 ? s.slice(0, i) : s).replace(/\D/g, '');
+            const ext = i >= 0 ? s.slice(i).replace(/\D/g, '') : '';
+            return ext ? main + ',,' + ext : main;
+        }
+        function telLinkHtml_(raw) {
+            const dial = telDial_(raw);
+            if (!dial) return '';
+            if (dial.replace(/\D/g, '') === '0900000000') return '<span class="tel-none">無電話</span>';
+            // v1.17.0：不顯示號碼，只留電話圖示，點了直接撥號
+            return '<a href="tel:' + dial + '" class="tel-link" aria-label="撥打電話" onclick="event.stopPropagation()"><span class="tel-chip" aria-hidden="true">&#9742;</span></a>';
+        }
+        // 純文字 → HTML：跳脫、換行變<br>、電話變撥號連結
+        function linkifyPhonesHtml(text) {
+            const src = String(text == null ? '' : text);
+            let out = '', last = 0, m;
+            TEL_RE_.lastIndex = 0;
+            while ((m = TEL_RE_.exec(src)) !== null) {
+                const start = m.index + m[1].length;
+                out += telEsc_(src.slice(last, start)) + telLinkHtml_(m[2]);
+                last = start + m[2].length;
+                if (m[0].length === 0) TEL_RE_.lastIndex++;
+            }
+            out += telEsc_(src.slice(last));
+            return out.replace(/\n/g, '<br>');
+        }
+        // 把「地址（聯絡：…）」拆成 { addr, contacts:[文字…] }；括號外殘留的電話也當作聯絡電話列出(地址文字保留原樣)
+        function splitStopContacts_(raw) {
+            let addr = String(raw == null ? '' : raw).trim();
+            const contacts = [];
+            addr = addr.replace(/[（(]\s*聯絡\s*[：:]\s*([^）)]*)[）)]/g, (_, inner) => {
+                String(inner).split(/[；;、]/).forEach(seg => { seg = seg.trim(); if (seg) contacts.push(seg); });
+                return '';
+            }).replace(/\s{2,}/g, ' ').trim();
+            const loose = [];
+            let m; TEL_RE_.lastIndex = 0;
+            while ((m = TEL_RE_.exec(addr)) !== null) { loose.push(m[2].trim()); if (m[0].length === 0) TEL_RE_.lastIndex++; }
+            loose.forEach(p => { if (!contacts.some(c => c.indexOf(p) !== -1)) contacts.push(p); });
+            const query = addr.replace(TEL_RE_, '$1').replace(/\s{2,}/g, ' ').trim();
+            return { addr, query, contacts };
+        }
+        function stopContactsHtml_(contacts) {
+            if (!contacts || !contacts.length) return '';
+            return '<div class="stop-contacts">' + contacts.map(c => '<div class="stop-contact"><span class="stop-contact-label">聯絡</span>' + linkifyPhonesHtml(c) + '</div>').join('') + '</div>';
+        }
+
+        function stopHtml(value) {
+            const lines = clean(value).split(/\n+/).map(x => x.trim()).filter(Boolean);
+            return lines.map(line => {
+                const sp = splitStopContacts_(line);
+                if (!sp.addr && !sp.contacts.length) return "";
+                return '<div class="stop-block">' + (sp.addr ? mapLinkHtml(sp.addr, sp.query || sp.addr) : "") + stopContactsHtml_(sp.contacts) + '</div>';
+            }).join("");
         }
         function openRentalForm() {
             if (!task) return;

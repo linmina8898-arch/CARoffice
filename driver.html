@@ -24,6 +24,13 @@
         .map-link { color: #1f2937; text-decoration: none; display: inline-flex; align-items: center; justify-content: flex-end; gap: 6px; }
         .map-chip { width: 24px; height: 24px; color: #553f62; background: #fbf7fa; border: 1px solid #eadde8; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; }
         .map-chip svg { width: 13px; height: 13px; display: block; }
+        .tel-link { color: #b63c6b; font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; vertical-align: middle; margin-left: 4px; }
+        .tel-none { color: #9ca3af; font-size: 12px; }
+        .tel-chip { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 999px; background: #fff5f8; border: 1px solid #efcad8; color: #b63c6b; font-size: 13px; line-height: 1; text-decoration: none; }
+        .stop-contacts { margin-top: 4px; text-align: right; }
+        .stop-block + .stop-block { margin-top: 8px; }
+        .stop-contact { font-size: 12.5px; color: #374151; line-height: 1.7; }
+        .stop-contact-label { display: inline-block; font-size: 10px; font-weight: 800; color: #fff; background: #b63c6b; border-radius: 6px; padding: 0 5px; margin-right: 6px; vertical-align: 1px; }
         .cash-note-popup { border-radius: 16px !important; }
         .cash-note-title { color: #1a0b3d !important; font-size: 28px !important; font-weight: 700 !important; }
         .cash-note-confirm { background: #553f62 !important; color: #fff !important; border-radius: 10px !important; padding: 10px 28px !important; }
@@ -188,7 +195,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.15.2"; // v1.15.2：客人電話帶分機時，致電按鈕會先撥主號碼、停4秒再自動撥分機；v1.15.1：v1.15.1：加點地址改粉底醒目，單程放在上車/下車地址中間；v1.15.0：v1.15.0：①手機返回鍵/滑動返回改為退回系統主頁（不再跳出到官方LINE）②任務明細縮成一頁，回報按鈕固定在畫面下方；v1.14.72：v1.14.72：依使用者回報，司機連續按好幾筆「確認收單」都成功，過不久畫面又跳回「待收單」逼司機重按：剛回報成功的保護時間由15秒拉長到3分鐘、存進手機(localStorage，重新開啟App也有效)，且只在後端回來的狀態比剛回報的還早時才蓋回去(後端已一樣或更後面不動)；配合gas.html v2.2.337(寫入後flush＋收尾再清快取)。 v1.14.71：依使用者要求，司機端「該收現金」的備援算法(後端沒給cashCollected時才會用到)改成原始車資扣掉折扣金額，要跟客人卡片付款欄的實付金額一致；主要算法在後端gas.html v2.2.329。v1.14.70：依使用者要求，畫面抬頭改成公司全名：分頁標題「AS派車 - 司機端」→「瑞陞汽車租賃有限公司 派車單 - 司機端(AS)」，頁面上方標頭「AS派車 Driver」→「瑞陞汽車租賃有限公司 派車 Driver」。v1.14.69：單程(不經機場的定點接送)司機端畫面調整：原本沿用接送機場欄位配置，導致單程被標成「接送機場」很奇怪(其實顯示的是終點地址)、還會多顯示用不到的「航班編號」。改成單程專屬格式：「上車地址／下車地址」各自帶地圖連結方便導航，不顯示航班編號。只限定t.type==='單程'才套用，接機/送機畫面完全不受影響
+        const APP_VERSION = "v1.17.0"; // v1.17.0：依使用者要求，任務明細不再顯示任何電話號碼，備註/司機提醒/站點聯絡人裡的電話一律只留「☎ 電話圖示」，點圖示直接撥號(聯絡人只顯示名字＋圖示)； v1.16.1：星期改用年月日直接計算，不受手機時區影響。 v1.16.0：備註/司機提醒/地址裡的電話(手機、市話、分機)自動變成可按的撥號連結；站點聯絡人「地址（聯絡：王小姐 0912-345-678）」拆成獨立一行並可直接撥打，地圖連結只吃純地址。v1.15.2：客人電話帶分機時，致電按鈕會先撥主號碼、停4秒再自動撥分機；v1.15.1：v1.15.1：加點地址改粉底醒目，單程放在上車/下車地址中間；v1.15.0：v1.15.0：①手機返回鍵/滑動返回改為退回系統主頁（不再跳出到官方LINE）②任務明細縮成一頁，回報按鈕固定在畫面下方；v1.14.72：v1.14.72：依使用者回報，司機連續按好幾筆「確認收單」都成功，過不久畫面又跳回「待收單」逼司機重按：剛回報成功的保護時間由15秒拉長到3分鐘、存進手機(localStorage，重新開啟App也有效)，且只在後端回來的狀態比剛回報的還早時才蓋回去(後端已一樣或更後面不動)；配合gas.html v2.2.337(寫入後flush＋收尾再清快取)。 v1.14.71：依使用者要求，司機端「該收現金」的備援算法(後端沒給cashCollected時才會用到)改成原始車資扣掉折扣金額，要跟客人卡片付款欄的實付金額一致；主要算法在後端gas.html v2.2.329。v1.14.70：依使用者要求，畫面抬頭改成公司全名：分頁標題「AS派車 - 司機端」→「瑞陞汽車租賃有限公司 派車單 - 司機端(AS)」，頁面上方標頭「AS派車 Driver」→「瑞陞汽車租賃有限公司 派車 Driver」。v1.14.69：單程(不經機場的定點接送)司機端畫面調整：原本沿用接送機場欄位配置，導致單程被標成「接送機場」很奇怪(其實顯示的是終點地址)、還會多顯示用不到的「航班編號」。改成單程專屬格式：「上車地址／下車地址」各自帶地圖連結方便導航，不顯示航班編號。只限定t.type==='單程'才套用，接機/送機畫面完全不受影響
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -264,8 +271,8 @@
             const raw = String(dateText || '').trim();
             const match = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
             if (!match) return raw.length >= 10 ? raw.substring(5).replace('-', '/') : raw;
-            const localDate = new Date(`${raw}T00:00:00+08:00`);
-            const weekday = ['日', '一', '二', '三', '四', '五', '六'][localDate.getDay()];
+            // 星期直接用年月日算(不受手機時區影響)；原本用「+08:00」再 getDay()，手機不在台灣時區時星期會差一天
+            const weekday = ['日', '一', '二', '三', '四', '五', '六'][new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]))).getUTCDay()];
             return `${match[2]}/${match[3]}（${weekday})`;
         }
 
@@ -1118,16 +1125,16 @@
                 cashHtml = `<div class="flex justify-between items-center py-3 border-t-2 border-[#EADDE8] mt-2" style="font-weight:700;"><span class="text-gray-700 mr-2">現場收現</span><div class="text-right"><div class="flex items-center justify-end"><div class="text-[#553f62] text-xl" style="font-weight:700;">$${amtToCollect.toLocaleString()}</div>${cashNoteBtn}</div>${cleanVal(t.cashCollectionNote) ? `<div class="text-xs text-gray-500 font-normal">${cleanVal(t.cashCollectionNote)}</div>` : ''}</div></div>`;
             }
 
-            let cNote = cleanVal(t.remarks) ? cleanVal(t.remarks).replace(/\n/g, '<br>') : '';
-            let dNote = cleanVal(t.driverNote) ? cleanVal(t.driverNote).replace(/\n/g, '<br>') : '';
-            let driverAlert = cleanVal(t.driverAlert) ? cleanVal(t.driverAlert).replace(/\n/g, '<br>') : '';
+            let cNote = cleanVal(t.remarks) ? linkifyPhonesHtml(cleanVal(t.remarks)) : '';
+            let dNote = cleanVal(t.driverNote) ? linkifyPhonesHtml(cleanVal(t.driverNote)) : '';
+            let driverAlert = cleanVal(t.driverAlert) ? linkifyPhonesHtml(cleanVal(t.driverAlert)) : '';
             const driverAlertHtml = driverAlert ? `<div class="driver-field bg-[#fff5f8] -mx-3 px-3 border-y border-[#f07cad]/20"><span class="driver-field-label text-[#b63c6b]">司機提醒</span><span class="driver-field-value text-[#b63c6b]" style="font-weight:700;">${driverAlert}</span></div>` : '';
             let companyHtml = '';
             
             let luggageText = formatLuggageWithSport(t.luggage, t.sportLuggage);
 
-            let addressHtml = mapLinkHtml(t.address);
-            let extraStopHtml = mapLinkHtml(t.extraStop);
+            let addressHtml = stopHtml(t.address);
+            let extraStopHtml = stopHtml(t.extraStop);
             // v1.15.1：加點地址用粉底醒目標示，單程放在「上車」「下車」中間，避免司機漏看
             const extraStopRowHtml = cleanVal(t.extraStop)
                 ? `<div class="driver-field bg-[#fff5f8] -mx-3 px-3 border-y border-[#f07cad]/20"><span class="driver-field-label text-[#b63c6b]" style="font-weight:700;">加點地址</span><span class="driver-field-value">${extraStopHtml}</span></div>`
@@ -1148,9 +1155,9 @@
                     
                     <div class="space-y-0 text-sm bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
                         ${t.type === '單程'
-                          ? `<div class="driver-field"><span class="driver-field-label">上車地址</span><span class="driver-field-value">${mapLinkHtml(t.address)}</span></div>
+                          ? `<div class="driver-field"><span class="driver-field-label">上車地址</span><span class="driver-field-value">${addressHtml}</span></div>
                              ${extraStopRowHtml}
-                             <div class="driver-field"><span class="driver-field-label">下車地址</span><span class="driver-field-value">${mapLinkHtml(t.airport)}</span></div>`
+                             <div class="driver-field"><span class="driver-field-label">下車地址</span><span class="driver-field-value">${stopHtml(t.airport)}</span></div>`
                           : `<div class="driver-field"><span class="driver-field-label">接送機場</span><span class="driver-field-value">${cleanVal(t.airport)}</span></div>
                              <div class="driver-field"><span class="driver-field-label">航班編號</span><span class="driver-field-value text-gray-800">${cleanVal(t.flightNo)}</span></div>`}
                         <div class="driver-field">
@@ -1225,10 +1232,75 @@
             });
         }
 
-        function mapLinkHtml(value) {
+        function mapLinkHtml(value, queryText) {
             const text = cleanVal(value);
             if (!text) return '';
-            return `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(text)}" target="_blank" class="map-link"><span>${text}</span><span class="map-chip" aria-label="開啟地圖"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s6-5.3 6-11a6 6 0 0 0-12 0c0 5.7 6 11 6 11Z"></path><circle cx="12" cy="10" r="2"></circle></svg></span></a>`;
+            return `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(queryText || text)}" target="_blank" class="map-link"><span>${text}</span><span class="map-chip" aria-label="開啟地圖"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s6-5.3 6-11a6 6 0 0 0-12 0c0 5.7 6 11 6 11Z"></path><circle cx="12" cy="10" r="2"></circle></svg></span></a>`;
+        }
+
+        // ===== v1.16.0：電話自動變撥號連結 + 站點聯絡人 =====
+        // 備註、司機提醒、地址文字裡的手機/市話(可帶分機 #56082 / ext.56082 / 分機56082 / 轉56082)自動變成可按的「撥號」連結；
+        // 站點聯絡人格式「地址（聯絡：王小姐 0912-345-678；李先生 03-571-2121 #56）」會把聯絡人另外拆成一行，地圖連結只吃純地址。
+        // 注意：不用 lookbehind(舊版iOS LINE內建瀏覽器不支援，會整支程式壞掉)。
+        const TEL_RE_ = /(^|[^\d])((?:09\d{2}[-\s]?\d{3}[-\s]?\d{3}|\(?0[2-8]\d?\)?[-\s]?\d{3,4}[-\s]?\d{4})(?!\d)(?:\s*(?:#|＃|ext\.?|EXT\.?|分機|轉)\s*\d{1,6})?)/g;
+        function telEsc_(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+        function telDial_(raw) {
+            const s = String(raw || '');
+            const i = s.search(/#|＃|分機|ext|EXT|轉/);
+            const main = (i >= 0 ? s.slice(0, i) : s).replace(/\D/g, '');
+            const ext = i >= 0 ? s.slice(i).replace(/\D/g, '') : '';
+            return ext ? main + ',,' + ext : main;
+        }
+        function telLinkHtml_(raw) {
+            const dial = telDial_(raw);
+            if (!dial) return '';
+            if (dial.replace(/\D/g, '') === '0900000000') return '<span class="tel-none">無電話</span>';
+            // v1.17.0：不顯示號碼，只留電話圖示，點了直接撥號
+            return '<a href="tel:' + dial + '" class="tel-link" aria-label="撥打電話" onclick="event.stopPropagation()"><span class="tel-chip" aria-hidden="true">&#9742;</span></a>';
+        }
+        // 純文字 → HTML：跳脫、換行變<br>、電話變撥號連結
+        function linkifyPhonesHtml(text) {
+            const src = String(text == null ? '' : text);
+            let out = '', last = 0, m;
+            TEL_RE_.lastIndex = 0;
+            while ((m = TEL_RE_.exec(src)) !== null) {
+                const start = m.index + m[1].length;
+                out += telEsc_(src.slice(last, start)) + telLinkHtml_(m[2]);
+                last = start + m[2].length;
+                if (m[0].length === 0) TEL_RE_.lastIndex++;
+            }
+            out += telEsc_(src.slice(last));
+            return out.replace(/\n/g, '<br>');
+        }
+        // 把「地址（聯絡：…）」拆成 { addr, contacts:[文字…] }；括號外殘留的電話也當作聯絡電話列出(地址文字保留原樣)
+        function splitStopContacts_(raw) {
+            let addr = String(raw == null ? '' : raw).trim();
+            const contacts = [];
+            addr = addr.replace(/[（(]\s*聯絡\s*[：:]\s*([^）)]*)[）)]/g, (_, inner) => {
+                String(inner).split(/[；;、]/).forEach(seg => { seg = seg.trim(); if (seg) contacts.push(seg); });
+                return '';
+            }).replace(/\s{2,}/g, ' ').trim();
+            const loose = [];
+            let m; TEL_RE_.lastIndex = 0;
+            while ((m = TEL_RE_.exec(addr)) !== null) { loose.push(m[2].trim()); if (m[0].length === 0) TEL_RE_.lastIndex++; }
+            loose.forEach(p => { if (!contacts.some(c => c.indexOf(p) !== -1)) contacts.push(p); });
+            const query = addr.replace(TEL_RE_, '$1').replace(/\s{2,}/g, ' ').trim();
+            return { addr, query, contacts };
+        }
+        function stopContactsHtml_(contacts) {
+            if (!contacts || !contacts.length) return '';
+            return '<div class="stop-contacts">' + contacts.map(c => '<div class="stop-contact"><span class="stop-contact-label">聯絡</span>' + linkifyPhonesHtml(c) + '</div>').join('') + '</div>';
+        }
+
+        // 地址欄：地圖連結(只用純地址) + 站點聯絡人撥號列
+        function stopHtml(value) {
+            // 加點可能有多行(一行一站)：每一站各自一個地圖連結＋自己的聯絡人撥號列
+            const lines = cleanVal(value).split(/\n+/).map(x => x.trim()).filter(Boolean);
+            return lines.map(line => {
+                const sp = splitStopContacts_(line);
+                if (!sp.addr && !sp.contacts.length) return '';
+                return '<div class="stop-block">' + (sp.addr ? mapLinkHtml(telEsc_(sp.addr), sp.query || sp.addr) : '') + stopContactsHtml_(sp.contacts) + '</div>';
+            }).join('');
         }
 
         function openRentalForm(orderId) {
