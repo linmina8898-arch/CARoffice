@@ -625,7 +625,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.83"; // v1.0.83：修正「其他車輛設定」(C2起各台車型/車資/折扣)原本放在頁面上方、往下捲看不到，改放在「車輛台數」正下方，選台數後自動捲到那裡；v1.0.82：新增「車輛台數」(多台車)：C2 起各自車型/車資/回程車資/現收/折扣/加值，確認視窗逐台列出，建立後每台一份客人確認文字，單號=基底-C1/-C2…(需gas v2.2.360)；v1.0.81：電話可填分機(ext.56082、#13、分機13、轉13 都會整理成「03-571-2121 #56082」)，司機撥號會自動帶分機；v1.0.80：電話欄可輸入市話(02-1234-5678、03-123-4567…)，新增「客人沒有電話」勾選(記為0900-000-000，司機端顯示無電話，客人確認文字顯示「無」)；v1.0.79：①不填航班編號、只選航廈時，航廈也會送出(顯示「航廈 T2」)，編輯舊單時會拆回航廈欄位 ②金額欄位拿掉右邊上下箭頭、滾輪不會再改到金額。 v1.0.78：依使用者要求，同時預約來回有加點時，回程的行程順序要跟去程相反(去程 新竹→竹北(加點)→機場，回程 機場→竹北→新竹)：送出前的確認預覽，回程那腿的行程/加點改成顯示反轉後的順序(跟後端gas.html v2.2.345實際寫入一致)，去程與沒有加點的預約不變。 v1.0.77：依使用者要求，航班編號旁邊新增「航廈」選單(第一航廈T1/第二航廈T2/不確定，幫我查詢)，只有選「桃園機場」才出現，有填航班編號就一定要選(沒選送出會跳出缺漏欄位提示)；去程/回程各一個；選了以「航班｜T1/T2/？」(例如CI108｜T2)接在航班編號後面送出，複製舊單/載入舊單時會把已存的「CI108｜T2」拆回兩個欄位。 v1.0.76： 🚨修正buildOrderFeeRows來回程「來回總額」算錯的問題：客服用「補套用折扣碼」只對來回其中一腿單獨套用時(去程/回程的折扣碼/折扣金額欄位各自獨立)，原本只扣這一腿自己的discountAmount，另一腿單獨套用的那組折扣完全沒被扣到，導致來回總額比實際應付多。修正：合併去程/回程兩腿各自的discountAmt，「來回總額」的扣除改用合併後的金額。跟gas.html v2.2.292 buildBookingFeeContents_、admin.html buildReservationUpdateFeePreview同一套邏輯
+    const APP_VERSION = "manual-booking-v1.0.84"; // v1.0.84：建立成功後的「客人確認文字」來回單可分開複製「去程」「回程」或「兩則合併」(單台來回、多台車每一台都適用)；v1.0.83：修正「其他車輛設定」(C2起各台車型/車資/折扣)原本放在頁面上方、往下捲看不到，改放在「車輛台數」正下方，選台數後自動捲到那裡；v1.0.82：新增「車輛台數」(多台車)：C2 起各自車型/車資/回程車資/現收/折扣/加值，確認視窗逐台列出，建立後每台一份客人確認文字，單號=基底-C1/-C2…(需gas v2.2.360)；v1.0.81：電話可填分機(ext.56082、#13、分機13、轉13 都會整理成「03-571-2121 #56082」)，司機撥號會自動帶分機；v1.0.80：電話欄可輸入市話(02-1234-5678、03-123-4567…)，新增「客人沒有電話」勾選(記為0900-000-000，司機端顯示無電話，客人確認文字顯示「無」)；v1.0.79：①不填航班編號、只選航廈時，航廈也會送出(顯示「航廈 T2」)，編輯舊單時會拆回航廈欄位 ②金額欄位拿掉右邊上下箭頭、滾輪不會再改到金額。 v1.0.78：依使用者要求，同時預約來回有加點時，回程的行程順序要跟去程相反(去程 新竹→竹北(加點)→機場，回程 機場→竹北→新竹)：送出前的確認預覽，回程那腿的行程/加點改成顯示反轉後的順序(跟後端gas.html v2.2.345實際寫入一致)，去程與沒有加點的預約不變。 v1.0.77：依使用者要求，航班編號旁邊新增「航廈」選單(第一航廈T1/第二航廈T2/不確定，幫我查詢)，只有選「桃園機場」才出現，有填航班編號就一定要選(沒選送出會跳出缺漏欄位提示)；去程/回程各一個；選了以「航班｜T1/T2/？」(例如CI108｜T2)接在航班編號後面送出，複製舊單/載入舊單時會把已存的「CI108｜T2」拆回兩個欄位。 v1.0.76： 🚨修正buildOrderFeeRows來回程「來回總額」算錯的問題：客服用「補套用折扣碼」只對來回其中一腿單獨套用時(去程/回程的折扣碼/折扣金額欄位各自獨立)，原本只扣這一腿自己的discountAmount，另一腿單獨套用的那組折扣完全沒被扣到，導致來回總額比實際應付多。修正：合併去程/回程兩腿各自的discountAmt，「來回總額」的扣除改用合併後的金額。跟gas.html v2.2.292 buildBookingFeeContents_、admin.html buildReservationUpdateFeePreview同一套邏輯
     // v1.0.72 - 新增「複製舊單，快速建立新預約」功能：取消的訂單客人又想用同樣行程重新預約時(只是要換日期/時間)，不用整張表單重填，填舊單號查詢後，客人資料/地址/車型/人數行李/金額/加值折扣項目會整包帶入下面表單，唯獨日期時間留白由客服自行填寫新的時段。跟既有的「補建遺漏的去程/回程」是兩個獨立功能：那個查完會用recoveryBaseId/recoveryLegSuffix掛回舊單底下(維持-A/-B配對)，這個完全不動那兩個欄位，送出後一律是全新單號，不影響原本那筆舊單。實作參考fetchRecoveryAutoFill同一套用getManualBookingTextData查單、setValue逐欄位帶入的做法，額外處理了：單程行程起訖點分別對應到address/airport欄位、回程行程/金額/航班另外從回程那筆資料帶入、加值服務用parseStoredFeeExtras依去程/回程分別還原明細、折扣只取去程那筆避免兩腿重複記的折扣被加乘兩次、現場收現金額只在付款方式真的需要時才帶入
     // 「固定客戶範本」選擇改成自訂清單，不再用原生下拉選單(在手機上選項一長就變成一長串塞在一起完全看不清楚)。改成一張張獨立卡片：來源標籤(粉紅底)+姓名+電話在同一行，地址另起一行，點擊即可帶入，選中的那筆會highlight。原本的select仍保留(隱藏)當作資料狀態，不影響既有的applyTemplate等邏輯
     // 不再用 Google callback 機制初始化地圖（callback 容易撞上 async 腳本執行時機競速問題，
@@ -2008,58 +2008,81 @@
         </div>`;
     }
 
-    // 多台車建立成功：每台一份客人確認文字，可切換、複製這一台或複製全部
-    async function showMultiCarSuccess(payload, res) {
-      const cars = carPayloads(payload);
-      const allIds = res.reservationIds || [];
-      const groups = res.groups || [];
-      const idsOf = (n) => {
-        const g = groups.find(x => Number(x.car) === n);
-        if (g && g.reservationIds) return g.reservationIds;
-        return allIds.filter(id => new RegExp("-C" + n + "(-[AB])?$").test(String(id)));
-      };
-      const msgs = cars.map((cp, i) => buildCustomerConfirmMessage(cp, idsOf(i + 1)));
+    // 建立成功後的「複製客人確認文字」視窗(單台來回、多台車共用)：
+    // 上排選車(多台才有)、下排選「兩則合併 / 去程 / 回程」(來回才有)，文字框顯示目前選的那一份，可單獨複製去程或回程。
+    // groups = [{ label: "C1", carType, ids: [單號...], parts: [去程文字, 回程文字?] }]
+    async function showCopyResultDialog(title, noteText, idsText, groups) {
+      const multi = groups.length > 1;
       const SEP = "\n\n━━━━━━━━━━━━━━━━\n\n";
-      saveLastCustomerMessage(msgs.map((m, i) => `【C${i + 1}】\n${m}`).join(SEP));
-      window.__showCarMsg = (n) => {
-        document.querySelectorAll(".car-msg-box").forEach(el => { el.style.display = Number(el.dataset.n) === n ? "block" : "none"; });
-        document.querySelectorAll(".car-msg-tab").forEach(el => {
-          const on = Number(el.dataset.n) === n;
-          el.style.background = on ? "#553f62" : "#fff"; el.style.color = on ? "#fff" : "#553f62";
+      const hasReturnAny = groups.some(g => g.parts.length > 1);
+      const views = groups.map(g => g.parts.length > 1
+        ? [{ name: "兩則合併", text: g.parts.join("\n\n") }, { name: "去程", text: g.parts[0] }, { name: "回程", text: g.parts[1] }]
+        : [{ name: "", text: g.parts[0] }]);
+      let curCar = 0, curView = 0;
+      const sty = (on) => `border:1px solid #553f62;border-radius:9px;padding:4px 14px;font-weight:700;background:${on ? "#553f62" : "#fff"};color:${on ? "#fff" : "#553f62"}`;
+      const refresh = () => {
+        document.querySelectorAll(".cr-car-tab").forEach(el => { el.setAttribute("style", sty(Number(el.dataset.n) === curCar)); });
+        document.querySelectorAll(".cr-view-tab").forEach(el => {
+          const show = views[curCar].length > 1;
+          el.setAttribute("style", sty(Number(el.dataset.n) === curView) + (show ? "" : ";display:none"));
         });
-        window.__curCarMsg = n;
+        const cur = views[curCar][Math.min(curView, views[curCar].length - 1)];
+        const box = document.getElementById("crBox"); if (box) box.value = cur.text;
+        const lab = document.getElementById("crLabel");
+        if (lab) lab.textContent = [multi ? groups[curCar].label : "", cur.name].filter(Boolean).join("｜");
       };
-      window.__curCarMsg = 0;
-      const idsText = cars.map((cp, i) => `C${i + 1} ${cp.carType}：${idsOf(i + 1).join("、")}`).join("\n");
+      window.__crCar = (n) => { curCar = n; curView = Math.min(curView, views[n].length - 1); refresh(); };
+      window.__crView = (n) => { curView = n; refresh(); };
+      const curText = () => { const box = document.getElementById("crBox"); return box ? box.value : ""; };
+      const allText = () => groups.map((g, i) => (multi ? `【${g.label}】\n` : "") + views[i][0].text).join(SEP);
+      const flash = (btn, txt, back) => { if (btn) { btn.textContent = txt; setTimeout(() => { btn.textContent = back; }, 1500); } };
+      const carTabs = multi ? `<div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">${groups.map((g, i) => `<button type="button" class="cr-car-tab" data-n="${i}" onclick="window.__crCar(${i})" style="${sty(i === 0)}">${escapeHtml(g.label)}</button>`).join("")}</div>` : "";
+      const viewTabs = hasReturnAny ? `<div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">${["兩則合併", "去程", "回程"].map((nm, n) => `<button type="button" class="cr-view-tab" data-n="${n}" onclick="window.__crView(${n})" style="${sty(n === 0)}">${nm}</button>`).join("")}</div>` : "";
       await Swal.fire({
-        title: `預約已建立（${cars.length} 台）`,
+        title,
         html: `<div style="text-align:left;line-height:1.7;font-size:14px;">
           單號：<br><pre style="white-space:pre-wrap;background:#f8f3f7;border-radius:10px;padding:10px;">${escapeHtml(idsText)}</pre>
-          <div style="color:#6b7280;margin-bottom:10px;">已寫入預約單、原始檔，並同步建立行事曆。每台車是各自獨立的一筆訂單。</div>
-          <label style="display:block;color:#553f62;font-weight:700;margin-bottom:6px;">傳給客人的確認文字（每台一份）</label>
-          <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">${cars.map((cp, i) => `<button type="button" class="car-msg-tab" data-n="${i}" onclick="window.__showCarMsg(${i})" style="border:1px solid #553f62;border-radius:9px;padding:4px 14px;font-weight:700;background:${i === 0 ? "#553f62" : "#fff"};color:${i === 0 ? "#fff" : "#553f62"}">C${i + 1}</button>`).join("")}</div>
-          ${msgs.map((m, i) => `<textarea class="car-msg-box" data-n="${i}" style="display:${i === 0 ? "block" : "none"};width:100%;height:260px;border:1px solid #e7dde8;border-radius:12px;padding:10px;font-size:13px;line-height:1.6;">${escapeHtml(m)}</textarea>`).join("")}
+          <div style="color:#6b7280;margin-bottom:10px;">${noteText}</div>
+          <label style="display:block;color:#553f62;font-weight:700;margin-bottom:6px;">傳給客人的確認文字<span id="crLabel" style="margin-left:6px;color:#d85c8f"></span></label>
+          ${carTabs}${viewTabs}
+          <textarea id="crBox" style="width:100%;height:260px;border:1px solid #e7dde8;border-radius:12px;padding:10px;font-size:13px;line-height:1.6;"></textarea>
         </div>`,
         icon: "success",
-        confirmButtonText: "複製全部",
-        showDenyButton: true,
-        denyButtonText: "複製這一台",
+        confirmButtonText: multi ? "複製全部" : "複製目前這份",
+        showDenyButton: multi,
+        denyButtonText: "複製目前這份",
         denyButtonColor: "#8b6a99",
         showCancelButton: true,
         cancelButtonText: "關閉",
         confirmButtonColor: "#553f62",
+        didOpen: () => { refresh(); },
         preConfirm: async () => {
-          const texts = Array.from(document.querySelectorAll(".car-msg-box")).map(el => el.value);
-          try { await navigator.clipboard.writeText(texts.map((t, i) => `【C${i + 1}】\n${t}`).join(SEP)); } catch (e) {}
+          try { await navigator.clipboard.writeText(multi ? allText() : curText()); } catch (e) {}
+          if (!multi) { flash(Swal.getConfirmButton(), "已複製", "複製目前這份"); return false; }
           return true;
         },
         preDeny: async () => {
-          const box = document.querySelector(`.car-msg-box[data-n="${window.__curCarMsg || 0}"]`);
-          try { await navigator.clipboard.writeText(box ? box.value : ""); } catch (e) {}
-          const btn = Swal.getDenyButton(); if (btn) { btn.textContent = `已複製 C${(window.__curCarMsg || 0) + 1}`; setTimeout(() => { btn.textContent = "複製這一台"; }, 1500); }
+          try { await navigator.clipboard.writeText(curText()); } catch (e) {}
+          flash(Swal.getDenyButton(), "已複製", "複製目前這份");
           return false;
         }
       });
+    }
+
+    // 多台車建立成功：每台一份客人確認文字(來回的每台再分去程/回程)，可切換、複製目前這份或複製全部
+    async function showMultiCarSuccess(payload, res) {
+      const cars = carPayloads(payload);
+      const allIds = res.reservationIds || [];
+      const groupsRes = res.groups || [];
+      const idsOf = (n) => {
+        const g = groupsRes.find(x => Number(x.car) === n);
+        if (g && g.reservationIds) return g.reservationIds;
+        return allIds.filter(id => new RegExp("-C" + n + "(-[AB])?$").test(String(id)));
+      };
+      const groups = cars.map((cp, i) => ({ label: `C${i + 1}`, carType: cp.carType, ids: idsOf(i + 1), parts: buildCustomerConfirmMessageParts(cp, idsOf(i + 1)) }));
+      saveLastCustomerMessage(groups.map(g => `【${g.label}】\n${g.parts.join("\n\n")}`).join("\n\n━━━━━━━━━━━━━━━━\n\n"));
+      const idsText = groups.map(g => `${g.label} ${g.carType}：${g.ids.join("、")}`).join("\n");
+      await showCopyResultDialog(`預約已建立（${cars.length} 台）`, "已寫入預約單、原始檔，並同步建立行事曆。每台車是各自獨立的一筆訂單。", idsText, groups);
     }
 
     function buildMultiCarConfirmHtml(p) {
@@ -2168,6 +2191,12 @@
         const ids = (res.reservationIds || []).join("\n");
         const customerText = buildCustomerConfirmMessage(payload, res.reservationIds || []);
         saveLastCustomerMessage(customerText);
+        if (payload.hasReturn && !isRecoveryMode) {
+          // 來回：可分開複製「去程」「回程」或兩則合併
+          await showCopyResultDialog("預約已建立", "已寫入預約單、原始檔，並同步建立行事曆。", ids, [{ label: "", carType: payload.carType, ids: res.reservationIds || [], parts: buildCustomerConfirmMessageParts(payload, res.reservationIds || []) }]);
+          updateSummary(ids.replace(/\n/g, "、") || "已建立");
+          return;
+        }
         await Swal.fire({
           title: "預約已建立",
           html: `<div style="text-align:left;line-height:1.7;font-size:14px;">
@@ -2239,6 +2268,11 @@
     }
 
     function buildCustomerConfirmMessage(p, reservationIds = []) {
+      return buildCustomerConfirmMessageParts(p, reservationIds).join("\n\n");
+    }
+
+    // 回傳「每一腿一則」的客人確認文字陣列(單程1則、來回2則：[去程, 回程])，供「分開複製去程/回程」使用
+    function buildCustomerConfirmMessageParts(p, reservationIds = []) {
       const trips = [{
         text: buildCustomerTripBlock(p, {
         label: "去程",
@@ -2263,7 +2297,7 @@
           reservationId: reservationIds[1] || ""
         });
       }
-      return trips.map(trip => buildCustomerMessageEnvelope(trip.text, trip.reservationId, p.source)).join("\n\n");
+      return trips.map(trip => buildCustomerMessageEnvelope(trip.text, trip.reservationId, p.source));
     }
 
     function buildCustomerMessageEnvelope(tripText, reservationId = "", source = "") {
