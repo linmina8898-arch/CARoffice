@@ -195,7 +195,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.17.1"; // v1.17.1：電話辨識支援國際電話(+國碼開頭)，一樣只顯示圖示、點了直接撥號； v1.17.0：依使用者要求，任務明細不再顯示任何電話號碼，備註/司機提醒/站點聯絡人裡的電話一律只留「☎ 電話圖示」，點圖示直接撥號(聯絡人只顯示名字＋圖示)； v1.16.1：星期改用年月日直接計算，不受手機時區影響。 v1.16.0：備註/司機提醒/地址裡的電話(手機、市話、分機)自動變成可按的撥號連結；站點聯絡人「地址（聯絡：王小姐 0912-345-678）」拆成獨立一行並可直接撥打，地圖連結只吃純地址。v1.15.2：客人電話帶分機時，致電按鈕會先撥主號碼、停4秒再自動撥分機；v1.15.1：v1.15.1：加點地址改粉底醒目，單程放在上車/下車地址中間；v1.15.0：v1.15.0：①手機返回鍵/滑動返回改為退回系統主頁（不再跳出到官方LINE）②任務明細縮成一頁，回報按鈕固定在畫面下方；v1.14.72：v1.14.72：依使用者回報，司機連續按好幾筆「確認收單」都成功，過不久畫面又跳回「待收單」逼司機重按：剛回報成功的保護時間由15秒拉長到3分鐘、存進手機(localStorage，重新開啟App也有效)，且只在後端回來的狀態比剛回報的還早時才蓋回去(後端已一樣或更後面不動)；配合gas.html v2.2.337(寫入後flush＋收尾再清快取)。 v1.14.71：依使用者要求，司機端「該收現金」的備援算法(後端沒給cashCollected時才會用到)改成原始車資扣掉折扣金額，要跟客人卡片付款欄的實付金額一致；主要算法在後端gas.html v2.2.329。v1.14.70：依使用者要求，畫面抬頭改成公司全名：分頁標題「AS派車 - 司機端」→「瑞陞汽車租賃有限公司 派車單 - 司機端(AS)」，頁面上方標頭「AS派車 Driver」→「瑞陞汽車租賃有限公司 派車 Driver」。v1.14.69：單程(不經機場的定點接送)司機端畫面調整：原本沿用接送機場欄位配置，導致單程被標成「接送機場」很奇怪(其實顯示的是終點地址)、還會多顯示用不到的「航班編號」。改成單程專屬格式：「上車地址／下車地址」各自帶地圖連結方便導航，不顯示航班編號。只限定t.type==='單程'才套用，接機/送機畫面完全不受影響
+        const APP_VERSION = "v1.18.0"; // v1.18.0：①有加點時地址改成「地址1/地址2/地址3」依行車順序編號(單程含終點、接送機含加點)，加點列維持粉底；②轉帳/月結＋另外現場收現時，付款方式改寫「轉帳＋現場收現」(或「月結簽單＋現場收現」)，收現金額下面補一行說明「只收這筆現金，其餘…」，不再同時出現「轉帳，不簽不收」與現場收現造成混淆； v1.17.1：電話辨識支援國際電話(+國碼開頭)，一樣只顯示圖示、點了直接撥號； v1.17.0：依使用者要求，任務明細不再顯示任何電話號碼，備註/司機提醒/站點聯絡人裡的電話一律只留「☎ 電話圖示」，點圖示直接撥號(聯絡人只顯示名字＋圖示)； v1.16.1：星期改用年月日直接計算，不受手機時區影響。 v1.16.0：備註/司機提醒/地址裡的電話(手機、市話、分機)自動變成可按的撥號連結；站點聯絡人「地址（聯絡：王小姐 0912-345-678）」拆成獨立一行並可直接撥打，地圖連結只吃純地址。v1.15.2：客人電話帶分機時，致電按鈕會先撥主號碼、停4秒再自動撥分機；v1.15.1：v1.15.1：加點地址改粉底醒目，單程放在上車/下車地址中間；v1.15.0：v1.15.0：①手機返回鍵/滑動返回改為退回系統主頁（不再跳出到官方LINE）②任務明細縮成一頁，回報按鈕固定在畫面下方；v1.14.72：v1.14.72：依使用者回報，司機連續按好幾筆「確認收單」都成功，過不久畫面又跳回「待收單」逼司機重按：剛回報成功的保護時間由15秒拉長到3分鐘、存進手機(localStorage，重新開啟App也有效)，且只在後端回來的狀態比剛回報的還早時才蓋回去(後端已一樣或更後面不動)；配合gas.html v2.2.337(寫入後flush＋收尾再清快取)。 v1.14.71：依使用者要求，司機端「該收現金」的備援算法(後端沒給cashCollected時才會用到)改成原始車資扣掉折扣金額，要跟客人卡片付款欄的實付金額一致；主要算法在後端gas.html v2.2.329。v1.14.70：依使用者要求，畫面抬頭改成公司全名：分頁標題「AS派車 - 司機端」→「瑞陞汽車租賃有限公司 派車單 - 司機端(AS)」，頁面上方標頭「AS派車 Driver」→「瑞陞汽車租賃有限公司 派車 Driver」。v1.14.69：單程(不經機場的定點接送)司機端畫面調整：原本沿用接送機場欄位配置，導致單程被標成「接送機場」很奇怪(其實顯示的是終點地址)、還會多顯示用不到的「航班編號」。改成單程專屬格式：「上車地址／下車地址」各自帶地圖連結方便導航，不顯示航班編號。只限定t.type==='單程'才套用，接機/送機畫面完全不受影響
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -1112,17 +1112,22 @@
             const isBillingPayment = paymentInfo.isBilling;
             const isTransferPayment = paymentInfo.isTransfer;
             let paymentGuideHtml = '';
+            // v1.18.0：有「現場收現」時(轉帳/月結 + 另外現場收一筆現金)，付款方式不能只寫「轉帳，不簽不收」，
+            // 不然司機會以為整趟都不用收錢、下面又冒出現場收現金額，搞不清楚。改成「轉帳＋現場收現」，並在收現金額下面補一行說明。
+            const splitCashNote = paymentInfo.cashCollected > 0
+                ? (isTransferPayment ? '只收這筆現金，其餘客人已轉帳，不用收' : (isBillingPayment ? '只收這筆現金，其餘月結簽單（客下請簽名）' : ''))
+                : '';
             if (isTransferPayment) {
-                paymentGuideHtml = `<div class="flex justify-between items-center py-3 border-t-2 border-gray-100 mt-2"><span class="text-gray-500 font-bold mr-2">付款方式</span><span class="text-[#553f62] font-bold text-right">轉帳，不簽不收</span></div>`;
+                paymentGuideHtml = `<div class="flex justify-between items-center py-3 border-t-2 border-gray-100 mt-2"><span class="text-gray-500 font-bold mr-2">付款方式</span><span class="text-[#553f62] font-bold text-right">${splitCashNote ? '轉帳＋現場收現' : '轉帳，不簽不收'}</span></div>`;
             } else if (isBillingPayment) {
-                paymentGuideHtml = `<div class="flex justify-between items-center py-3 border-t-2 border-pink-100 mt-2"><span class="text-gray-500 font-bold mr-2">付款方式</span><span class="text-[#553f62] font-bold text-right">月結簽單，客下請簽名</span></div>`;
+                paymentGuideHtml = `<div class="flex justify-between items-center py-3 border-t-2 border-pink-100 mt-2"><span class="text-gray-500 font-bold mr-2">付款方式</span><span class="text-[#553f62] font-bold text-right">${splitCashNote ? '月結簽單＋現場收現' : '月結簽單，客下請簽名'}</span></div>`;
             }
             let cashHtml = '';
             if (paymentInfo.cashCollected > 0) {
                 let amtToCollect = paymentInfo.cashCollected;
                 const payoutAmount = paymentInfo.payoutAmount;
                 const cashNoteBtn = payoutAmount > 0 ? `<button type="button" onclick="showCashSettlementNote(${amtToCollect}, ${payoutAmount})" class="ml-2 rounded-full border border-[#EADDE8] bg-[#FBF7FA] px-2 py-0.5 text-[11px] font-bold text-[#7A6A82]">收現備註</button>` : '';
-                cashHtml = `<div class="flex justify-between items-center py-3 border-t-2 border-[#EADDE8] mt-2" style="font-weight:700;"><span class="text-gray-700 mr-2">現場收現</span><div class="text-right"><div class="flex items-center justify-end"><div class="text-[#553f62] text-xl" style="font-weight:700;">$${amtToCollect.toLocaleString()}</div>${cashNoteBtn}</div>${cleanVal(t.cashCollectionNote) ? `<div class="text-xs text-gray-500 font-normal">${cleanVal(t.cashCollectionNote)}</div>` : ''}</div></div>`;
+                cashHtml = `<div class="flex justify-between items-center py-3 border-t-2 border-[#EADDE8] mt-2" style="font-weight:700;"><span class="text-gray-700 mr-2">現場收現</span><div class="text-right"><div class="flex items-center justify-end"><div class="text-[#553f62] text-xl" style="font-weight:700;">$${amtToCollect.toLocaleString()}</div>${cashNoteBtn}</div>${splitCashNote ? `<div class="text-xs text-[#b63c6b] font-normal mt-0.5">${splitCashNote}</div>` : ''}${cleanVal(t.cashCollectionNote) ? `<div class="text-xs text-gray-500 font-normal">${cleanVal(t.cashCollectionNote)}</div>` : ''}</div></div>`;
             }
 
             let cNote = cleanVal(t.remarks) ? linkifyPhonesHtml(cleanVal(t.remarks)) : '';
@@ -1139,6 +1144,16 @@
             const extraStopRowHtml = cleanVal(t.extraStop)
                 ? `<div class="driver-field bg-[#fff5f8] -mx-3 px-3 border-y border-[#f07cad]/20"><span class="driver-field-label text-[#b63c6b]" style="font-weight:700;">加點地址</span><span class="driver-field-value">${extraStopHtml}</span></div>`
                 : '';
+            // v1.18.0：有加點時，所有地址改成「地址1／地址2／地址3」依行車順序編號，避免司機把加點當成最後一站或弄錯順序
+            const extraLinesArr = cleanVal(t.extraStop).split(/\n+/).map(x => x.trim()).filter(Boolean);
+            const addrRowHtml = (label, val, highlight) => highlight
+                ? `<div class="driver-field bg-[#fff5f8] -mx-3 px-3 border-y border-[#f07cad]/20"><span class="driver-field-label text-[#b63c6b]" style="font-weight:700;">${label}</span><span class="driver-field-value">${stopHtml(val)}</span></div>`
+                : `<div class="driver-field"><span class="driver-field-label">${label}</span><span class="driver-field-value">${stopHtml(val)}</span></div>`;
+            const numberedRoute = (() => {
+                if (!extraLinesArr.length) return '';
+                const pts = t.type === '單程' ? [t.address].concat(extraLinesArr, [t.airport]) : [t.address].concat(extraLinesArr);
+                return pts.map((v, i) => addrRowHtml('地址' + (i + 1), v, i > 0 && !(t.type === '單程' && i === pts.length - 1))).join('');
+            })();
             const tripVehicleText = [cleanVal(t.tripCarNo), cleanVal(t.tripCarType), cleanVal(t.tripCarColor)].filter(Boolean).join(' / ');
             const tripVehicleHtml = tripVehicleText ? `<div class="driver-field bg-[#f8f5fa] -mx-3 px-3 border-y border-[#553f62]/10"><span class="driver-field-label text-[#553f62]">本趟車輛</span><span class="driver-field-value text-[#553f62]">${tripVehicleText}${cleanVal(t.tripVehicleNote) ? `<br><span class="text-xs text-gray-500">${cleanVal(t.tripVehicleNote)}</span>` : ''}</span></div>` : '';
 
@@ -1155,17 +1170,16 @@
                     
                     <div class="space-y-0 text-sm bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
                         ${t.type === '單程'
-                          ? `<div class="driver-field"><span class="driver-field-label">上車地址</span><span class="driver-field-value">${addressHtml}</span></div>
+                          ? (numberedRoute || `<div class="driver-field"><span class="driver-field-label">上車地址</span><span class="driver-field-value">${addressHtml}</span></div>
                              ${extraStopRowHtml}
-                             <div class="driver-field"><span class="driver-field-label">下車地址</span><span class="driver-field-value">${stopHtml(t.airport)}</span></div>`
+                             <div class="driver-field"><span class="driver-field-label">下車地址</span><span class="driver-field-value">${stopHtml(t.airport)}</span></div>`)
                           : `<div class="driver-field"><span class="driver-field-label">接送機場</span><span class="driver-field-value">${cleanVal(t.airport)}</span></div>
                              <div class="driver-field"><span class="driver-field-label">航班編號</span><span class="driver-field-value text-gray-800">${cleanVal(t.flightNo)}</span></div>`}
                         <div class="driver-field">
                             <span class="driver-field-label">客戶姓名</span>
                             <div class="driver-field-value flex items-center justify-end"><span>${cleanVal(t.custName)}</span>${callBtn}</div>
                         </div>
-                        ${t.type !== '單程' ? `<div class="driver-field"><span class="driver-field-label">接送地址</span><span class="driver-field-value">${addressHtml}</span></div>` : ''}
-                        ${t.type !== '單程' ? extraStopRowHtml : ''}
+                        ${t.type !== '單程' ? (numberedRoute || `<div class="driver-field"><span class="driver-field-label">接送地址</span><span class="driver-field-value">${addressHtml}</span></div>${extraStopRowHtml}`) : ''}
                         <div class="driver-field"><span class="driver-field-label">乘車人數</span><span class="driver-field-value">${formatPassengerCount(t.paxCount)}</span></div>
                         ${luggageText === '無'
                           ? `<div class="driver-field bg-[#fff5f8] -mx-3 px-3 border-y border-[#f07cad]/20"><span class="driver-field-label text-[#b63c6b]">行李件數</span><span class="driver-field-value text-[#b63c6b]" style="font-weight:700;">無：出來快，勿遲到！</span></div>`
