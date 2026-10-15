@@ -3,6 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://script.google.com">
+    <link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
+    <link rel="preconnect" href="https://static.line-scdn.net" crossorigin>
+    <script>
+        /* 問卷資料請求「提前到最前面」：不等 Tailwind、LIFF SDK 下載完，一開頁就先送出，
+           三者同時進行。Google 腳本冷啟動時第一次可能要十幾秒，所以：
+           1) 8 秒沒回應就「再補送一份」(原本那份不取消，哪份先回來用哪份)，最多補到 4 份；
+           2) 回來的不是 JSON(Google 忙碌頁)就自動重試；
+           3) 整體最多等 60 秒。 */
+        (function () {
+            var GAS = 'https://script.google.com/macros/s/AKfycbww3Pr0IcOABPvTteIWHo9j6MWRQvNjpf_MZRE7NgDp3Nt69Upx8VhVnCVMcbUvjJwI/exec';
+            var qs = new URLSearchParams(window.location.search);
+            var stored = ''; try { stored = sessionStorage.getItem('surveyToken') || ''; } catch (e) {}
+            var token = qs.get('token') || qs.get('t') || qs.get('surveyToken') || stored || '';
+            window.__surveyFetchStartedAt = Date.now();
+            if (!token) { window.__surveyInvitation = null; return; }
+            function once(signalHolder) {
+                var c = new AbortController();
+                signalHolder.push(c);
+                return fetch(GAS + '?action=getSurveyInvitation&token=' + encodeURIComponent(token) + '&t=' + Date.now(), { signal: c.signal })
+                    .then(function (r) { return r.text(); })
+                    .then(function (t) { return JSON.parse(t); });
+            }
+            window.__surveyInvitation = new Promise(function (resolve, reject) {
+                var done = false, launched = 0, inflight = 0, controllers = [], timers = [];
+                var MAX = 4;
+                function finish(fn, v) {
+                    if (done) return; done = true;
+                    timers.forEach(clearTimeout);
+                    controllers.forEach(function (c) { try { c.abort(); } catch (e) {} });
+                    fn(v);
+                }
+                function launch() {
+                    if (done || launched >= MAX) return;
+                    launched++; inflight++;
+                    once(controllers).then(function (r) { finish(resolve, r); })
+                    .catch(function () {
+                        inflight--;
+                        if (done) return;
+                        if (inflight <= 0) {
+                            if (launched >= MAX) finish(reject, new Error('failed'));
+                            else timers.push(setTimeout(launch, 1200));
+                        }
+                    });
+                }
+                launch();
+                [8000, 16000, 24000].forEach(function (ms) { timers.push(setTimeout(launch, ms)); });
+                timers.push(setTimeout(function () { finish(reject, new Error('timeout')); }, 60000));
+            });
+            window.__surveyInvitation.catch(function () {});
+        })();
+    </script>
     <title>安興租車 - 搭乘回饋問卷</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
@@ -49,7 +101,8 @@
             <div id="loadingScreen" class="p-12 text-center flex flex-col items-center justify-center min-h-[300px]">
                 <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary mb-5"></div>
                 <p class="text-primary font-medium">正在載入您的問卷資料</p>
-                <p class="text-xs text-gray-400 mt-2">請稍候，請勿關閉畫面</p>
+                <p id="loadingHint" class="text-xs text-gray-400 mt-2">請稍候，請勿關閉畫面</p>
+                <button id="loadingRetryBtn" type="button" onclick="location.reload()" class="hidden mt-5 bg-primary text-white text-sm font-bold py-2 px-6 rounded-full shadow">重新載入</button>
             </div>
 
             <div id="expiredScreen" class="hidden p-12 text-center flex flex-col items-center justify-center min-h-[400px]">
@@ -63,7 +116,7 @@
                     抱歉，此問卷已超過收到問卷後 3 天的填寫期限。<br>
                     如有服務建議，仍歡迎聯絡客服與我們分享。
                 </p>
-                <button onclick="window.close()" class="mt-8 bg-primary text-white font-bold py-2 px-8 rounded-full shadow hover:bg-[#41304c] transition">關閉頁面</button>
+                <button id="closedBtn" onclick="window.close()" class="mt-8 bg-primary text-white font-bold py-2 px-8 rounded-full shadow hover:bg-[#41304c] transition">關閉頁面</button>
             </div>
             <form id="surveyForm" class="hidden p-6 md:p-8 space-y-8 text-gray-700">
                 <!-- Section 1: 搭乘資訊 -->
@@ -313,12 +366,40 @@
         if (tokenParam) sessionStorage.setItem('surveyToken', tokenParam);
         if (sourceParam) sessionStorage.setItem('surveySource', sourceParam);
 
-        function showClosedScreen(title, message) {
+        function showClosedScreen(title, message, retry) {
+            clearLoadingHints();
+            const closedBtn = document.getElementById('closedBtn');
+            if (closedBtn) {
+                closedBtn.innerText = retry ? '重新載入' : '關閉頁面';
+                closedBtn.onclick = retry ? () => location.reload() : () => window.close();
+            }
             document.getElementById('loadingScreen').classList.add('hidden');
             document.getElementById('surveyForm').classList.add('hidden');
             document.getElementById('closedTitle').innerText = title;
             document.getElementById('closedMessage').innerText = message;
             document.getElementById('expiredScreen').classList.remove('hidden');
+        }
+
+        let loadingHintTimers = [];
+        function clearLoadingHints() { loadingHintTimers.forEach(clearTimeout); loadingHintTimers = []; }
+        function startLoadingHints() {
+            const hint = document.getElementById('loadingHint');
+            const btn = document.getElementById('loadingRetryBtn');
+            if (!hint) return;
+            loadingHintTimers.push(setTimeout(() => { hint.innerText = '系統正在喚醒，通常再幾秒就好，請不用關閉畫面'; }, 5000));
+            loadingHintTimers.push(setTimeout(() => { hint.innerText = '還在努力連線中，若超過半分鐘仍沒反應，可點下方重新載入'; if (btn) btn.classList.remove('hidden'); }, 20000));
+        }
+
+        function renderInvitation(result) {
+            if (!result || !result.success) return showClosedScreen('無法開啟問卷', (result && result.error) || '請聯絡客服協助處理。');
+            if (result.submitted) return showClosedScreen('問卷已完成', '此筆行程已完成回饋填寫，謝謝您的支持。');
+            if (result.expired) return showClosedScreen('問卷已截止', '此問卷已超過收到問卷後 3 天的填寫期限。');
+            clearLoadingHints();
+            document.getElementById('bookingId').value = result.bookingId || '';
+            document.getElementById('paxName').value = result.paxName || '';
+            document.getElementById('paxPhone').value = result.paxPhone || '';
+            document.getElementById('loadingScreen').classList.add('hidden');
+            document.getElementById('surveyForm').classList.remove('hidden');
         }
 
         async function loadSurvey() {
@@ -327,21 +408,11 @@
                 return;
             }
             try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 30000);
-                const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=getSurveyInvitation&token=${encodeURIComponent(tokenParam)}&t=${Date.now()}`, { signal: controller.signal });
-                clearTimeout(timeoutId);
-                const result = await safeJsonParse(res);
-                if (!result.success) return showClosedScreen('無法開啟問卷', result.error || '請聯絡客服協助處理。');
-                if (result.submitted) return showClosedScreen('問卷已完成', '此筆行程已完成回饋填寫，謝謝您的支持。');
-                if (result.expired) return showClosedScreen('問卷已截止', '此問卷已超過收到問卷後 3 天的填寫期限。');
-                document.getElementById('bookingId').value = result.bookingId || '';
-                document.getElementById('paxName').value = result.paxName || '';
-                document.getElementById('paxPhone').value = result.paxPhone || '';
-                document.getElementById('loadingScreen').classList.add('hidden');
-                document.getElementById('surveyForm').classList.remove('hidden');
+                // 資料請求在網頁最前面就已經送出(見 <head> 內的提前載入)，這裡只是接結果
+                const result = await (window.__surveyInvitation || Promise.reject(new Error('no-request')));
+                renderInvitation(result);
             } catch (error) {
-                showClosedScreen('目前無法載入問卷', '系統回應時間較久，請稍後重新開啟 LINE 中的問卷連結，或聯絡客服協助處理。');
+                showClosedScreen('目前無法載入問卷', '連線比較慢或暫時中斷，請點下方「重新載入」再試一次；仍無法開啟請聯絡客服協助處理。', true);
             }
         }
 
@@ -367,7 +438,11 @@
         async function initializeSurveyLiff() {
             if (!window.liff) return true;
             try {
-                await liff.init({ liffId: LIFF_IDS[liffSource] || LIFF_IDS.AS });
+                // LIFF 初始化偶爾會卡住：最多等 12 秒，超過就放棄(不影響問卷顯示)
+                await Promise.race([
+                    liff.init({ liffId: LIFF_IDS[liffSource] || LIFF_IDS.AS }),
+                    new Promise((_, rej) => setTimeout(() => rej(new Error('liff-timeout')), 12000))
+                ]);
                 liffReady = true;
                 if (!liff.isLoggedIn()) {
                     const hasLineAuthParams = urlParams.has('code') || urlParams.has('liffClientId') || urlParams.has('liffRedirectUri');
@@ -414,11 +489,13 @@
 
         const surveyForm = document.getElementById('surveyForm');
         if(surveyForm) {
-            surveyForm.addEventListener('submit', function(e) {
+            surveyForm.addEventListener('submit', async function(e) {
                 e.preventDefault(); 
                 const submitBtn = document.getElementById('submitBtn');
                 submitBtn.innerHTML = `<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> 處理中...`;
                 submitBtn.disabled = true;
+                // 送出前確認 LINE 身分已取得(最多再等 5 秒)，避免因為 LIFF 還沒好而沒帶到 lineId
+                try { await Promise.race([liffPromise, new Promise(r => setTimeout(r, 5000))]); } catch (err) {}
 
                 const formData = {
                     token: tokenParam,
@@ -471,9 +548,17 @@
         }
         document.getElementById('comments')?.addEventListener('input', countCommentChars);
         countCommentChars();
+        let liffPromise = Promise.resolve(true);
         async function bootstrapSurvey() {
-            const shouldLoad = await initializeSurveyLiff();
-            if (shouldLoad === false) return;
+            if (!tokenParam) { await loadSurvey(); return; }
+            startLoadingHints();
+            // LIFF 初始化與問卷資料請求「同時進行」，不再一個等一個
+            liffPromise = initializeSurveyLiff();
+            // 問卷資料先回來時，再多等 LIFF 最多 2.5 秒，只為了確認「要不要跳去 LINE 登入」，避免畫面閃一下又跳走
+            const invitation = (window.__surveyInvitation || Promise.reject(new Error('no-request'))).then(() => 'ok', () => 'fail');
+            await invitation;
+            const needLogin = await Promise.race([liffPromise.then(v => v === false), new Promise(r => setTimeout(() => r(false), 2500))]);
+            if (needLogin) return;
             await loadSurvey();
         }
         bootstrapSurvey();
