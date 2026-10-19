@@ -13,7 +13,7 @@
            2) 回來的不是 JSON(Google 忙碌頁)就自動重試；
            3) 整體最多等 60 秒。 */
         (function () {
-            var GAS = 'https://script.google.com/macros/s/AKfycbww3Pr0IcOABPvTteIWHo9j6MWRQvNjpf_MZRE7NgDp3Nt69Upx8VhVnCVMcbUvjJwI/exec';
+            var GAS = 'https://script.google.com/macros/s/AKfycbz6wgk6T8ypEI1pW5ih7M3Bom54Tu7unv-sc_ldFtPSBWw4yAbahs70GErKGpsRqcG3/exec';
             var qs = new URLSearchParams(window.location.search);
             var stored = ''; try { stored = sessionStorage.getItem('surveyToken') || ''; } catch (e) {}
             var token = qs.get('token') || qs.get('t') || qs.get('surveyToken') || stored || '';
@@ -336,7 +336,7 @@
     </div>
 
     <script>
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbww3Pr0IcOABPvTteIWHo9j6MWRQvNjpf_MZRE7NgDp3Nt69Upx8VhVnCVMcbUvjJwI/exec';
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz6wgk6T8ypEI1pW5ih7M3Bom54Tu7unv-sc_ldFtPSBWw4yAbahs70GErKGpsRqcG3/exec';
 
         /**
          * 安全解析後端回應：GAS 額度不足、逾時、或服務忙碌時，Google 會回一頁 HTML 錯誤頁而不是 JSON，
