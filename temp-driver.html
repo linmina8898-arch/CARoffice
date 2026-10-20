@@ -88,7 +88,7 @@
         </div>
     </div>
     <script>
-        const APP_VERSION = "v1.0.49"; // v1.0.49：行李件數分2行(登機/中型/大型 + 含推車/胖胖箱)，乘車人數改「大人 2 + 兒童 1」(需gas v2.2.390)；  v1.0.48：臨時司機明細新增「司機備註」列(試算表AI欄)； v1.0.47：有加點時地址改「地址1/地址2…」編號；轉帳/月結＋現場收現時付款方式寫清楚「轉帳＋現場收現 $X（只收這筆現金，其餘客人已轉帳）」； v1.0.46：電話辨識支援國際電話(+國碼開頭)，一樣只顯示圖示； v1.0.45：依使用者要求，任務明細不再顯示任何電話號碼，電話只留「☎ 電話圖示」點了直接撥號(跟司機端 v1.17.0 同一套)； v1.0.44：備註/司機提醒/地址裡的電話自動變撥號連結，站點聯絡人拆成獨立一行(跟司機端 v1.16.0 同一套)。v1.0.43：客人電話帶分機時，致電按鈕先撥主號碼、停4秒再撥分機；依使用者要求(先確認過示意圖)：畫面最後面新增「本趟車輛」一行(車號︱車型︱車色)，放在付款方式(含實拿車資)後面、中間空一格(空格高度跟其他每一行一樣)；沒填車色就只顯示車號︱車型，三項都沒有時整行(含空格)不顯示；車色已包含在車型文字裡時不重複顯示。配合gas.html v2.2.344。 依使用者要求：有現場收現且有給司機車資時，「付款方式」下面多一行「實拿車資 $X」，避免臨時司機看到「現場收現 $1,800」誤以為車資是1,800(收現備註按鈕保留)。 v1.0.40： 依使用者要求，畫面抬頭改成公司全名：分頁標題「AS派車 - 臨時派遣任務」→「瑞陞汽車租賃有限公司 派車單 - 臨時派遣任務(AS)」，頁面上方標頭「AS派車」→「瑞陞汽車租賃有限公司 派車」。v1.0.39：修正LIFF withLoginOnExternalBrowser登入流程導回頁面時，網址上的?token=有時候會遺失、導致顯示「無法開啟任務」的問題：進頁面時把token先存到sessionStorage，網址讀不到token時改用暫存的這份
+        const APP_VERSION = "v1.0.50"; // v1.0.50：月結客戶「免簽名」(企業客戶工作表「司機要簽單」填否)：結案不跳簽名板、顯示「月結，免簽名」(需gas v2.2.398)； v1.0.49：行李件數分2行(登機/中型/大型 + 含推車/胖胖箱)，乘車人數改「大人 2 + 兒童 1」(需gas v2.2.390)；  v1.0.48：臨時司機明細新增「司機備註」列(試算表AI欄)； v1.0.47：有加點時地址改「地址1/地址2…」編號；轉帳/月結＋現場收現時付款方式寫清楚「轉帳＋現場收現 $X（只收這筆現金，其餘客人已轉帳）」； v1.0.46：電話辨識支援國際電話(+國碼開頭)，一樣只顯示圖示； v1.0.45：依使用者要求，任務明細不再顯示任何電話號碼，電話只留「☎ 電話圖示」點了直接撥號(跟司機端 v1.17.0 同一套)； v1.0.44：備註/司機提醒/地址裡的電話自動變撥號連結，站點聯絡人拆成獨立一行(跟司機端 v1.16.0 同一套)。v1.0.43：客人電話帶分機時，致電按鈕先撥主號碼、停4秒再撥分機；依使用者要求(先確認過示意圖)：畫面最後面新增「本趟車輛」一行(車號︱車型︱車色)，放在付款方式(含實拿車資)後面、中間空一格(空格高度跟其他每一行一樣)；沒填車色就只顯示車號︱車型，三項都沒有時整行(含空格)不顯示；車色已包含在車型文字裡時不重複顯示。配合gas.html v2.2.344。 依使用者要求：有現場收現且有給司機車資時，「付款方式」下面多一行「實拿車資 $X」，避免臨時司機看到「現場收現 $1,800」誤以為車資是1,800(收現備註按鈕保留)。 v1.0.40： 依使用者要求，畫面抬頭改成公司全名：分頁標題「AS派車 - 臨時派遣任務」→「瑞陞汽車租賃有限公司 派車單 - 臨時派遣任務(AS)」，頁面上方標頭「AS派車」→「瑞陞汽車租賃有限公司 派車」。v1.0.39：修正LIFF withLoginOnExternalBrowser登入流程導回頁面時，網址上的?token=有時候會遺失、導致顯示「無法開啟任務」的問題：進頁面時把token先存到sessionStorage，網址讀不到token時改用暫存的這份
         const GAS_URL = "https://script.google.com/macros/s/AKfycbz6wgk6T8ypEI1pW5ih7M3Bom54Tu7unv-sc_ldFtPSBWw4yAbahs70GErKGpsRqcG3/exec";
         const LIFF_ID = "2009971109-EdjC9QlC";
         let lineUserId = "";
@@ -238,12 +238,13 @@
         function renderTask(expiresAt) {
             const billing = clean(task.companyName) || String(task.paymentMethod).includes("月結") || String(task.paymentMethod).includes("簽單");
             const cash = parseCashAmount(task.cashCollected);
-            const basePayment = billing ? "月結簽單，客下請簽名" : (task.paymentStatus || task.paymentMethod || "-");
+            const needSign = billing && task.companyNeedSign !== false; // v1.0.50：企業客戶「司機要簽單」填否 → 免簽名
+            const basePayment = billing ? (needSign ? "月結簽單，客下請簽名" : "月結，免簽名") : (task.paymentStatus || task.paymentMethod || "-");
             // v1.0.47：轉帳/月結 + 另外現場收現時，寫清楚「轉帳＋現場收現 $X（只收這筆，其餘已轉帳）」，避免跟「不簽不收」互相矛盾
             const isSplitTransfer = cash > 0 && !billing && String(basePayment).includes("轉帳");
             const payment = cash > 0
                 ? (isSplitTransfer ? `轉帳＋現場收現 $${cash.toLocaleString()}（只收這筆現金，其餘客人已轉帳）`
-                    : (billing ? `月結簽單＋現場收現 $${cash.toLocaleString()}（只收這筆現金，其餘月結簽單，客下請簽名）` : `${basePayment}｜現場收現 $${cash.toLocaleString()}`))
+                    : (billing ? (needSign ? `月結簽單＋現場收現 $${cash.toLocaleString()}（只收這筆現金，其餘月結簽單，客下請簽名）` : `月結＋現場收現 $${cash.toLocaleString()}（只收這筆現金，其餘月結，免簽名）`) : `${basePayment}｜現場收現 $${cash.toLocaleString()}`))
                 : basePayment;
             // 有現場收現且有給司機車資時，付款方式下面多一行「實拿車資」，司機一眼看出自己拿多少(收現金額≠車資，差額要回金)
             const payoutAmt = parseCashAmount(task.driverPayout || task.payout);
@@ -291,7 +292,7 @@
                     <div class="text-xs text-gray-400 mt-3">連結有效至 ${esc(expiresAt)}，請勿轉傳他人。</div>
                 </div>
                 <div class="mt-4 space-y-3">
-                    ${next ? `<button onclick="handleProgress('${next}', ${billing})" class="w-full bg-[#553f62] text-white py-3.5 rounded-xl text-base">${label}</button>` : ""}
+                    ${next ? `<button onclick="handleProgress('${next}', ${needSign})" class="w-full bg-[#553f62] text-white py-3.5 rounded-xl text-base">${label}</button>` : ""}
                     <button onclick="reportAnomaly()" class="w-full bg-white border border-red-200 text-red-500 py-3 rounded-xl">異常狀況回報</button>
                 </div>`;
             document.getElementById("loading").classList.add("hidden");
