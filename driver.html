@@ -195,7 +195,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.18.4"; // v1.18.4：月結客戶「免簽名」(企業客戶工作表「司機要簽單」填否)：結案不跳簽名板、直接確認結案，任務卡標籤/付款文字寫「月結（免簽名）」(需gas v2.2.398)； v1.18.3： v1.18.3：行李件數分2行——第1行「登機 1 + 中型 1 + 大型 2」，第2行小字「含 推車 1 + 胖胖箱 1（29吋）」，人數改「大人 2 + 兒童 1」(需gas v2.2.390)；舊單(沒有中型)仍顯示「托運」； v1.18.2：「司機備註」文字顏色由黃褐色改成跟「客戶備註」同一個紫色； v1.18.1：試算表「司機備註」欄(AI)的內容原本後端沒送、司機明細完全看不到，現在會顯示在「司機備註」列(標籤由「車商備註」改成「司機備註」)； v1.18.0：①有加點時地址改成「地址1/地址2/地址3」依行車順序編號(單程含終點、接送機含加點)，加點列維持粉底；②轉帳/月結＋另外現場收現時，付款方式改寫「轉帳＋現場收現」(或「月結簽單＋現場收現」)，收現金額下面補一行說明「只收這筆現金，其餘…」，不再同時出現「轉帳，不簽不收」與現場收現造成混淆； v1.17.1：電話辨識支援國際電話(+國碼開頭)，一樣只顯示圖示、點了直接撥號； v1.17.0：依使用者要求，任務明細不再顯示任何電話號碼，備註/司機提醒/站點聯絡人裡的電話一律只留「☎ 電話圖示」，點圖示直接撥號(聯絡人只顯示名字＋圖示)； v1.16.1：星期改用年月日直接計算，不受手機時區影響。 v1.16.0：備註/司機提醒/地址裡的電話(手機、市話、分機)自動變成可按的撥號連結；站點聯絡人「地址（聯絡：王小姐 0912-345-678）」拆成獨立一行並可直接撥打，地圖連結只吃純地址。v1.15.2：客人電話帶分機時，致電按鈕會先撥主號碼、停4秒再自動撥分機；v1.15.1：v1.15.1：加點地址改粉底醒目，單程放在上車/下車地址中間；v1.15.0：v1.15.0：①手機返回鍵/滑動返回改為退回系統主頁（不再跳出到官方LINE）②任務明細縮成一頁，回報按鈕固定在畫面下方；v1.14.72：v1.14.72：依使用者回報，司機連續按好幾筆「確認收單」都成功，過不久畫面又跳回「待收單」逼司機重按：剛回報成功的保護時間由15秒拉長到3分鐘、存進手機(localStorage，重新開啟App也有效)，且只在後端回來的狀態比剛回報的還早時才蓋回去(後端已一樣或更後面不動)；配合gas.html v2.2.337(寫入後flush＋收尾再清快取)。 v1.14.71：依使用者要求，司機端「該收現金」的備援算法(後端沒給cashCollected時才會用到)改成原始車資扣掉折扣金額，要跟客人卡片付款欄的實付金額一致；主要算法在後端gas.html v2.2.329。v1.14.70：依使用者要求，畫面抬頭改成公司全名：分頁標題「AS派車 - 司機端」→「瑞陞汽車租賃有限公司 派車單 - 司機端(AS)」，頁面上方標頭「AS派車 Driver」→「瑞陞汽車租賃有限公司 派車 Driver」。v1.14.69：單程(不經機場的定點接送)司機端畫面調整：原本沿用接送機場欄位配置，導致單程被標成「接送機場」很奇怪(其實顯示的是終點地址)、還會多顯示用不到的「航班編號」。改成單程專屬格式：「上車地址／下車地址」各自帶地圖連結方便導航，不顯示航班編號。只限定t.type==='單程'才套用，接機/送機畫面完全不受影響
+        const APP_VERSION = "v1.18.5"; // v1.18.5：月結單付款文字／標籤帶公司簡稱，例：月結簽單(昕鴻)(需gas v2.2.399)； v1.18.4：月結客戶「免簽名」(企業客戶工作表「司機要簽單」填否)：結案不跳簽名板、直接確認結案，任務卡標籤/付款文字寫「月結（免簽名）」(需gas v2.2.398)； v1.18.3： v1.18.3：行李件數分2行——第1行「登機 1 + 中型 1 + 大型 2」，第2行小字「含 推車 1 + 胖胖箱 1（29吋）」，人數改「大人 2 + 兒童 1」(需gas v2.2.390)；舊單(沒有中型)仍顯示「托運」； v1.18.2：「司機備註」文字顏色由黃褐色改成跟「客戶備註」同一個紫色； v1.18.1：試算表「司機備註」欄(AI)的內容原本後端沒送、司機明細完全看不到，現在會顯示在「司機備註」列(標籤由「車商備註」改成「司機備註」)； v1.18.0：①有加點時地址改成「地址1/地址2/地址3」依行車順序編號(單程含終點、接送機含加點)，加點列維持粉底；②轉帳/月結＋另外現場收現時，付款方式改寫「轉帳＋現場收現」(或「月結簽單＋現場收現」)，收現金額下面補一行說明「只收這筆現金，其餘…」，不再同時出現「轉帳，不簽不收」與現場收現造成混淆； v1.17.1：電話辨識支援國際電話(+國碼開頭)，一樣只顯示圖示、點了直接撥號； v1.17.0：依使用者要求，任務明細不再顯示任何電話號碼，備註/司機提醒/站點聯絡人裡的電話一律只留「☎ 電話圖示」，點圖示直接撥號(聯絡人只顯示名字＋圖示)； v1.16.1：星期改用年月日直接計算，不受手機時區影響。 v1.16.0：備註/司機提醒/地址裡的電話(手機、市話、分機)自動變成可按的撥號連結；站點聯絡人「地址（聯絡：王小姐 0912-345-678）」拆成獨立一行並可直接撥打，地圖連結只吃純地址。v1.15.2：客人電話帶分機時，致電按鈕會先撥主號碼、停4秒再自動撥分機；v1.15.1：v1.15.1：加點地址改粉底醒目，單程放在上車/下車地址中間；v1.15.0：v1.15.0：①手機返回鍵/滑動返回改為退回系統主頁（不再跳出到官方LINE）②任務明細縮成一頁，回報按鈕固定在畫面下方；v1.14.72：v1.14.72：依使用者回報，司機連續按好幾筆「確認收單」都成功，過不久畫面又跳回「待收單」逼司機重按：剛回報成功的保護時間由15秒拉長到3分鐘、存進手機(localStorage，重新開啟App也有效)，且只在後端回來的狀態比剛回報的還早時才蓋回去(後端已一樣或更後面不動)；配合gas.html v2.2.337(寫入後flush＋收尾再清快取)。 v1.14.71：依使用者要求，司機端「該收現金」的備援算法(後端沒給cashCollected時才會用到)改成原始車資扣掉折扣金額，要跟客人卡片付款欄的實付金額一致；主要算法在後端gas.html v2.2.329。v1.14.70：依使用者要求，畫面抬頭改成公司全名：分頁標題「AS派車 - 司機端」→「瑞陞汽車租賃有限公司 派車單 - 司機端(AS)」，頁面上方標頭「AS派車 Driver」→「瑞陞汽車租賃有限公司 派車 Driver」。v1.14.69：單程(不經機場的定點接送)司機端畫面調整：原本沿用接送機場欄位配置，導致單程被標成「接送機場」很奇怪(其實顯示的是終點地址)、還會多顯示用不到的「航班編號」。改成單程專屬格式：「上車地址／下車地址」各自帶地圖連結方便導航，不顯示航班編號。只限定t.type==='單程'才套用，接機/送機畫面完全不受影響
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -999,8 +999,9 @@
             const cashReturn = cashCollected > 0 && payoutAmount > 0 ? cashCollected - payoutAmount : 0;
             // v1.18.4：企業客戶工作表「司機要簽單」填「否」的公司(例如特約社區廠商)，後端回 companyNeedSign=false → 免簽名
             const needSign = t.companyNeedSign !== false;
-            const paymentStatus = isCash ? '司機收現' : (isBilling ? (needSign ? '月結簽單，客下請簽名' : '月結，免簽名') : (isTransfer ? '轉帳，不簽不收' : (method || '未標示')));
-            return { isCash, isBilling, needSign, isTransfer, cashCollected, payoutAmount, cashReturn, paymentStatus, hasSeparateCash: cashCollected > 0 && !isCash };
+            const coTag = cleanVal(t.companyShortName) ? `(${cleanVal(t.companyShortName)})` : ''; // v1.18.5：付款文字帶公司簡稱
+            const paymentStatus = isCash ? '司機收現' : (isBilling ? (needSign ? `月結簽單${coTag}，客下請簽名` : `月結${coTag}，免簽名`) : (isTransfer ? '轉帳，不簽不收' : (method || '未標示')));
+            return { isCash, isBilling, needSign, coTag, isTransfer, cashCollected, payoutAmount, cashReturn, paymentStatus, hasSeparateCash: cashCollected > 0 && !isCash };
         }
 
         // --- 渲染【主畫面清單 (加入「確認收單」按鈕)】 ---
@@ -1043,7 +1044,7 @@
                 let mmdd = formatTaskDateWithWeekday(t.date);
                 if (cleanVal(t.extraStop)) tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-600 text-white">加點</span>`);
                 if (paymentInfo.isBilling) {
-                    tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#553f62] text-white">${paymentInfo.needSign ? '月結簽單' : '月結（免簽名）'}</span>`);
+                    tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#553f62] text-white">${paymentInfo.needSign ? '月結簽單' : '月結（免簽名）'}${paymentInfo.coTag || ''}</span>`);
                 } else if (paymentInfo.isCash) {
                     tags.push(`<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#f07cad] text-white">現場收現 $${paymentInfo.cashCollected.toLocaleString()}</span>`);
                 } else if (paymentInfo.isTransfer) {
@@ -1150,12 +1151,12 @@
             // v1.18.0：有「現場收現」時(轉帳/月結 + 另外現場收一筆現金)，付款方式不能只寫「轉帳，不簽不收」，
             // 不然司機會以為整趟都不用收錢、下面又冒出現場收現金額，搞不清楚。改成「轉帳＋現場收現」，並在收現金額下面補一行說明。
             const splitCashNote = paymentInfo.cashCollected > 0
-                ? (isTransferPayment ? '只收這筆現金，其餘客人已轉帳，不用收' : (isBillingPayment ? (paymentInfo.needSign ? '只收這筆現金，其餘月結簽單（客下請簽名）' : '只收這筆現金，其餘月結（免簽名）') : ''))
+                ? (isTransferPayment ? '只收這筆現金，其餘客人已轉帳，不用收' : (isBillingPayment ? (paymentInfo.needSign ? `只收這筆現金，其餘月結簽單${paymentInfo.coTag || ''}（客下請簽名）` : `只收這筆現金，其餘月結${paymentInfo.coTag || ''}（免簽名）`) : ''))
                 : '';
             if (isTransferPayment) {
                 paymentGuideHtml = `<div class="flex justify-between items-center py-3 border-t-2 border-gray-100 mt-2"><span class="text-gray-500 font-bold mr-2">付款方式</span><span class="text-[#553f62] font-bold text-right">${splitCashNote ? '轉帳＋現場收現' : '轉帳，不簽不收'}</span></div>`;
             } else if (isBillingPayment) {
-                paymentGuideHtml = `<div class="flex justify-between items-center py-3 border-t-2 border-pink-100 mt-2"><span class="text-gray-500 font-bold mr-2">付款方式</span><span class="text-[#553f62] font-bold text-right">${splitCashNote ? (paymentInfo.needSign ? '月結簽單＋現場收現' : '月結＋現場收現') : (paymentInfo.needSign ? '月結簽單，客下請簽名' : '月結，免簽名')}</span></div>`;
+                paymentGuideHtml = `<div class="flex justify-between items-center py-3 border-t-2 border-pink-100 mt-2"><span class="text-gray-500 font-bold mr-2">付款方式</span><span class="text-[#553f62] font-bold text-right">${splitCashNote ? (paymentInfo.needSign ? `月結簽單${paymentInfo.coTag || ''}＋現場收現` : `月結${paymentInfo.coTag || ''}＋現場收現`) : (paymentInfo.needSign ? `月結簽單${paymentInfo.coTag || ''}，客下請簽名` : `月結${paymentInfo.coTag || ''}，免簽名`)}</span></div>`;
             }
             let cashHtml = '';
             if (paymentInfo.cashCollected > 0) {
