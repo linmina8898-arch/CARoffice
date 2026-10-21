@@ -66,7 +66,8 @@
           </div>
           <div>
             <label class="label">時間</label>
-            <input id="rideTime" type="time" class="field focus-ring" value="09:00">
+            <div style="display:flex;align-items:center;gap:8px"><select id="rideHour" class="field focus-ring" aria-label="去程時"></select><span class="font-bold">:</span><select id="rideMinute" class="field focus-ring" aria-label="去程分"></select></div>
+            <input id="rideTime" type="hidden" value="09:00">
           </div>
         </div>
         <div>
@@ -144,7 +145,8 @@
             </div>
             <div>
               <label class="label">回程時間</label>
-              <input id="returnTime" type="time" class="field focus-ring" value="18:00">
+              <div style="display:flex;align-items:center;gap:8px"><select id="returnHour" class="field focus-ring" aria-label="回程時"></select><span class="font-bold">:</span><select id="returnMinute" class="field focus-ring" aria-label="回程分"></select></div>
+              <input id="returnTime" type="hidden" value="18:00">
             </div>
           </div>
           <div class="grid grid-cols-2 gap-3">
@@ -187,7 +189,7 @@
     </div>
   </div>
   <script>
-    const APP_VERSION = "quote-v1.0.18"; // ①紫色標題區塊改成跟正式預約卡片一樣扁平的單行樣式(比照gas.html的noticeHeader_，16px padding、一行文字，不再是三行堆疊的大標題)。②「本報價單24小時內有效」提示框原本是橘色/米色系，跟系統固定的紫/粉紅配色不符，改成粉紅色系(背景#FBF0F5、文字#a6396d)
+    const APP_VERSION = "quote-v1.0.19"; // ①時間改成「時:分」24小時下拉選單(分每5分鐘)。②文字版/圖片版改新格式(費用明細依去程/回程/優惠分組、新增【費用已包含】、新結尾)。③星期改用UTC計算不受裝置時區影響
     const GAS_URL = "https://script.google.com/macros/s/AKfycbz6wgk6T8ypEI1pW5ih7M3Bom54Tu7unv-sc_ldFtPSBWw4yAbahs70GErKGpsRqcG3/exec";
     const BOOKING_URL = location.href.includes("quote.html") ? location.href.replace("quote.html", "index.html") : "index.html";
     let priceRows = [];
@@ -412,24 +414,34 @@
     }
     function formatQuoteDate(value) {
       if (!value) return "";
-      const date = new Date(`${value}T00:00:00+08:00`);
+      const date = new Date(`${value}T00:00:00Z`); // 用UTC算星期，不受裝置時區影響
       const normalized = String(value).replace(/-/g, "/");
       if (isNaN(date.getTime())) return normalized;
       const weeks = ["日", "一", "二", "三", "四", "五", "六"];
-      return `${normalized} (${weeks[date.getDay()]})`;
+      return `${normalized} (${weeks[date.getUTCDay()]})`;
     }
     function formatQuoteMoney(value, plus) {
       const n = Number(value || 0);
       if (n < 0) return `-NT$${Math.abs(n).toLocaleString("en-US")}`;
       return `${plus ? "+" : ""}NT$${n.toLocaleString("en-US")}`;
     }
-    function buildQuoteFeeLines(items) {
-      return (items || [])
+    // 費用項目分組：去程 / 回程 / 優惠各自一組(其他項目歸同一組)，文字版和圖片版都用這個分組，組與組之間才空一行/加分隔線
+    function groupQuoteItems(items) {
+      const groups = [];
+      let lastKey = null;
+      (items || [])
         .filter(item => !item.isTotal && !String(item.label || "").includes("小計"))
-        .map(item => {
-          if (item.note) return `${item.label}｜${item.note}`;
-          return `${item.label}｜${formatQuoteMoney(item.amount, item.isExtra)}`;
+        .forEach(item => {
+          const label = String(item.label || "");
+          const key = label.startsWith("去程") ? "go" : label.startsWith("回程") ? "back" : /優惠|折扣|折抵/.test(label) ? "discount" : "other";
+          if (key !== lastKey) { groups.push([]); lastKey = key; }
+          groups[groups.length - 1].push(item);
         });
+      return groups;
+    }
+    function quoteItemLine(item) {
+      if (item.note) return `${item.label}｜${item.note}`;
+      return `${item.label}｜${formatQuoteMoney(item.amount, item.isExtra)}`;
     }
     function buildQuoteText(payload, result) {
       const lines = [];
@@ -462,21 +474,24 @@
       lines.push(divider);
       lines.push("【費用明細】");
       lines.push("");
-      buildQuoteFeeLines(result.items).forEach(line => {
-        lines.push(line);
+      groupQuoteItems(result.items).forEach(group => {
+        group.forEach(item => lines.push(quoteItemLine(item)));
         lines.push("");
       });
       lines.push(`預估總額｜NT$${Number(result.total || 0).toLocaleString("en-US")}`);
       lines.push(divider);
+      lines.push("");
+      lines.push("【費用已包含】");
+      lines.push("・合法小客車租賃車輛，非白牌車");
+      lines.push("・持有職業駕照的專業駕駛");
+      lines.push("・乘客責任險$500萬／人");
       lines.push("");
       lines.push("");
       lines.push("📍以上為依據目前提供資訊試算之參考報價。");
       lines.push("實際費用仍將依完整上下車地址、是否加點、行李數量及實際安排車型後確認。");
       lines.push("如有活動優惠折抵請洽詢客服。");
       lines.push("");
-      lines.push("");
       lines.push("📍本公司採預約保留制，完成預約後將為您安排車輛與司機。");
-      lines.push("");
       lines.push("");
       lines.push("");
       lines.push("若此報價符合您的需求，歡迎透過官方 LINE 完成正式預約。");
@@ -509,9 +524,14 @@
     // 產生「給客人看」的報價單圖片：跟後台試算工具不一樣，這裡只放客人需要知道的資訊
     // （行程、費用明細、總額），不放客服備註、通路代碼這些內部欄位。
     function buildQuoteImageHtml(payload, result) {
-      const rows = (result.items || []).map(item => {
-        const value = item.note || money(item.amount, item.isExtra);
-        return `<div style="display:flex;justify-content:space-between;padding:7px 0;font-size:15.5px;${item.isTotal ? "border-top:1px solid #e7ddea;margin-top:4px;padding-top:12px;font-weight:700;color:#553f62;font-size:17px;" : "color:#4b4553;"}"><span>${escapeQuoteHtml(item.label)}</span><span>${escapeQuoteHtml(value)}</span></div>`;
+      const feeGroups = groupQuoteItems(result.items);
+      const rows = feeGroups.map((group, gi) => {
+        const inner = group.map(item => {
+          const value = item.note || formatQuoteMoney(item.amount, item.isExtra);
+          return `<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:15.5px;color:#4b4553;"><span>${escapeQuoteHtml(item.label)}</span><span>${escapeQuoteHtml(value)}</span></div>`;
+        }).join("");
+        const isLast = gi === feeGroups.length - 1;
+        return `<div style="${isLast ? "" : "padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid #f1eaf3;"}">${inner}</div>`;
       }).join("");
       const route = routeLine(payload.serviceType, payload.airport, payload.mainAddress || payload.mainZone);
       const returnRoute = payload.hasReturn ? routeLine(payload.returnServiceType, payload.returnAirport, payload.returnAddress || payload.returnZone) : "";
@@ -521,7 +541,7 @@
       return `
         <div style="width:480px;background:#fff;font-family:-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif;">
           <div style="background:#574266;padding:16px 30px;text-align:center;color:#fff;">
-            <div style="font-size:17px;font-weight:700;letter-spacing:2px;">安興租車｜預估報價單</div>
+            <div style="font-size:17px;font-weight:700;letter-spacing:2px;">安興專車接送｜參考報價</div>
           </div>
 
           <div style="background:#FBF0F5;border-bottom:1px solid #F3D9E6;padding:14px 30px;text-align:center;">
@@ -537,10 +557,10 @@
 
             ${sectionLabel("【行程資訊】")}
             <div style="border:1px solid #e7ddea;border-radius:10px;padding:16px 18px;margin-bottom:20px;">
-              <div style="font-size:15px;color:#8a8291;margin-bottom:5px;">${escapeQuoteHtml(formatQuoteDate(payload.rideDate))} ${escapeQuoteHtml(payload.rideTime)}</div>
-              <div style="font-size:18px;font-weight:700;color:#1A0B3D;">${escapeQuoteHtml(payload.serviceType)}｜${escapeQuoteHtml(payload.carType)}</div>
+              <div style="font-size:14px;color:#8a8291;margin-bottom:3px;">${escapeQuoteHtml(formatQuoteDate(payload.rideDate))} ${escapeQuoteHtml(payload.rideTime)}</div>
+              <div style="font-size:18px;font-weight:700;color:#1A0B3D;">${escapeQuoteHtml(payload.serviceType)}服務｜${escapeQuoteHtml(payload.carType)}</div>
               <div style="font-size:15.5px;color:#4b4553;margin-top:4px;">${escapeQuoteHtml(route)}</div>
-              ${payload.hasReturn ? `<div style="border-top:1px dashed #e7ddea;margin-top:12px;padding-top:12px;"><div style="font-size:14px;color:#8a8291;">回程　${escapeQuoteHtml(formatQuoteDate(payload.returnDate))} ${escapeQuoteHtml(payload.returnTime)}</div><div style="font-size:15.5px;color:#4b4553;margin-top:3px;">${escapeQuoteHtml(returnRoute)}</div></div>` : ""}
+              ${payload.hasReturn ? `<div style="border-top:1px dashed #e7ddea;margin-top:12px;padding-top:12px;"><div style="font-size:14px;color:#8a8291;">回程　${escapeQuoteHtml(formatQuoteDate(payload.returnDate))} ${escapeQuoteHtml(payload.returnTime)}</div><div style="font-size:15.5px;font-weight:700;color:#1A0B3D;margin-top:3px;">${escapeQuoteHtml(payload.returnServiceType)}服務</div><div style="font-size:15.5px;color:#4b4553;margin-top:3px;">${escapeQuoteHtml(returnRoute)}</div></div>` : ""}
               ${payload.extraAddress ? `<div style="font-size:14.5px;color:#8a8291;margin-top:10px;">加點：${escapeQuoteHtml(payload.extraAddress)}</div>` : ""}
             </div>
 
@@ -555,14 +575,16 @@
             ${sectionLabel("【費用明細】")}
             <div>${rows}</div>
 
-            <div style="margin-top:18px;display:flex;justify-content:space-between;align-items:baseline;background:#FBF7FA;border-radius:10px;padding:18px 20px;">
+            <div style="margin-top:14px;display:flex;justify-content:space-between;align-items:baseline;background:#FBF7FA;border-radius:10px;padding:18px 20px;">
               <span style="font-size:16px;font-weight:600;color:#553f62;">預估總額</span>
               <span style="font-size:30px;font-weight:700;color:#993556;">$${Number(result.total || 0).toLocaleString("en-US")}</span>
             </div>
-            <div style="font-size:13px;color:#a89fb0;margin-top:14px;line-height:1.6;">＊實際費用仍將依完整上下車地址、是否加點、行李數量及實際安排車型後確認。如有活動優惠折抵請洽詢客服。</div>
+            ${sectionLabel("【費用已包含】").replace("margin-bottom:8px;", "margin:22px 0 8px;")}
+            <div style="font-size:15px;color:#4b4553;line-height:1.9;"><div>・合法小客車租賃車輛，非白牌車</div><div>・持有職業駕照的專業駕駛</div><div>・乘客責任險 $500萬／人</div></div>
+            <div style="font-size:13px;color:#a89fb0;margin-top:18px;line-height:1.6;">＊實際費用仍將依完整上下車地址、是否加點、行李數量及實際安排車型後確認。如有活動優惠折抵請洽詢客服。</div>
           </div>
 
-          <div style="background:#FBF7FA;padding:16px 30px;font-size:13px;color:#8a8291;text-align:center;line-height:1.9;">如報價無誤，歡迎透過官方 LINE 完成正式預約<br>合法營運︱專業接送∣安心搭乘安全抵達</div>
+          <div style="background:#FBF7FA;padding:18px 30px;font-size:13px;color:#8a8291;text-align:center;line-height:1.9;">若此報價符合您的需求，歡迎透過官方 LINE 完成正式預約<br>首次透過系統預約，另享折扣碼優惠<br><b style="color:#553f62;">官方 LINE：page.line.me/ansing</b><br><span style="display:block;margin-top:8px;">安興專車接送｜深耕新竹・服務全台<br>合法營運︱專業接送∣安心搭乘安全抵達</span></div>
         </div>`;
     }
     async function generateQuoteImage() {
@@ -640,8 +662,21 @@
       }).catch(() => {});
       Swal.fire({ title: "已複製", text: "可以直接貼到 LINE、IG、Messenger 或簡訊給客人。", icon: "success", timer: 1400, showConfirmButton: false });
     }
+    // 時間改成「時 : 分」兩個下拉選單(24小時制，分每5分鐘一格)，實際值寫進隱藏的 rideTime / returnTime，其他程式照舊讀這兩個欄位
+    function setupTimeSelect(prefix, hiddenId, defaultTime) {
+      const hh = $(prefix + "Hour"), mm = $(prefix + "Minute"), hid = $(hiddenId);
+      hh.innerHTML = Array.from({ length: 24 }, (_, i) => `<option value="${String(i).padStart(2, "0")}">${String(i).padStart(2, "0")}</option>`).join("");
+      mm.innerHTML = Array.from({ length: 12 }, (_, i) => `<option value="${String(i * 5).padStart(2, "0")}">${String(i * 5).padStart(2, "0")}</option>`).join("");
+      const sync = () => { hid.value = `${hh.value}:${mm.value}`; };
+      hh.addEventListener("change", sync);
+      mm.addEventListener("change", sync);
+      const [dh, dm] = defaultTime.split(":");
+      hh.value = dh; mm.value = dm; sync();
+    }
     function init() {
       $("versionText").textContent = APP_VERSION;
+      setupTimeSelect("ride", "rideTime", "09:00");
+      setupTimeSelect("return", "returnTime", "18:00");
       fillNumberSelect("adult", 7, 1);
       fillNumberSelect("child", 3, 0);
       fillNumberSelect("infant", 2, 0);
