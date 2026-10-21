@@ -584,6 +584,11 @@
               <option value="轉帳+收現">轉帳+收現</option>
             </select>
           </div>
+          <div class="full" id="companyWrap">
+            <label for="companyKey">特約／月結企業客戶（選填）</label>
+            <input id="companyKey" type="text" inputmode="email" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="20" placeholder="輸入公司統編或特約代號，查到公司後自動帶入">
+            <p id="companyStatus" class="hint" style="font-weight:700;margin-top:6px"></p>
+          </div>
           <div id="manualCashWrap" class="full hidden">
             <label>現場收現金額</label>
             <div class="mini-grid two">
@@ -676,7 +681,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.0.94"; // v1.0.94：數字欄位(車資等)拿掉上下箭頭，滾輪/方向鍵不會再改數字； v1.0.93：航班欄位(去程/回程)手機鍵盤預設英文＋自動大寫； v1.0.92：來回預約新增「回程機場」(預設同去程)，機場不同時回程單存回程機場、航廈T1/T2依各趟機場決定、確認畫面/客人確認文字回程顯示回程機場，複製舊單會帶回程機場(需gas v2.2.393)； v1.0.91：行李分類改版——登機/托運中型(21-26吋)/托運大型(27-29吋)三個欄位，另有「含推車」「含胖胖箱(+尺寸)」細項(包含在大型內)；客人確認文字、預約明細圖、確認視窗行李改成「登機 1 + 中型 1 + 大型 2」，細項另起一行「含 …」；載入舊單會帶回細項(需gas v2.2.390)； v1.0.90：修正客人確認文字「特殊備註」只要備註內有「收據」兩個字就整段被換成「需開立收據」，其他備註內容消失；現在只把含收據的片段換成「需開立收據」，其餘內容保留； v1.0.89：預約明細圖片資訊欄有選舉牌時多一列「舉牌」(需gas v2.2.388)； v1.0.88：「對話文字快速帶入」移到頁面最上面，標題可點擊收折/展開(記住上次狀態)； v1.0.87：新增「訂車人同乘客」勾選(預設勾選＝跟以前一樣)，取消勾選可另外填訂車人姓名/稱謂/電話(代訂)；折扣碼查詢用訂車人電話；訂車人與乘客不同時客人確認文字多一行「訂車貴賓」；載入舊單會帶回訂車人(需gas v2.2.369)； v1.0.86：客人確認文字改成顯示每個地址下面的「聯絡人 電話」(原本會拿掉)，聯絡人欄提示字改成「客人確認文字會顯示此聯絡人與電話；司機端只看得到電話圖示」(需gas v2.2.367)； v1.0.85：每個地址(接送地址/起點/終點/各加點)可展開填「聯絡人稱呼＋電話」，存成「地址（聯絡：王小姐 0912-345-678）」，司機端自動拆成獨立一行可直接撥打；客人確認文字會拿掉這段，不外流；v1.0.84：建立成功後的「客人確認文字」來回單可分開複製「去程」「回程」或「兩則合併」(單台來回、多台車每一台都適用)；v1.0.83：修正「其他車輛設定」(C2起各台車型/車資/折扣)原本放在頁面上方、往下捲看不到，改放在「車輛台數」正下方，選台數後自動捲到那裡；v1.0.82：新增「車輛台數」(多台車)：C2 起各自車型/車資/回程車資/現收/折扣/加值，確認視窗逐台列出，建立後每台一份客人確認文字，單號=基底-C1/-C2…(需gas v2.2.360)；v1.0.81：電話可填分機(ext.56082、#13、分機13、轉13 都會整理成「03-571-2121 #56082」)，司機撥號會自動帶分機；v1.0.80：電話欄可輸入市話(02-1234-5678、03-123-4567…)，新增「客人沒有電話」勾選(記為0900-000-000，司機端顯示無電話，客人確認文字顯示「無」)；v1.0.79：①不填航班編號、只選航廈時，航廈也會送出(顯示「航廈 T2」)，編輯舊單時會拆回航廈欄位 ②金額欄位拿掉右邊上下箭頭、滾輪不會再改到金額。 v1.0.78：依使用者要求，同時預約來回有加點時，回程的行程順序要跟去程相反(去程 新竹→竹北(加點)→機場，回程 機場→竹北→新竹)：送出前的確認預覽，回程那腿的行程/加點改成顯示反轉後的順序(跟後端gas.html v2.2.345實際寫入一致)，去程與沒有加點的預約不變。 v1.0.77：依使用者要求，航班編號旁邊新增「航廈」選單(第一航廈T1/第二航廈T2/不確定，幫我查詢)，只有選「桃園機場」才出現，有填航班編號就一定要選(沒選送出會跳出缺漏欄位提示)；去程/回程各一個；選了以「航班｜T1/T2/？」(例如CI108｜T2)接在航班編號後面送出，複製舊單/載入舊單時會把已存的「CI108｜T2」拆回兩個欄位。 v1.0.76： 🚨修正buildOrderFeeRows來回程「來回總額」算錯的問題：客服用「補套用折扣碼」只對來回其中一腿單獨套用時(去程/回程的折扣碼/折扣金額欄位各自獨立)，原本只扣這一腿自己的discountAmount，另一腿單獨套用的那組折扣完全沒被扣到，導致來回總額比實際應付多。修正：合併去程/回程兩腿各自的discountAmt，「來回總額」的扣除改用合併後的金額。跟gas.html v2.2.292 buildBookingFeeContents_、admin.html buildReservationUpdateFeePreview同一套邏輯
+    const APP_VERSION = "manual-booking-v1.0.95"; // v1.0.95：新增「特約／月結企業客戶」欄(輸入統編或特約代號，查到公司後帶入、付款方式改月結簽單，需gas v2.2.407)；  v1.0.94：數字欄位(車資等)拿掉上下箭頭，滾輪/方向鍵不會再改數字； v1.0.93：航班欄位(去程/回程)手機鍵盤預設英文＋自動大寫； v1.0.92：來回預約新增「回程機場」(預設同去程)，機場不同時回程單存回程機場、航廈T1/T2依各趟機場決定、確認畫面/客人確認文字回程顯示回程機場，複製舊單會帶回程機場(需gas v2.2.393)； v1.0.91：行李分類改版——登機/托運中型(21-26吋)/托運大型(27-29吋)三個欄位，另有「含推車」「含胖胖箱(+尺寸)」細項(包含在大型內)；客人確認文字、預約明細圖、確認視窗行李改成「登機 1 + 中型 1 + 大型 2」，細項另起一行「含 …」；載入舊單會帶回細項(需gas v2.2.390)； v1.0.90：修正客人確認文字「特殊備註」只要備註內有「收據」兩個字就整段被換成「需開立收據」，其他備註內容消失；現在只把含收據的片段換成「需開立收據」，其餘內容保留； v1.0.89：預約明細圖片資訊欄有選舉牌時多一列「舉牌」(需gas v2.2.388)； v1.0.88：「對話文字快速帶入」移到頁面最上面，標題可點擊收折/展開(記住上次狀態)； v1.0.87：新增「訂車人同乘客」勾選(預設勾選＝跟以前一樣)，取消勾選可另外填訂車人姓名/稱謂/電話(代訂)；折扣碼查詢用訂車人電話；訂車人與乘客不同時客人確認文字多一行「訂車貴賓」；載入舊單會帶回訂車人(需gas v2.2.369)； v1.0.86：客人確認文字改成顯示每個地址下面的「聯絡人 電話」(原本會拿掉)，聯絡人欄提示字改成「客人確認文字會顯示此聯絡人與電話；司機端只看得到電話圖示」(需gas v2.2.367)； v1.0.85：每個地址(接送地址/起點/終點/各加點)可展開填「聯絡人稱呼＋電話」，存成「地址（聯絡：王小姐 0912-345-678）」，司機端自動拆成獨立一行可直接撥打；客人確認文字會拿掉這段，不外流；v1.0.84：建立成功後的「客人確認文字」來回單可分開複製「去程」「回程」或「兩則合併」(單台來回、多台車每一台都適用)；v1.0.83：修正「其他車輛設定」(C2起各台車型/車資/折扣)原本放在頁面上方、往下捲看不到，改放在「車輛台數」正下方，選台數後自動捲到那裡；v1.0.82：新增「車輛台數」(多台車)：C2 起各自車型/車資/回程車資/現收/折扣/加值，確認視窗逐台列出，建立後每台一份客人確認文字，單號=基底-C1/-C2…(需gas v2.2.360)；v1.0.81：電話可填分機(ext.56082、#13、分機13、轉13 都會整理成「03-571-2121 #56082」)，司機撥號會自動帶分機；v1.0.80：電話欄可輸入市話(02-1234-5678、03-123-4567…)，新增「客人沒有電話」勾選(記為0900-000-000，司機端顯示無電話，客人確認文字顯示「無」)；v1.0.79：①不填航班編號、只選航廈時，航廈也會送出(顯示「航廈 T2」)，編輯舊單時會拆回航廈欄位 ②金額欄位拿掉右邊上下箭頭、滾輪不會再改到金額。 v1.0.78：依使用者要求，同時預約來回有加點時，回程的行程順序要跟去程相反(去程 新竹→竹北(加點)→機場，回程 機場→竹北→新竹)：送出前的確認預覽，回程那腿的行程/加點改成顯示反轉後的順序(跟後端gas.html v2.2.345實際寫入一致)，去程與沒有加點的預約不變。 v1.0.77：依使用者要求，航班編號旁邊新增「航廈」選單(第一航廈T1/第二航廈T2/不確定，幫我查詢)，只有選「桃園機場」才出現，有填航班編號就一定要選(沒選送出會跳出缺漏欄位提示)；去程/回程各一個；選了以「航班｜T1/T2/？」(例如CI108｜T2)接在航班編號後面送出，複製舊單/載入舊單時會把已存的「CI108｜T2」拆回兩個欄位。 v1.0.76： 🚨修正buildOrderFeeRows來回程「來回總額」算錯的問題：客服用「補套用折扣碼」只對來回其中一腿單獨套用時(去程/回程的折扣碼/折扣金額欄位各自獨立)，原本只扣這一腿自己的discountAmount，另一腿單獨套用的那組折扣完全沒被扣到，導致來回總額比實際應付多。修正：合併去程/回程兩腿各自的discountAmt，「來回總額」的扣除改用合併後的金額。跟gas.html v2.2.292 buildBookingFeeContents_、admin.html buildReservationUpdateFeePreview同一套邏輯
     // v1.0.72 - 新增「複製舊單，快速建立新預約」功能：取消的訂單客人又想用同樣行程重新預約時(只是要換日期/時間)，不用整張表單重填，填舊單號查詢後，客人資料/地址/車型/人數行李/金額/加值折扣項目會整包帶入下面表單，唯獨日期時間留白由客服自行填寫新的時段。跟既有的「補建遺漏的去程/回程」是兩個獨立功能：那個查完會用recoveryBaseId/recoveryLegSuffix掛回舊單底下(維持-A/-B配對)，這個完全不動那兩個欄位，送出後一律是全新單號，不影響原本那筆舊單。實作參考fetchRecoveryAutoFill同一套用getManualBookingTextData查單、setValue逐欄位帶入的做法，額外處理了：單程行程起訖點分別對應到address/airport欄位、回程行程/金額/航班另外從回程那筆資料帶入、加值服務用parseStoredFeeExtras依去程/回程分別還原明細、折扣只取去程那筆避免兩腿重複記的折扣被加乘兩次、現場收現金額只在付款方式真的需要時才帶入
     // 「固定客戶範本」選擇改成自訂清單，不再用原生下拉選單(在手機上選項一長就變成一長串塞在一起完全看不清楚)。改成一張張獨立卡片：來源標籤(粉紅底)+姓名+電話在同一行，地址另起一行，點擊即可帶入，選中的那筆會highlight。原本的select仍保留(隱藏)當作資料狀態，不影響既有的applyTemplate等邏輯
     // 不再用 Google callback 機制初始化地圖（callback 容易撞上 async 腳本執行時機競速問題，
@@ -742,6 +747,10 @@
       // v1.0.79：游標停在數字欄位時滾動滑鼠滾輪，瀏覽器會直接把金額加減(這就是「金額每次都會跑掉」)，滾動時先讓欄位失焦就不會改到
       document.addEventListener("wheel", () => { const a = document.activeElement; if (a && a.tagName === "INPUT" && a.type === "number") a.blur(); }, { passive: true });
       $("paymentMethod").addEventListener("change", toggleManualCashFields);
+      // v1.0.95：特約／月結企業客戶——輸入統編或特約代號，查「企業客戶」工作表，查到就帶入公司並把付款方式改成月結簽單
+      $("companyKey").addEventListener("input", () => { clearTimeout(companyTimer_); companyTimer_ = setTimeout(lookupCompany_, 350); });
+      $("companyKey").addEventListener("blur", () => { if ($("companyKey").value.trim() && !manualCompany) { clearTimeout(companyTimer_); lookupCompany_(); } });
+      $("companyKey").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); clearTimeout(companyTimer_); lookupCompany_(); } });
       $("templateSelect").addEventListener("change", applyTemplate);
       $("templateSearch").addEventListener("input", renderTemplateOptions);
       $("templateSourceFilter").addEventListener("change", renderTemplateOptions);
@@ -1954,6 +1963,37 @@
       return $("source").value === "其他" ? $("customSource").value.trim() : $("source").value;
     }
 
+    // ===== v1.0.95：特約／月結企業客戶 =====
+    let manualCompany = null, companySeq_ = 0, companyTimer_ = null;
+    function setCompanyStatus_(msg, bad) { const el = $("companyStatus"); el.textContent = msg || ""; el.style.color = bad ? "#b63c6b" : "#553f62"; }
+    async function lookupCompany_() {
+      const v = $("companyKey").value.replace(/[^A-Za-z0-9_\-]/g, "").slice(0, 20);
+      if (v !== $("companyKey").value) $("companyKey").value = v;
+      const seq = ++companySeq_;
+      const isTax = /^\d+$/.test(v);
+      if (!v || (isTax && v.length < 8) || (!isTax && v.length < 2)) { manualCompany = null; setCompanyStatus_(v ? (isTax ? "請輸入完整8碼統編，或改輸入特約代號。" : "請繼續輸入特約代號…") : "", false); return; }
+      setCompanyStatus_("正在查詢企業資料…", false);
+      try {
+        const res = await fetch(`${GAS_URL}?action=getCompanyByTaxId&taxId=${encodeURIComponent(v)}&t=${Date.now()}`).then(r => safeJsonParse(r));
+        if (seq !== companySeq_) return;
+        const c = res && res.company;
+        if (c && c.name) {
+          manualCompany = { taxId: c.taxId || "", name: c.name, billingCode: c.billingCode || "", shortName: c.shortName || "", needSign: c.needSign !== false };
+          const pay = $("paymentMethod").value;
+          if (!pay.includes("月結") && !pay.includes("簽單")) { $("paymentMethod").value = "月結簽單"; $("paymentMethod").dispatchEvent(new Event("change", { bubbles: true })); }
+          setCompanyStatus_(`✔ 已帶入：${c.name}${c.shortName ? "（" + c.shortName + "）" : ""}｜${manualCompany.needSign ? "司機結案要客人簽單" : "司機免簽名"}`, false);
+        } else {
+          manualCompany = null;
+          setCompanyStatus_("查無此統編／特約代號。請確認後再輸入，或把這格清空改用一般付款。", true);
+        }
+      } catch (e) {
+        if (seq !== companySeq_) return;
+        manualCompany = null;
+        setCompanyStatus_("查詢失敗，請確認網路連線後重試。", true);
+      }
+    }
+    function companyApplies_() { const pay = $("paymentMethod").value; return !!manualCompany && (pay.includes("月結") || pay.includes("簽單")); }
+
     function collectPayload() {
       const isOneWay = $("serviceType").value === "單程";
       const signboardNeeded = $("signboardNeeded").checked;
@@ -1997,6 +2037,10 @@
         appVersion: APP_VERSION
       };
       payload.vehicleCount = vehicleCount;
+      // 特約／月結：有查到公司、而且付款方式是月結/簽單才帶；後端會再用統編/代號重查一次，不信任前端
+      payload.companyKey = $("companyKey").value.trim();
+      payload.companyApplies = companyApplies_();
+      if (payload.companyApplies) payload.companyShort = manualCompany.shortName || manualCompany.name;
       if (vehicleCount > 1) payload.vehicles = buildVehicles(payload);
       return payload;
     }
@@ -2148,6 +2192,7 @@
 
     function validatePayload(p) {
       const errors = [];
+      if ($("companyKey").value.trim() && !manualCompany) errors.push("特約／月結：查無此統編或特約代號（請確認，或把該欄清空）");
       const isOneWay = p.serviceType === "單程";
       if (!p.source) errors.push("來源");
       if (!p.customerName) errors.push("乘客姓名");
@@ -2254,7 +2299,7 @@
           ${confirmRow("行李", formatCustomerLuggage(p.luggageCount, p.sportLuggage, ""))}
           ${confirmRow("安全座椅", p.seatDetails)}
           ${confirmRow("舉牌", p.signboard)}
-          ${confirmRow("付款方式", p.paymentMethod)}
+          ${confirmRow("付款方式", p.companyApplies ? p.paymentMethod + "（" + p.companyShort + "）" : p.paymentMethod)}
           ${!shared && cashCollected && money(cashCollected) > 0 ? confirmRow("現場收現", "$" + money(cashCollected).toLocaleString()) : ""}
           ${shared ? "" : `<div class="flex justify-between gap-3 py-1.5 mt-1 text-sm font-bold text-[#553f62] border-t border-gray-200"><span>車資</span><span>$${fare.toLocaleString()}</span></div>`}
         </div>`;
@@ -2743,7 +2788,7 @@
       const infoRows = [
         ["單號", order.reservationId], ["姓名", order.customerName], ["電話", order.phone],
         ["車型", order.carType], ["人數", formatCustomerPax(order.paxCount)], ["行李", formatCustomerLuggage(order.luggageCount, order.sportLuggage, "")],
-        ["地址", stopTextWithContacts(order.address, "")], ["加點", stopTextWithContacts(order.extraLocation, "")], ["付款", order.paymentMethod],
+        ["地址", stopTextWithContacts(order.address, "")], ["加點", stopTextWithContacts(order.extraLocation, "")], ["付款", order.paymentLabel || order.paymentMethod],
         ["座椅", order.seatDetails], ...(/^(無|不需要|否|不用)?$/.test(String(order.signboard || "").trim()) ? [] : [["舉牌", String(order.signboard).trim() === "需要" ? "需舉牌" : String(order.signboard).trim()]]), ["備註", order.remarks]
       ];
       return `
@@ -3058,6 +3103,7 @@
     function resetForm() {
       manualBookingIdemKey = null; // 開始填一筆全新的訂單，之前失敗未清空的 key 不該沿用到這筆
       $("manualForm").reset();
+      manualCompany = null; companySeq_++; setCompanyStatus_("", false);
       refreshOrdererUi();
       $("templateSelect").value = "";
       $("templateResultsList").querySelectorAll(".tpl-row.selected").forEach(r => r.classList.remove("selected"));
