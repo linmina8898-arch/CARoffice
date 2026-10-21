@@ -84,7 +84,7 @@
 
   <script>
     const APP_VERSION = "report-check-v1.0.9"; // ①路線文字用\n改用<br>渲染，跟gas.html v2.2.249同步，不再依賴瀏覽器自然斷行(送機/接機兩種方向斷行位置不一致、接機常常斷在地址中間很亂)，現在兩種方向都固定「起點/終點各自一行」。②配色收斂：電話號碼原本用亮粉紅+無底線，跟「需收現」的紅色混在一起太搶眼、整頁看起來紅通通的。改成深紫色+虛線底線(有明確的可點擊感、但不會搶過真正該注意的地方)，紅/粉紅只留給「未確實回報」徽章跟「需收現」金額這兩個真正需要立即注意的資訊
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbww3Pr0IcOABPvTteIWHo9j6MWRQvNjpf_MZRE7NgDp3Nt69Upx8VhVnCVMcbUvjJwI/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbz6wgk6T8ypEI1pW5ih7M3Bom54Tu7unv-sc_ldFtPSBWw4yAbahs70GErKGpsRqcG3/exec";
 
     async function safeJsonParse(r) {
       const text = await r.text();

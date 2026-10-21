@@ -188,7 +188,7 @@
   </div>
   <script>
     const APP_VERSION = "quote-v1.0.18"; // ①紫色標題區塊改成跟正式預約卡片一樣扁平的單行樣式(比照gas.html的noticeHeader_，16px padding、一行文字，不再是三行堆疊的大標題)。②「本報價單24小時內有效」提示框原本是橘色/米色系，跟系統固定的紫/粉紅配色不符，改成粉紅色系(背景#FBF0F5、文字#a6396d)
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbww3Pr0IcOABPvTteIWHo9j6MWRQvNjpf_MZRE7NgDp3Nt69Upx8VhVnCVMcbUvjJwI/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbz6wgk6T8ypEI1pW5ih7M3Bom54Tu7unv-sc_ldFtPSBWw4yAbahs70GErKGpsRqcG3/exec";
     const BOOKING_URL = location.href.includes("quote.html") ? location.href.replace("quote.html", "index.html") : "index.html";
     let priceRows = [];
     let SPECIAL_DATE_SURCHARGES = {}; // 特殊節日加價：{"2026-06-18":{amount:400,label:"端午節連假加成"}}，跟折扣碼一樣後台設定、系統自動比對套用
