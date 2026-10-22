@@ -22,6 +22,7 @@
     .card { background: #fff; border: 1px solid #e6e2ea; border-radius: 16px; box-shadow: 0 10px 24px rgba(31, 41, 55, .06); }
     .money-row { display: flex; justify-content: space-between; gap: 14px; padding: 5px 0; font-size: 14px; }
     .money-row.total { border-top: 1px solid #ece8ef; margin-top: 6px; padding-top: 12px; font-size: 18px; font-weight: 700; color: var(--primary); }
+    .hidden { display: none !important; }
     .bottom-bar { position: sticky; bottom: 0; z-index: 20; padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); background: rgba(244, 245, 247, .96); backdrop-filter: blur(10px); border-top: 1px solid #e5e7eb; }
   </style>
 </head>
@@ -46,15 +47,17 @@
           <label class="label">客服 / 備註用</label>
           <input id="staffName" class="field focus-ring" placeholder="例如：星星">
         </div>
-        <div class="grid grid-cols-2 gap-3">
+        <div id="serviceGrid" class="grid grid-cols-2 gap-3">
           <div>
             <label class="label">行程</label>
             <select id="serviceType" class="field focus-ring">
               <option value="送機">送機</option>
               <option value="接機">接機</option>
+              <option value="單程">單程</option>
+              <option value="包車">包車</option>
             </select>
           </div>
-          <div>
+          <div data-mode="airport">
             <label class="label">機場</label>
             <select id="airport" class="field focus-ring"></select>
           </div>
@@ -70,12 +73,12 @@
             <input id="rideTime" type="hidden" value="09:00">
           </div>
         </div>
-        <div>
+        <div data-mode="airport">
           <label class="label">主要地區</label>
           <input id="mainZone" list="zoneList" class="field focus-ring" placeholder="輸入或選擇，例如 300 新竹市東區">
           <datalist id="zoneList"></datalist>
         </div>
-        <div>
+        <div data-mode="airport">
           <label class="label">提供給客人的地址文字</label>
           <input id="mainAddress" class="field focus-ring" placeholder="例如：新竹市東區關新路">
         </div>
@@ -117,7 +120,72 @@
           </div>
         </div>
       </div>
-      <div class="card p-4 space-y-3">
+      <div id="manualCard" data-mode="manual" class="card p-4 space-y-3 hidden">
+        <h2 class="text-base font-semibold text-[#553f62]">報價內容（金額由客服填寫）</h2>
+        <div data-mode="oneway">
+          <label class="label">接送點（依序，至少 2 個）</label>
+          <div id="manualStopsList" class="space-y-2"></div>
+          <button type="button" id="addManualStopBtn" class="mt-2 w-full border border-dashed border-[#c9bccf] text-[#553f62] rounded-xl py-2 text-sm">＋ 新增接送點</button>
+        </div>
+        <div data-mode="charter" class="space-y-3">
+          <div>
+            <label class="label">上車地點</label>
+            <input id="charterPickup" class="field focus-ring" placeholder="例如：新竹市東區關新路1號">
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="label">用車時數（預約時間起，到下車止）</label>
+              <select id="charterHours" class="field focus-ring"></select>
+            </div>
+            <div>
+              <label class="label">緩衝時間（分鐘）</label>
+              <input id="charterBuffer" type="text" inputmode="numeric" class="field focus-ring" value="15">
+            </div>
+          </div>
+          <div>
+            <label class="label">跨夜（住宿補貼）</label>
+            <select id="charterNights" class="field focus-ring"></select>
+          </div>
+          <div>
+            <label class="label">行程內容（一行一個，可自由填寫）</label>
+            <textarea id="charterItinerary" rows="5" class="field focus-ring" placeholder="08:00 新竹出發&#10;10:00 苗栗南庄老街"></textarea>
+          </div>
+        </div>
+        <div class="border-t border-gray-100 pt-3 space-y-3">
+          <div>
+            <div id="car1Title" class="text-sm font-semibold text-[#553f62] mb-2">車型 1</div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="label">車資（元）</label>
+                <input id="fare1" type="text" inputmode="numeric" class="field focus-ring" placeholder="例如 1800">
+              </div>
+              <div data-mode="charter">
+                <label class="label">超時每小時（元）</label>
+                <input id="overtime1" type="text" inputmode="numeric" class="field focus-ring" placeholder="例如 500">
+              </div>
+            </div>
+          </div>
+          <div id="car2Block" class="hidden border border-gray-200 rounded-xl p-3 space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="text-sm font-semibold text-[#553f62]">車型 2</div>
+              <button type="button" id="removeCar2Btn" class="text-xs text-gray-400">✕ 移除</button>
+            </div>
+            <select id="carType2" class="field focus-ring"></select>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="label">車資（元）</label>
+                <input id="fare2" type="text" inputmode="numeric" class="field focus-ring">
+              </div>
+              <div data-mode="charter">
+                <label class="label">超時每小時（元）</label>
+                <input id="overtime2" type="text" inputmode="numeric" class="field focus-ring">
+              </div>
+            </div>
+          </div>
+          <button type="button" id="addCar2Btn" class="w-full border border-dashed border-[#c9bccf] text-[#553f62] rounded-xl py-2 text-sm">＋ 加報第二種車型</button>
+        </div>
+      </div>
+      <div data-mode="airport" class="card p-4 space-y-3">
         <div class="flex items-center justify-between">
           <h2 class="text-base font-semibold text-[#553f62]">加價與來回</h2>
           <label class="flex items-center gap-2 text-sm text-[#553f62]">
@@ -189,7 +257,7 @@
     </div>
   </div>
   <script>
-    const APP_VERSION = "quote-v1.0.19"; // ①時間改成「時:分」24小時下拉選單(分每5分鐘)。②文字版/圖片版改新格式(費用明細依去程/回程/優惠分組、新增【費用已包含】、新結尾)。③星期改用UTC計算不受裝置時區影響
+    const APP_VERSION = "quote-v1.0.20"; // 新增「單程」(多接送點)與「包車」(可填行程、緩衝/超時、跨夜住宿補貼)報價：金額由客服手動填，可同時報2種車型，座椅/增高墊每張$200；文字版與圖片版同步支援
     const GAS_URL = "https://script.google.com/macros/s/AKfycbz6wgk6T8ypEI1pW5ih7M3Bom54Tu7unv-sc_ldFtPSBWw4yAbahs70GErKGpsRqcG3/exec";
     const BOOKING_URL = location.href.includes("quote.html") ? location.href.replace("quote.html", "index.html") : "index.html";
     let priceRows = [];
@@ -375,30 +443,109 @@
       // 改成回程地區預設直接沿用去程，不再各自獨立預設。
       if (!$("returnZone").value && zones.length) $("returnZone").value = $("mainZone").value || zones[0];
     }
+    // ===== 單程 / 包車：金額由客服手動填寫，不查價目表 =====
+    const SEAT_FEE = 200; // 安全座椅／增高墊 每張
+    let manualStops = ["", ""];
+    let car2Enabled = false;
+    const isManualType = (t) => t === "單程" || t === "包車";
+    const numOnly = (id) => Number(String($(id).value || "").replace(/[^\d]/g, "")) || 0;
+    const carName = (v) => String(v || "").replace("(SIENNA/BENZ V)", "");
+    function nightFee(dateStr, i) {
+      const d = new Date(`${dateStr}T00:00:00Z`);
+      d.setUTCDate(d.getUTCDate() + i);
+      const w = d.getUTCDay();
+      return (w === 5 || w === 6) ? 2000 : 1500; // 周五～周六$2000，周日～周四$1500
+    }
+    function manualState() {
+      const cars = [{ carType: $("carType").value, fare: numOnly("fare1"), overtime: numOnly("overtime1") }];
+      if (car2Enabled) cars.push({ carType: $("carType2").value, fare: numOnly("fare2"), overtime: numOnly("overtime2") });
+      return {
+        mode: $("serviceType").value,
+        stops: manualStops.map(clean).filter(Boolean),
+        pickup: clean($("charterPickup").value),
+        itinerary: String($("charterItinerary").value || "").split("\n").map(clean).filter(Boolean),
+        hours: Number($("charterHours").value || 1),
+        buffer: numOnly("charterBuffer"),
+        nights: Number($("charterNights").value || 0),
+        cars
+      };
+    }
+    function computeManualQuote(payload) {
+      const m = payload.manual;
+      const seats = Number(payload.seatCount || 0);
+      const cars = m.cars.map(car => {
+        const items = [];
+        let total = 0;
+        items.push({ label: m.mode === "包車" ? `包車車資（${m.hours}小時）` : "單程車資", amount: car.fare });
+        total += car.fare;
+        if (m.mode === "包車" && car.overtime > 0) items.push({ label: "超時費用", note: `每小時加收 NT$${car.overtime.toLocaleString("en-US")}` });
+        if (seats > 0) { items.push({ label: `安全座椅／增高墊 ×${seats}`, amount: seats * SEAT_FEE, isExtra: true }); total += seats * SEAT_FEE; }
+        if (m.mode === "包車" && m.nights > 0) {
+          let sum = 0;
+          for (let i = 0; i < m.nights; i++) sum += nightFee(payload.rideDate, i);
+          items.push({ label: `住宿補貼 ${m.nights}晚`, amount: sum, isExtra: true });
+          total += sum;
+        }
+        return { name: carName(car.carType), items, total };
+      });
+      const flat = [];
+      cars.forEach(c => c.items.forEach(it => flat.push(cars.length > 1 ? { ...it, label: `${c.name} ${it.label}` } : it)));
+      return { success: true, manual: true, cars, items: flat, total: cars[0].total };
+    }
+    function renderManualStops() {
+      const wrap = $("manualStopsList");
+      wrap.innerHTML = manualStops.map((v, i) => `
+        <div class="grid grid-cols-[28px_1fr_32px] gap-2 items-center">
+          <span class="w-7 h-7 rounded-full bg-[#553f62] text-white text-xs flex items-center justify-center" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center">${i + 1}</span>
+          <input type="text" value="${escapeQuoteHtml(v)}" data-stop-idx="${i}" class="manual-stop field focus-ring !py-1.5 !text-sm" placeholder="${i === 0 ? "第1點（上車地點）" : `第${i + 1}點`}">
+          ${manualStops.length > 2 ? `<button type="button" class="text-gray-400" data-stop-remove="${i}" aria-label="刪除">✕</button>` : "<span></span>"}
+        </div>`).join("");
+      wrap.querySelectorAll(".manual-stop").forEach(el => el.addEventListener("input", () => { manualStops[Number(el.dataset.stopIdx)] = el.value; }));
+      wrap.querySelectorAll("[data-stop-remove]").forEach(el => el.addEventListener("click", () => { manualStops.splice(Number(el.dataset.stopRemove), 1); renderManualStops(); }));
+    }
+    function applyServiceMode() {
+      const t = $("serviceType").value;
+      const manual = isManualType(t);
+      document.querySelectorAll('[data-mode="airport"]').forEach(el => el.classList.toggle("hidden", manual));
+      $("manualCard").classList.toggle("hidden", !manual);
+      document.querySelectorAll('[data-mode="oneway"]').forEach(el => el.classList.toggle("hidden", t !== "單程"));
+      document.querySelectorAll('[data-mode="charter"]').forEach(el => el.classList.toggle("hidden", t !== "包車"));
+      $("serviceGrid").style.gridTemplateColumns = manual ? "1fr" : "";
+      if (manual) $("hasReturn").checked = false;
+      $("returnBlock").classList.add("hidden");
+      $("feeList").innerHTML = manual ? "填好車資後按「取得報價」。" : "請先選擇地區後按「取得報價」。";
+      $("quoteText").value = ""; $("btnCopy").disabled = true; $("btnImage").disabled = true; lastQuote = null;
+      updateCarTitles();
+    }
+    function updateCarTitles() {
+      $("car1Title").textContent = `車型 1：${carName($("carType").value)}`;
+    }
     function buildPayload() {
       const paxText = `${$("adult").value}大 ${$("child").value}中 ${$("infant").value}小`;
       const luggageText = `${$("checkedLuggage").value}大 ${$("carryLuggage").value}登機`;
       const validStops = extraStops.filter(s => (s.address || "").trim() || s.fee > 0);
       const extraStopFee = validStops.reduce((sum, s) => sum + (Number(s.fee) || 0), 0);
       const extraAddress = validStops.map(s => s.address.trim()).filter(Boolean).join("、");
+      const manual = isManualType($("serviceType").value) ? manualState() : null;
       return {
+        manual,
         channelCode: "AS",
         staffName: clean($("staffName").value),
         serviceType: $("serviceType").value,
-        airport: $("airport").value,
+        airport: manual ? "" : $("airport").value,
         rideDate: $("rideDate").value,
         rideTime: $("rideTime").value,
-        mainZone: clean($("mainZone").value),
-        mainAddress: clean($("mainAddress").value),
+        mainZone: manual ? (manual.stops[0] || manual.pickup) : clean($("mainZone").value),
+        mainAddress: manual ? (manual.mode === "單程" ? manual.stops.join(" ➜ ") : manual.pickup) : clean($("mainAddress").value),
         extraZone: "",
-        extraAddress,
-        extraStopFee,
+        extraAddress: manual ? "" : extraAddress,
+        extraStopFee: manual ? 0 : extraStopFee,
         carType: $("carType").value,
         paxText,
         luggageText,
         seatCount: Number($("seatCount").value || 0),
         signboard: $("signboard").checked,
-        hasReturn: $("hasReturn").checked,
+        hasReturn: manual ? false : $("hasReturn").checked,
         returnServiceType: $("returnServiceType").value,
         returnAirport: $("airport").value,
         returnDate: $("returnDate").value,
@@ -443,7 +590,98 @@
       if (item.note) return `${item.label}｜${item.note}`;
       return `${item.label}｜${formatQuoteMoney(item.amount, item.isExtra)}`;
     }
+    function includedLines() {
+      return ["【費用已包含】", "・合法小客車租賃車輛，非白牌車", "・持有職業駕照的專業駕駛", "・乘客責任險$500萬／人"];
+    }
+    function manualNoticeLines(payload) {
+      const m = payload.manual;
+      const out = ["【費用說明】"];
+      if (m.mode === "包車") {
+        out.push(`・用車時間自預約時間起算至下車為止，緩衝 ${m.buffer} 分鐘，超過以 1 小時計算`);
+        out.push("・包車行程如跨夜，另加住宿補貼：");
+        out.push("　周五～周六：$2,000／晚");
+        out.push("　周日～周四：$1,500／晚");
+      }
+      out.push(`・如需安全座椅／增高墊：$${SEAT_FEE}／張`);
+      return out;
+    }
+    function quoteTailLines() {
+      const lines = [];
+      lines.push("📍以上為依據目前提供資訊試算之參考報價。");
+      lines.push("實際費用仍將依完整上下車地址、是否加點、行李數量及實際安排車型後確認。");
+      lines.push("如有活動優惠折抵請洽詢客服。");
+      lines.push("");
+      lines.push("📍本公司採預約保留制，完成預約後將為您安排車輛與司機。");
+      lines.push("");
+      lines.push("");
+      lines.push("若此報價符合您的需求，歡迎透過官方 LINE 完成正式預約。");
+      lines.push("首次透過系統預約，另享折扣碼優惠。");
+      lines.push("");
+      lines.push("官方 LINE 預約：");
+      lines.push("https://page.line.me/ansing");
+      lines.push("");
+      lines.push("期待為您提供安全、舒適、準時的接送服務。");
+      lines.push("");
+      lines.push("安興專車接送｜深耕新竹・服務全台");
+      lines.push("合法營運︱專業接送∣安心搭乘安全抵達");
+      return lines;
+    }
+    function buildManualQuoteText(payload, result) {
+      const m = payload.manual;
+      const lines = [];
+      const divider = "━━━━━";
+      lines.push("您好，感謝您諮詢安興專車接送。");
+      lines.push("以下為您的行程參考報價：");
+      lines.push("");
+      lines.push("");
+      lines.push("安興專車接送｜參考報價");
+      lines.push(divider);
+      lines.push("");
+      lines.push("【行程資訊】");
+      lines.push(`▪︎ 行程：${m.mode}服務`);
+      if (m.mode === "單程") {
+        lines.push("▪︎ 路線：");
+        m.stops.forEach((st, i) => lines.push(i === 0 ? `　${st}` : `　➜ ${st}`));
+      }
+      if (payload.rideDate) lines.push(`▪︎ 日期：${formatQuoteDate(payload.rideDate)}`);
+      if (m.mode === "單程") {
+        if (payload.rideTime) lines.push(`▪︎ 時間：${payload.rideTime}`);
+      } else {
+        lines.push(`▪︎ 用車時間：${payload.rideTime} 起，共 ${m.hours} 小時`);
+        if (m.pickup) lines.push(`▪︎ 上車地點：${m.pickup}`);
+      }
+      if (m.cars.length === 1) lines.push(`▪︎ 車型：${carName(m.cars[0].carType)}`);
+      lines.push(`▪︎ 人數：${payload.paxText}`);
+      lines.push(`▪︎ 行李：${payload.luggageText}`);
+      if (payload.seatCount > 0) lines.push(`▪︎ 座椅：${payload.seatCount} 張`);
+      if (m.mode === "包車" && m.itinerary.length) {
+        lines.push("");
+        lines.push("【行程內容】");
+        m.itinerary.forEach(l => lines.push(l));
+      }
+      lines.push("");
+      lines.push(divider);
+      lines.push("【費用明細】");
+      lines.push("");
+      result.cars.forEach((car, i) => {
+        if (result.cars.length > 1) lines.push(`◆ ${car.name}`);
+        car.items.forEach(it => lines.push(quoteItemLine(it)));
+        lines.push(`預估總額｜NT$${car.total.toLocaleString("en-US")}`);
+        lines.push("");
+      });
+      if (result.cars.length > 1) { lines.push("（以上為各車型的預估總額，請擇一車型）"); lines.push(""); }
+      lines.push(divider);
+      lines.push("");
+      includedLines().forEach(l => lines.push(l));
+      lines.push("");
+      manualNoticeLines(payload).forEach(l => lines.push(l));
+      lines.push("");
+      lines.push("");
+      quoteTailLines().forEach(l => lines.push(l));
+      return lines.join("\n");
+    }
     function buildQuoteText(payload, result) {
+      if (payload.manual) return buildManualQuoteText(payload, result);
       const lines = [];
       const divider = "━━━━━";
       lines.push("您好，感謝您諮詢安興專車接送。");
@@ -487,27 +725,22 @@
       lines.push("・乘客責任險$500萬／人");
       lines.push("");
       lines.push("");
-      lines.push("📍以上為依據目前提供資訊試算之參考報價。");
-      lines.push("實際費用仍將依完整上下車地址、是否加點、行李數量及實際安排車型後確認。");
-      lines.push("如有活動優惠折抵請洽詢客服。");
-      lines.push("");
-      lines.push("📍本公司採預約保留制，完成預約後將為您安排車輛與司機。");
-      lines.push("");
-      lines.push("");
-      lines.push("若此報價符合您的需求，歡迎透過官方 LINE 完成正式預約。");
-      lines.push("首次透過系統預約，另享折扣碼優惠。");
-      lines.push("");
-      lines.push("官方 LINE 預約：");
-      lines.push("https://page.line.me/ansing");
-      lines.push("");
-      lines.push("期待為您提供安全、舒適、準時的接送服務。");
-      lines.push("");
-      lines.push("安興專車接送｜深耕新竹・服務全台");
-      lines.push("合法營運︱專業接送∣安心搭乘安全抵達");
+      quoteTailLines().forEach(l => lines.push(l));
       return lines.join("\n");
     }
     function renderQuote(payload, result) {
       lastQuote = { payload, result };
+      if (result.manual) {
+        $("feeList").innerHTML = result.cars.map(car => `
+          ${result.cars.length > 1 ? `<div class="font-semibold text-[#553f62] mt-2">${escapeQuoteHtml(car.name)}</div>` : ""}
+          ${car.items.map(it => `<div class="money-row"><span>${escapeQuoteHtml(it.label)}</span><span>${escapeQuoteHtml(it.note || money(it.amount, it.isExtra))}</span></div>`).join("")}
+          <div class="money-row total"><span>預估總額</span><span>${money(car.total)}</span></div>`).join("");
+        $("totalText").textContent = result.cars.map(c => `$${c.total.toLocaleString("en-US")}`).join(" / ");
+        $("quoteText").value = buildQuoteText(payload, result);
+        $("btnCopy").disabled = false;
+        $("btnImage").disabled = false;
+        return;
+      }
       const rows = (result.items || []).map(item => {
         if (item.note) return `<div class="money-row"><span>${item.label}</span><span>${item.note}</span></div>`;
         return `<div class="money-row ${item.isTotal ? "total" : ""}"><span>${item.label}</span><span>${money(item.amount, item.isExtra)}</span></div>`;
@@ -538,6 +771,39 @@
       const now = new Date();
       const generatedAt = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, "0")}/${String(now.getDate()).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
       const sectionLabel = (text) => `<div style="font-size:14.5px;font-weight:700;color:#993556;letter-spacing:1px;margin-bottom:8px;">${text}</div>`;
+      const m = payload.manual;
+      const manualTrip = () => {
+        const carLine = m.cars.length === 1 ? `｜${escapeQuoteHtml(carName(m.cars[0].carType))}` : "";
+        let inner = `<div style="font-size:14px;color:#8a8291;margin-bottom:3px;">${escapeQuoteHtml(formatQuoteDate(payload.rideDate))} ${escapeQuoteHtml(payload.rideTime)}</div>
+          <div style="font-size:18px;font-weight:700;color:#1A0B3D;">${escapeQuoteHtml(m.mode)}服務${carLine}</div>`;
+        if (m.mode === "單程") {
+          inner += m.stops.map((st, i) => `<div style="font-size:15.5px;color:#4b4553;margin-top:${i ? 2 : 6}px;">${i ? "➜ " : ""}${escapeQuoteHtml(st)}</div>`).join("");
+        } else {
+          inner += `<div style="font-size:15px;color:#4b4553;margin-top:6px;">用車 ${m.hours} 小時（${escapeQuoteHtml(payload.rideTime)} 起）</div>`;
+          inner += `<div style="font-size:15px;color:#4b4553;margin-top:2px;">上車：${escapeQuoteHtml(m.pickup)}</div>`;
+          if (m.itinerary.length) inner += `<div style="border-top:1px dashed #e7ddea;margin-top:12px;padding-top:12px;font-size:14.5px;color:#4b4553;line-height:1.7;">${m.itinerary.map(l => `<div>${escapeQuoteHtml(l)}</div>`).join("")}</div>`;
+        }
+        return `<div style="border:1px solid #e7ddea;border-radius:10px;padding:16px 18px;margin-bottom:20px;">${inner}</div>`;
+      };
+      const tripBoxHtml = m ? manualTrip() : `<div style="border:1px solid #e7ddea;border-radius:10px;padding:16px 18px;margin-bottom:20px;">
+              <div style="font-size:14px;color:#8a8291;margin-bottom:3px;">${escapeQuoteHtml(formatQuoteDate(payload.rideDate))} ${escapeQuoteHtml(payload.rideTime)}</div>
+              <div style="font-size:18px;font-weight:700;color:#1A0B3D;">${escapeQuoteHtml(payload.serviceType)}服務｜${escapeQuoteHtml(payload.carType)}</div>
+              <div style="font-size:15.5px;color:#4b4553;margin-top:4px;">${escapeQuoteHtml(route)}</div>
+              ${payload.hasReturn ? `<div style="border-top:1px dashed #e7ddea;margin-top:12px;padding-top:12px;"><div style="font-size:14px;color:#8a8291;">回程　${escapeQuoteHtml(formatQuoteDate(payload.returnDate))} ${escapeQuoteHtml(payload.returnTime)}</div><div style="font-size:15.5px;font-weight:700;color:#1A0B3D;margin-top:3px;">${escapeQuoteHtml(payload.returnServiceType)}服務</div><div style="font-size:15.5px;color:#4b4553;margin-top:3px;">${escapeQuoteHtml(returnRoute)}</div></div>` : ""}
+              ${payload.extraAddress ? `<div style="font-size:14.5px;color:#8a8291;margin-top:10px;">加點：${escapeQuoteHtml(payload.extraAddress)}</div>` : ""}
+            </div>`;
+      const manualFeeHtml = m ? (() => {
+        const multi = result.cars.length > 1;
+        return result.cars.map(car => `
+          <div style="${multi ? "border:1px solid #e7ddea;border-radius:10px;padding:12px 16px;margin-bottom:12px;" : ""}">
+            ${multi ? `<div style="font-size:16px;font-weight:700;color:#553f62;margin-bottom:4px;">${escapeQuoteHtml(car.name)}</div>` : ""}
+            ${car.items.map(it => `<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:15.5px;color:#4b4553;"><span>${escapeQuoteHtml(it.label)}</span><span>${escapeQuoteHtml(it.note || formatQuoteMoney(it.amount, it.isExtra))}</span></div>`).join("")}
+            <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:baseline;background:#FBF7FA;border-radius:10px;padding:${multi ? "12px 16px" : "18px 20px"};">
+              <span style="font-size:16px;font-weight:600;color:#553f62;">預估總額</span>
+              <span style="font-size:${multi ? 24 : 30}px;font-weight:700;color:#993556;">$${car.total.toLocaleString("en-US")}</span>
+            </div>
+          </div>`).join("") + (multi ? `<div style="font-size:13px;color:#a89fb0;">以上為各車型的預估總額，請擇一車型</div>` : "");
+      })() : "";
       return `
         <div style="width:480px;background:#fff;font-family:-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif;">
           <div style="background:#574266;padding:16px 30px;text-align:center;color:#fff;">
@@ -556,13 +822,7 @@
             </div>
 
             ${sectionLabel("【行程資訊】")}
-            <div style="border:1px solid #e7ddea;border-radius:10px;padding:16px 18px;margin-bottom:20px;">
-              <div style="font-size:14px;color:#8a8291;margin-bottom:3px;">${escapeQuoteHtml(formatQuoteDate(payload.rideDate))} ${escapeQuoteHtml(payload.rideTime)}</div>
-              <div style="font-size:18px;font-weight:700;color:#1A0B3D;">${escapeQuoteHtml(payload.serviceType)}服務｜${escapeQuoteHtml(payload.carType)}</div>
-              <div style="font-size:15.5px;color:#4b4553;margin-top:4px;">${escapeQuoteHtml(route)}</div>
-              ${payload.hasReturn ? `<div style="border-top:1px dashed #e7ddea;margin-top:12px;padding-top:12px;"><div style="font-size:14px;color:#8a8291;">回程　${escapeQuoteHtml(formatQuoteDate(payload.returnDate))} ${escapeQuoteHtml(payload.returnTime)}</div><div style="font-size:15.5px;font-weight:700;color:#1A0B3D;margin-top:3px;">${escapeQuoteHtml(payload.returnServiceType)}服務</div><div style="font-size:15.5px;color:#4b4553;margin-top:3px;">${escapeQuoteHtml(returnRoute)}</div></div>` : ""}
-              ${payload.extraAddress ? `<div style="font-size:14.5px;color:#8a8291;margin-top:10px;">加點：${escapeQuoteHtml(payload.extraAddress)}</div>` : ""}
-            </div>
+            ${tripBoxHtml}
 
             ${sectionLabel("【乘車資訊】")}
             <div style="margin-bottom:20px;">
@@ -573,14 +833,15 @@
             </div>
 
             ${sectionLabel("【費用明細】")}
-            <div>${rows}</div>
+            ${m ? manualFeeHtml : `<div>${rows}</div>
 
             <div style="margin-top:14px;display:flex;justify-content:space-between;align-items:baseline;background:#FBF7FA;border-radius:10px;padding:18px 20px;">
               <span style="font-size:16px;font-weight:600;color:#553f62;">預估總額</span>
               <span style="font-size:30px;font-weight:700;color:#993556;">$${Number(result.total || 0).toLocaleString("en-US")}</span>
-            </div>
+            </div>`}
             ${sectionLabel("【費用已包含】").replace("margin-bottom:8px;", "margin:22px 0 8px;")}
             <div style="font-size:15px;color:#4b4553;line-height:1.9;"><div>・合法小客車租賃車輛，非白牌車</div><div>・持有職業駕照的專業駕駛</div><div>・乘客責任險 $500萬／人</div></div>
+            ${m ? `<div style="font-size:14.5px;font-weight:700;color:#993556;letter-spacing:1px;margin:22px 0 8px;">【費用說明】</div><div style="font-size:14.5px;color:#4b4553;line-height:1.8;">${manualNoticeLines(payload).slice(1).map(l => `<div>${escapeQuoteHtml(l).replace(/^　/, "&emsp;")}</div>`).join("")}</div>` : ""}
             <div style="font-size:13px;color:#a89fb0;margin-top:18px;line-height:1.6;">＊實際費用仍將依完整上下車地址、是否加點、行李數量及實際安排車型後確認。如有活動優惠折抵請洽詢客服。</div>
           </div>
 
@@ -627,6 +888,15 @@
     }
     async function getQuote() {
       const payload = buildPayload();
+      if (payload.manual) {
+        const m = payload.manual;
+        if (m.mode === "單程" && m.stops.length < 2) return Swal.fire("接送點不足", "單程至少要填 2 個接送點（上車、下車）。", "info");
+        if (m.mode === "包車" && !m.pickup) return Swal.fire("請填上車地點", "包車報價需要上車地點。", "info");
+        if (m.cars.some(c => !c.fare)) return Swal.fire("請填車資", "每個車型都要填車資金額。", "info");
+        if (!payload.rideDate) return Swal.fire("請選擇日期", "", "info");
+        renderQuote(payload, computeManualQuote(payload));
+        return;
+      }
       if (!payload.mainZone) return Swal.fire("請選擇主要地區", "快速報價需要先選擇地區，才抓得到資料庫價格。", "info");
       $("btnQuote").disabled = true;
       $("btnQuote").textContent = "試算中...";
@@ -675,6 +945,16 @@
     }
     function init() {
       $("versionText").textContent = APP_VERSION;
+      $("charterHours").innerHTML = Array.from({ length: 24 }, (_, i) => `<option value="${i + 1}"${i + 1 === 8 ? " selected" : ""}>${i + 1} 小時</option>`).join("");
+      $("charterNights").innerHTML = `<option value="0">不跨夜</option>` + Array.from({ length: 7 }, (_, i) => `<option value="${i + 1}">${i + 1} 晚（加收住宿補貼）</option>`).join("");
+      $("carType2").innerHTML = $("carType").innerHTML;
+      $("carType2").selectedIndex = Math.min(2, $("carType2").options.length - 1);
+      renderManualStops();
+      $("addManualStopBtn").addEventListener("click", () => { manualStops.push(""); renderManualStops(); });
+      $("addCar2Btn").addEventListener("click", () => { car2Enabled = true; $("car2Block").classList.remove("hidden"); $("addCar2Btn").classList.add("hidden"); });
+      $("removeCar2Btn").addEventListener("click", () => { car2Enabled = false; $("car2Block").classList.add("hidden"); $("addCar2Btn").classList.remove("hidden"); });
+      $("carType").addEventListener("change", updateCarTitles);
+      $("serviceType").addEventListener("change", applyServiceMode);
       setupTimeSelect("ride", "rideTime", "09:00");
       setupTimeSelect("return", "returnTime", "18:00");
       fillNumberSelect("adult", 7, 1);
@@ -689,7 +969,7 @@
       $("returnDate").value = tomorrow.toISOString().slice(0, 10);
       $("hasReturn").addEventListener("change", () => $("returnBlock").classList.toggle("hidden", !$("hasReturn").checked));
       $("serviceType").addEventListener("change", () => {
-        $("returnServiceType").value = $("serviceType").value === "送機" ? "接機" : "送機";
+        if (!isManualType($("serviceType").value)) $("returnServiceType").value = $("serviceType").value === "送機" ? "接機" : "送機";
       });
       // 去程地區變更時，回程地區跟著同步更新——除非客服自己手動改過回程地區(returnZoneManuallyEdited)，
       // 才不會再被去程蓋過去。修正回程地區原本各自獨立預設(跟去程完全無關)、去程改了回程也不會跟著換的問題。
