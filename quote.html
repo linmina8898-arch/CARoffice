@@ -88,7 +88,7 @@
             <option value="小車">小車</option>
             <option value="大車">大車</option>
             <option value="進口商務車(SIENNA/BENZ V)">進口商務車</option>
-            <option value="New Alphard 40">New Alphard 40</option>
+            <option value="New Alphard 40">New Alphard 40系</option>
           </select>
         </div>
         <div class="grid grid-cols-3 gap-3">
@@ -257,7 +257,7 @@
     </div>
   </div>
   <script>
-    const APP_VERSION = "quote-v1.0.20"; // 新增「單程」(多接送點)與「包車」(可填行程、緩衝/超時、跨夜住宿補貼)報價：金額由客服手動填，可同時報2種車型，座椅/增高墊每張$200；文字版與圖片版同步支援
+    const APP_VERSION = "quote-v1.0.21"; // v1.0.21：車型顯示名稱跟客人訂車頁一致(New Alphard 40系、進口商務車不再帶括號)。 // 新增「單程」(多接送點)與「包車」(可填行程、緩衝/超時、跨夜住宿補貼)報價：金額由客服手動填，可同時報2種車型，座椅/增高墊每張$200；文字版與圖片版同步支援
     const GAS_URL = "https://script.google.com/macros/s/AKfycbz6wgk6T8ypEI1pW5ih7M3Bom54Tu7unv-sc_ldFtPSBWw4yAbahs70GErKGpsRqcG3/exec";
     const BOOKING_URL = location.href.includes("quote.html") ? location.href.replace("quote.html", "index.html") : "index.html";
     let priceRows = [];
@@ -449,7 +449,7 @@
     let car2Enabled = false;
     const isManualType = (t) => t === "單程" || t === "包車";
     const numOnly = (id) => Number(String($(id).value || "").replace(/[^\d]/g, "")) || 0;
-    const carName = (v) => String(v || "").replace("(SIENNA/BENZ V)", "");
+    const carName = (v) => String(v || "").replace("(SIENNA/BENZ V)", "").replace(/^New Alphard 40$/, "New Alphard 40系"); // 顯示名稱跟客人訂車頁一致
     function nightFee(dateStr, i) {
       const d = new Date(`${dateStr}T00:00:00Z`);
       d.setUTCDate(d.getUTCDate() + i);
@@ -696,7 +696,7 @@
       lines.push(`▪︎ 路線：${routeLine(payload.serviceType, payload.airport, payload.mainAddress || payload.mainZone)}`);
       if (payload.rideDate) lines.push(`▪︎ 日期：${formatQuoteDate(payload.rideDate)}`);
       if (payload.rideTime) lines.push(`▪︎ 時間：${payload.rideTime}`);
-      lines.push(`▪︎ 車型：${payload.carType.replace("(SIENNA/BENZ V)", "")}`);
+      lines.push(`▪︎ 車型：${carName(payload.carType)}`);
       lines.push(`▪︎ 人數：${payload.paxText}`);
       lines.push(`▪︎ 行李：${payload.luggageText}`);
       if (payload.extraAddress || payload.extraZone) lines.push(`▪︎ 加點：${payload.extraAddress || payload.extraZone}`);
@@ -787,7 +787,7 @@
       };
       const tripBoxHtml = m ? manualTrip() : `<div style="border:1px solid #e7ddea;border-radius:10px;padding:16px 18px;margin-bottom:20px;">
               <div style="font-size:14px;color:#8a8291;margin-bottom:3px;">${escapeQuoteHtml(formatQuoteDate(payload.rideDate))} ${escapeQuoteHtml(payload.rideTime)}</div>
-              <div style="font-size:18px;font-weight:700;color:#1A0B3D;">${escapeQuoteHtml(payload.serviceType)}服務｜${escapeQuoteHtml(payload.carType)}</div>
+              <div style="font-size:18px;font-weight:700;color:#1A0B3D;">${escapeQuoteHtml(payload.serviceType)}服務｜${escapeQuoteHtml(carName(payload.carType))}</div>
               <div style="font-size:15.5px;color:#4b4553;margin-top:4px;">${escapeQuoteHtml(route)}</div>
               ${payload.hasReturn ? `<div style="border-top:1px dashed #e7ddea;margin-top:12px;padding-top:12px;"><div style="font-size:14px;color:#8a8291;">回程　${escapeQuoteHtml(formatQuoteDate(payload.returnDate))} ${escapeQuoteHtml(payload.returnTime)}</div><div style="font-size:15.5px;font-weight:700;color:#1A0B3D;margin-top:3px;">${escapeQuoteHtml(payload.returnServiceType)}服務</div><div style="font-size:15.5px;color:#4b4553;margin-top:3px;">${escapeQuoteHtml(returnRoute)}</div></div>` : ""}
               ${payload.extraAddress ? `<div style="font-size:14.5px;color:#8a8291;margin-top:10px;">加點：${escapeQuoteHtml(payload.extraAddress)}</div>` : ""}
