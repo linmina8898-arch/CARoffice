@@ -328,6 +328,22 @@
         </div>
       </section>
 
+      <!-- v1.2.0：補訂回程。客人先訂了單程(單號沒有-A/-B)，之後才要訂回程：原單改成「單號-A」、新增「單號-B」，同一個預約，對帳不會斷；
+           跟中控台「更多→修改→補訂回程」是同一套後端功能(gas v2.2.420)。 -->
+      <section class="panel" style="border:1px solid #eadfec;background:#faf7fb">
+        <button type="button" id="addReturnToggle" class="section-title" style="cursor:pointer;background:none;border:none;padding:0;width:100%;text-align:left;color:#553f62">➕ 補訂回程（客人先訂了單趟，之後才要訂回程）</button>
+        <div id="addReturnBody" class="hidden" style="margin-top:10px">
+          <p class="hint" style="margin-bottom:10px">原單會改成「單號-A」，新增「單號-B」(同一個預約，對帳不會斷)；客人資料、地址、人數行李、車型、付款方式自動帶去程的，只要填回程日期時間跟車資。不是新單，不會重新編號。</p>
+          <div class="grid-form">
+            <div class="full">
+              <label for="addReturnOrderId">原單號（不含 -A / -B）</label>
+              <input id="addReturnOrderId" placeholder="例如：AS-202608227259kMo">
+            </div>
+          </div>
+          <button type="button" id="addReturnBtn" class="secondary-btn" style="margin-top:10px">查詢原單並補訂回程</button>
+        </div>
+      </section>
+
       <section class="panel">
         <div class="section-title">訂單來源</div>
         <div class="grid-form">
@@ -686,7 +702,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.1.3"; // v1.1.3：新增「帳務備註」欄(選固定客戶範本會自動帶入「固定客戶」表的「帳務備註」欄，複製舊單也會帶，只有客服/中控看得到，司機看不到；需gas v2.2.423)； // v1.1.2：路線的箭頭改成「→ 」(後面多一個空格，跟系統卡片一樣)； // v1.1.1：客人確認文字(預約成功通知)單程拿掉「航班編號／接送機場／加點地址」，接送地址改成「起點→加點→終點」一條路線，回程整條反過來； // v1.1.0：複製舊單／帶入另一腿時，姓名欄只放名字、稱謂自動選進「稱謂」下拉(不再整串帶「王小姐」)(搭配gas v2.2.419更準，沒更新也會自己拆)； // v1.0.99：行李欄位順序改「大型→中型→登機」； // v1.0.98：貼上客人訊息解析地址時，自動拿掉地址尾巴的手機/市話(例如「…4樓之2；0912580590」)； v1.0.97：多台車(C2起)每台可選填不同的乘車人姓名／稱謂／電話／地址／加點(預設收合、空白沿用C1，訂車人維持C1，需gas v2.2.411)。 v1.0.96：車型選單補上「New Alphard 40系」(原本只有小車/大車/進口商務車，跟客人訂車頁不一致；第2台起的車型也同步)，貼文字解析車型時Alphard歸到New Alphard 40系、不再被當成進口商務車。 // v1.0.95：新增「特約／月結企業客戶」欄(輸入統編或特約代號，查到公司後帶入、付款方式改月結簽單，需gas v2.2.407)；  v1.0.94：數字欄位(車資等)拿掉上下箭頭，滾輪/方向鍵不會再改數字； v1.0.93：航班欄位(去程/回程)手機鍵盤預設英文＋自動大寫； v1.0.92：來回預約新增「回程機場」(預設同去程)，機場不同時回程單存回程機場、航廈T1/T2依各趟機場決定、確認畫面/客人確認文字回程顯示回程機場，複製舊單會帶回程機場(需gas v2.2.393)； v1.0.91：行李分類改版——登機/托運中型(21-26吋)/托運大型(27-29吋)三個欄位，另有「含推車」「含胖胖箱(+尺寸)」細項(包含在大型內)；客人確認文字、預約明細圖、確認視窗行李改成「登機 1 + 中型 1 + 大型 2」，細項另起一行「含 …」；載入舊單會帶回細項(需gas v2.2.390)； v1.0.90：修正客人確認文字「特殊備註」只要備註內有「收據」兩個字就整段被換成「需開立收據」，其他備註內容消失；現在只把含收據的片段換成「需開立收據」，其餘內容保留； v1.0.89：預約明細圖片資訊欄有選舉牌時多一列「舉牌」(需gas v2.2.388)； v1.0.88：「對話文字快速帶入」移到頁面最上面，標題可點擊收折/展開(記住上次狀態)； v1.0.87：新增「訂車人同乘客」勾選(預設勾選＝跟以前一樣)，取消勾選可另外填訂車人姓名/稱謂/電話(代訂)；折扣碼查詢用訂車人電話；訂車人與乘客不同時客人確認文字多一行「訂車貴賓」；載入舊單會帶回訂車人(需gas v2.2.369)； v1.0.86：客人確認文字改成顯示每個地址下面的「聯絡人 電話」(原本會拿掉)，聯絡人欄提示字改成「客人確認文字會顯示此聯絡人與電話；司機端只看得到電話圖示」(需gas v2.2.367)； v1.0.85：每個地址(接送地址/起點/終點/各加點)可展開填「聯絡人稱呼＋電話」，存成「地址（聯絡：王小姐 0912-345-678）」，司機端自動拆成獨立一行可直接撥打；客人確認文字會拿掉這段，不外流；v1.0.84：建立成功後的「客人確認文字」來回單可分開複製「去程」「回程」或「兩則合併」(單台來回、多台車每一台都適用)；v1.0.83：修正「其他車輛設定」(C2起各台車型/車資/折扣)原本放在頁面上方、往下捲看不到，改放在「車輛台數」正下方，選台數後自動捲到那裡；v1.0.82：新增「車輛台數」(多台車)：C2 起各自車型/車資/回程車資/現收/折扣/加值，確認視窗逐台列出，建立後每台一份客人確認文字，單號=基底-C1/-C2…(需gas v2.2.360)；v1.0.81：電話可填分機(ext.56082、#13、分機13、轉13 都會整理成「03-571-2121 #56082」)，司機撥號會自動帶分機；v1.0.80：電話欄可輸入市話(02-1234-5678、03-123-4567…)，新增「客人沒有電話」勾選(記為0900-000-000，司機端顯示無電話，客人確認文字顯示「無」)；v1.0.79：①不填航班編號、只選航廈時，航廈也會送出(顯示「航廈 T2」)，編輯舊單時會拆回航廈欄位 ②金額欄位拿掉右邊上下箭頭、滾輪不會再改到金額。 v1.0.78：依使用者要求，同時預約來回有加點時，回程的行程順序要跟去程相反(去程 新竹→竹北(加點)→機場，回程 機場→竹北→新竹)：送出前的確認預覽，回程那腿的行程/加點改成顯示反轉後的順序(跟後端gas.html v2.2.345實際寫入一致)，去程與沒有加點的預約不變。 v1.0.77：依使用者要求，航班編號旁邊新增「航廈」選單(第一航廈T1/第二航廈T2/不確定，幫我查詢)，只有選「桃園機場」才出現，有填航班編號就一定要選(沒選送出會跳出缺漏欄位提示)；去程/回程各一個；選了以「航班｜T1/T2/？」(例如CI108｜T2)接在航班編號後面送出，複製舊單/載入舊單時會把已存的「CI108｜T2」拆回兩個欄位。 v1.0.76： 🚨修正buildOrderFeeRows來回程「來回總額」算錯的問題：客服用「補套用折扣碼」只對來回其中一腿單獨套用時(去程/回程的折扣碼/折扣金額欄位各自獨立)，原本只扣這一腿自己的discountAmount，另一腿單獨套用的那組折扣完全沒被扣到，導致來回總額比實際應付多。修正：合併去程/回程兩腿各自的discountAmt，「來回總額」的扣除改用合併後的金額。跟gas.html v2.2.292 buildBookingFeeContents_、admin.html buildReservationUpdateFeePreview同一套邏輯
+    const APP_VERSION = "manual-booking-v1.2.2"; // v1.2.2：加點只是航廈名稱(第一航廈/第二航廈)時不帶乘車人聯絡資料；v1.2.1：「地址1／地址2…」沒填聯絡人的地址預設帶乘車人姓名＋電話；v1.2.0：新增「➕ 補訂回程」(客人先訂單趟、之後才訂回程：原單改成 單號-A、新增 單號-B，同中控台功能，需gas v2.2.420)；接送機有加點時，客人確認文字／預約明細圖改成像司機系統「地址1／地址2／地址3…」依行車順序編號、每個地址下一行「聯絡 姓名 電話」(行事曆、客人卡片同步，需gas v2.2.428)；v1.1.3：新增「帳務備註」欄(選固定客戶範本會自動帶入「固定客戶」表的「帳務備註」欄，複製舊單也會帶，只有客服/中控看得到，司機看不到；需gas v2.2.423)； // v1.1.2：路線的箭頭改成「→ 」(後面多一個空格，跟系統卡片一樣)； // v1.1.1：客人確認文字(預約成功通知)單程拿掉「航班編號／接送機場／加點地址」，接送地址改成「起點→加點→終點」一條路線，回程整條反過來； // v1.1.0：複製舊單／帶入另一腿時，姓名欄只放名字、稱謂自動選進「稱謂」下拉(不再整串帶「王小姐」)(搭配gas v2.2.419更準，沒更新也會自己拆)； // v1.0.99：行李欄位順序改「大型→中型→登機」； // v1.0.98：貼上客人訊息解析地址時，自動拿掉地址尾巴的手機/市話(例如「…4樓之2；0912580590」)； v1.0.97：多台車(C2起)每台可選填不同的乘車人姓名／稱謂／電話／地址／加點(預設收合、空白沿用C1，訂車人維持C1，需gas v2.2.411)。 v1.0.96：車型選單補上「New Alphard 40系」(原本只有小車/大車/進口商務車，跟客人訂車頁不一致；第2台起的車型也同步)，貼文字解析車型時Alphard歸到New Alphard 40系、不再被當成進口商務車。 // v1.0.95：新增「特約／月結企業客戶」欄(輸入統編或特約代號，查到公司後帶入、付款方式改月結簽單，需gas v2.2.407)；  v1.0.94：數字欄位(車資等)拿掉上下箭頭，滾輪/方向鍵不會再改數字； v1.0.93：航班欄位(去程/回程)手機鍵盤預設英文＋自動大寫； v1.0.92：來回預約新增「回程機場」(預設同去程)，機場不同時回程單存回程機場、航廈T1/T2依各趟機場決定、確認畫面/客人確認文字回程顯示回程機場，複製舊單會帶回程機場(需gas v2.2.393)； v1.0.91：行李分類改版——登機/托運中型(21-26吋)/托運大型(27-29吋)三個欄位，另有「含推車」「含胖胖箱(+尺寸)」細項(包含在大型內)；客人確認文字、預約明細圖、確認視窗行李改成「登機 1 + 中型 1 + 大型 2」，細項另起一行「含 …」；載入舊單會帶回細項(需gas v2.2.390)； v1.0.90：修正客人確認文字「特殊備註」只要備註內有「收據」兩個字就整段被換成「需開立收據」，其他備註內容消失；現在只把含收據的片段換成「需開立收據」，其餘內容保留； v1.0.89：預約明細圖片資訊欄有選舉牌時多一列「舉牌」(需gas v2.2.388)； v1.0.88：「對話文字快速帶入」移到頁面最上面，標題可點擊收折/展開(記住上次狀態)； v1.0.87：新增「訂車人同乘客」勾選(預設勾選＝跟以前一樣)，取消勾選可另外填訂車人姓名/稱謂/電話(代訂)；折扣碼查詢用訂車人電話；訂車人與乘客不同時客人確認文字多一行「訂車貴賓」；載入舊單會帶回訂車人(需gas v2.2.369)； v1.0.86：客人確認文字改成顯示每個地址下面的「聯絡人 電話」(原本會拿掉)，聯絡人欄提示字改成「客人確認文字會顯示此聯絡人與電話；司機端只看得到電話圖示」(需gas v2.2.367)； v1.0.85：每個地址(接送地址/起點/終點/各加點)可展開填「聯絡人稱呼＋電話」，存成「地址（聯絡：王小姐 0912-345-678）」，司機端自動拆成獨立一行可直接撥打；客人確認文字會拿掉這段，不外流；v1.0.84：建立成功後的「客人確認文字」來回單可分開複製「去程」「回程」或「兩則合併」(單台來回、多台車每一台都適用)；v1.0.83：修正「其他車輛設定」(C2起各台車型/車資/折扣)原本放在頁面上方、往下捲看不到，改放在「車輛台數」正下方，選台數後自動捲到那裡；v1.0.82：新增「車輛台數」(多台車)：C2 起各自車型/車資/回程車資/現收/折扣/加值，確認視窗逐台列出，建立後每台一份客人確認文字，單號=基底-C1/-C2…(需gas v2.2.360)；v1.0.81：電話可填分機(ext.56082、#13、分機13、轉13 都會整理成「03-571-2121 #56082」)，司機撥號會自動帶分機；v1.0.80：電話欄可輸入市話(02-1234-5678、03-123-4567…)，新增「客人沒有電話」勾選(記為0900-000-000，司機端顯示無電話，客人確認文字顯示「無」)；v1.0.79：①不填航班編號、只選航廈時，航廈也會送出(顯示「航廈 T2」)，編輯舊單時會拆回航廈欄位 ②金額欄位拿掉右邊上下箭頭、滾輪不會再改到金額。 v1.0.78：依使用者要求，同時預約來回有加點時，回程的行程順序要跟去程相反(去程 新竹→竹北(加點)→機場，回程 機場→竹北→新竹)：送出前的確認預覽，回程那腿的行程/加點改成顯示反轉後的順序(跟後端gas.html v2.2.345實際寫入一致)，去程與沒有加點的預約不變。 v1.0.77：依使用者要求，航班編號旁邊新增「航廈」選單(第一航廈T1/第二航廈T2/不確定，幫我查詢)，只有選「桃園機場」才出現，有填航班編號就一定要選(沒選送出會跳出缺漏欄位提示)；去程/回程各一個；選了以「航班｜T1/T2/？」(例如CI108｜T2)接在航班編號後面送出，複製舊單/載入舊單時會把已存的「CI108｜T2」拆回兩個欄位。 v1.0.76： 🚨修正buildOrderFeeRows來回程「來回總額」算錯的問題：客服用「補套用折扣碼」只對來回其中一腿單獨套用時(去程/回程的折扣碼/折扣金額欄位各自獨立)，原本只扣這一腿自己的discountAmount，另一腿單獨套用的那組折扣完全沒被扣到，導致來回總額比實際應付多。修正：合併去程/回程兩腿各自的discountAmt，「來回總額」的扣除改用合併後的金額。跟gas.html v2.2.292 buildBookingFeeContents_、admin.html buildReservationUpdateFeePreview同一套邏輯
     // v1.0.72 - 新增「複製舊單，快速建立新預約」功能：取消的訂單客人又想用同樣行程重新預約時(只是要換日期/時間)，不用整張表單重填，填舊單號查詢後，客人資料/地址/車型/人數行李/金額/加值折扣項目會整包帶入下面表單，唯獨日期時間留白由客服自行填寫新的時段。跟既有的「補建遺漏的去程/回程」是兩個獨立功能：那個查完會用recoveryBaseId/recoveryLegSuffix掛回舊單底下(維持-A/-B配對)，這個完全不動那兩個欄位，送出後一律是全新單號，不影響原本那筆舊單。實作參考fetchRecoveryAutoFill同一套用getManualBookingTextData查單、setValue逐欄位帶入的做法，額外處理了：單程行程起訖點分別對應到address/airport欄位、回程行程/金額/航班另外從回程那筆資料帶入、加值服務用parseStoredFeeExtras依去程/回程分別還原明細、折扣只取去程那筆避免兩腿重複記的折扣被加乘兩次、現場收現金額只在付款方式真的需要時才帶入
     // 「固定客戶範本」選擇改成自訂清單，不再用原生下拉選單(在手機上選項一長就變成一長串塞在一起完全看不清楚)。改成一張張獨立卡片：來源標籤(粉紅底)+姓名+電話在同一行，地址另起一行，點擊即可帶入，選中的那筆會highlight。原本的select仍保留(隱藏)當作資料狀態，不影響既有的applyTemplate等邏輯
     // 不再用 Google callback 機制初始化地圖（callback 容易撞上 async 腳本執行時機競速問題，
@@ -743,6 +759,8 @@
       $("recoveryFetchBtn").addEventListener("click", fetchRecoveryAutoFill);
       $("duplicateToggle").addEventListener("click", () => $("duplicateBody").classList.toggle("hidden"));
       $("duplicateFetchBtn").addEventListener("click", fetchDuplicateOrderAutoFill);
+      $("addReturnToggle").addEventListener("click", () => $("addReturnBody").classList.toggle("hidden"));
+      $("addReturnBtn").addEventListener("click", openQuickAddReturnLeg);
       initTimeSelects();
       $("source").addEventListener("change", handleSourceChange);
       $("hasReturn").addEventListener("change", handleReturnToggle);
@@ -1560,9 +1578,52 @@
         }).replace(/[ \t]{2,}/g, " ").trim();
         if (!addr) return;
         out.push((out.length ? indent : "") + addr);
-        contacts.forEach(function (c) { out.push(indent + "　" + c); });
+        contacts.forEach(function (c) { out.push(indent + "　聯絡 " + c); }); // v1.2.0：聯絡人那行加「聯絡」標示，跟司機系統一樣
       });
       return out.join("\n");
+    }
+    // v1.2.0：接送機有「加點」時，客人確認文字／預約明細圖改成像司機系統：「地址1／地址2／地址3…」依行車順序編號，
+    // 每個地址下面一行「聯絡 姓名 電話」。沒有加點回傳 null，維持原本單一「地址」。
+    function splitStopsWithContacts(text) {
+      const stops = [];
+      String(text || "").split(/\r?\n|；/).forEach(function (t) {
+        const contacts = [];
+        const addr = t.replace(/[（(]\s*聯絡\s*[：:]([^）)]*)[）)]/g, function (m, inner) {
+          String(inner).split("、").forEach(function (c) { c = c.trim(); if (c) contacts.push(c); });
+          return "";
+        }).replace(/[ \t]{2,}/g, " ").trim();
+        if (addr && addr !== "無") stops.push({ addr: addr, contacts: contacts });
+      });
+      return stops;
+    }
+    function isTerminalOnlyStop(addr) { return /^\s*(第?[一二12]\s*航廈|T\s*[12]|Terminal\s*[12]|航廈)\s*$/i.test(String(addr || "")); }
+    function paxContactText(name, phone) {
+      const ph = String(phone || "").trim();
+      return [String(name || "").trim(), (ph && ph !== "無" && !isNoPhoneValue(ph)) ? ph : ""].filter(Boolean).join(" ");
+    }
+    function numberedAddressStops(address, extra) {
+      const extras = splitStopsWithContacts(extra);
+      if (!extras.length) return null;
+      return splitStopsWithContacts(address).concat(extras);
+    }
+    // 給文字用：回傳多行(每站「．地址N：」＋縮排地址＋縮排聯絡人)
+    // 沒填聯絡人的地址預設帶乘車人姓名＋電話(paxContact，沒有就不帶)
+    function numberedAddressTextLines(address, extra, paxContact) {
+      const stops = numberedAddressStops(address, extra);
+      if (!stops) return null;
+      const out = [];
+      stops.forEach(function (st, i) {
+        out.push("．地址" + (i + 1) + "：");
+        out.push("    " + st.addr);
+        (st.contacts.length ? st.contacts : ((paxContact && !isTerminalOnlyStop(st.addr)) ? [paxContact] : [])).forEach(function (c) { out.push("    　聯絡 " + c); });
+      });
+      return out;
+    }
+    // 給明細圖用：回傳 [["地址1","地址\n　聯絡 …"],…]
+    function numberedAddressInfoRows(address, extra, paxContact) {
+      const stops = numberedAddressStops(address, extra);
+      if (!stops) return null;
+      return stops.map(function (st, i) { return ["地址" + (i + 1), [st.addr].concat((st.contacts.length ? st.contacts : ((paxContact && !isTerminalOnlyStop(st.addr)) ? [paxContact] : [])).map(function (c) { return "　聯絡 " + c; })).join("\n")]; });
     }
     function stripStopContacts(text) {
       return String(text || "").replace(/[（(]\s*聯絡\s*[：:][^）)]*[）)]/g, "").replace(/[ \t]{2,}/g, " ").trim();
@@ -2710,6 +2771,93 @@
       return lines.join("\n");
     }
 
+    // ===== v1.2.0：補訂回程(呼叫後端 addReturnLegToReservation，跟中控台同一套) =====
+    async function openQuickAddReturnLeg() {
+      const id = ($("addReturnOrderId").value || "").trim();
+      if (!id) { Swal.fire("請輸入原單號", "", "warning"); return; }
+      Swal.fire({ title: "查詢中", text: "正在讀取原單...", allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      let o = null;
+      try {
+        const data = await fetch(`${GAS_URL}?action=getManualBookingTextData&reservationId=${encodeURIComponent(id)}&t=${Date.now()}`).then(r => safeJsonParse(r));
+        if (!data.success) throw new Error(data.error || "查無資料");
+        const orders = (data.orders || []).filter(Boolean);
+        if (!orders.length) throw new Error("查無這筆預約");
+        if (orders.length > 1 || /-(A|B|去程|回程)$/i.test(orders[0].reservationId)) {
+          Swal.fire("這個預約已經是來回單", "這張已經有去程跟回程了，不能再補訂回程。", "info");
+          return;
+        }
+        o = orders[0];
+      } catch (err) { Swal.fire("查詢失敗", err.message || "請稍後再試", "error"); return; }
+      const baseId = o.reservationId;
+      const isOneWay = String(o.serviceType).trim() === "單程";
+      const retType = o.serviceType === "接機" ? "送機" : (o.serviceType === "送機" ? "接機" : "單程");
+      const p2 = n => String(n).padStart(2, "0");
+      const tm = String(o.rideTime || "").match(/(\d{1,2}):(\d{2})/);
+      const defH = tm ? p2(+tm[1]) : "08", defM = tm ? +tm[2] : 0;
+      const hourOpts = Array.from({ length: 24 }, (_, h) => `<option value="${p2(h)}" ${p2(h) === defH ? "selected" : ""}>${p2(h)}</option>`).join("");
+      const minList = Array.from({ length: 12 }, (_, i) => i * 5); if (!minList.includes(defM)) { minList.push(defM); minList.sort((a, b) => a - b); }
+      const minOpts = minList.map(mm => `<option value="${p2(mm)}" ${mm === defM ? "selected" : ""}>${p2(mm)}</option>`).join("");
+      const fareDefault = Number(String(o.fare || "").replace(/[^\d.]/g, "")) || 0;
+      const sec = "border:1px solid #e5dce8;border-radius:12px;padding:10px 12px;margin-bottom:10px;text-align:left";
+      const h3 = "font-size:13px;font-weight:700;color:#553f62;margin-bottom:6px";
+      const rowS = "display:flex;gap:10px;align-items:center;padding:5px 0;font-size:13px;flex-wrap:wrap";
+      const lbl = "width:74px;color:#9ca3af;flex:none";
+      const inS = "border:1px solid #f07cad;background:#fff5f8;border-radius:8px;padding:5px 8px;font-size:13px";
+      const chk = (cid, checked, text) => `<label style="display:flex;gap:8px;align-items:flex-start;padding:4px 0;font-size:13px;cursor:pointer"><input id="${cid}" type="checkbox" ${checked ? "checked" : ""} style="margin-top:3px;accent-color:#f07cad"><span>${text}</span></label>`;
+      const html = `<div style="font-size:12px;color:#6b7280;margin-bottom:8px;text-align:left">原單 ${escapeHtml(baseId)}（${escapeHtml(o.rideDate || "")} ${escapeHtml(o.rideTime || "")} ${escapeHtml(o.serviceType || "")}｜車資 $${fareDefault.toLocaleString()}）</div>
+        <div style="${sec};background:#faf7fb;border-color:#eadfec"><div style="${h3}">單號會這樣變（同一個預約，對帳不會斷）</div>
+          <div style="font-size:13px;line-height:1.9">去程　${escapeHtml(baseId)} <span style="color:#f07cad;font-weight:700">➜</span> <b>${escapeHtml(baseId)}-A</b><br>回程　新增 <b>${escapeHtml(baseId)}-B</b></div></div>
+        <div style="${sec}"><div style="${h3}">回程資料</div>
+          <div style="${rowS}"><span style="${lbl}">日期</span><input id="qarDate" type="date" min="${escapeHtml(o.rideDate || "")}" style="${inS}"><select id="qarHour" style="${inS}">${hourOpts}</select>:<select id="qarMin" style="${inS}">${minOpts}</select></div>
+          <div style="${rowS}"><span style="${lbl}">服務</span><span>${retType}（自動反向）</span></div>
+          ${isOneWay ? "" : `<div style="${rowS}"><span style="${lbl}">航班</span><input id="qarFlight" placeholder="回程航班（選填）" style="${inS};width:200px"></div>`}
+          <div style="${rowS}"><span style="${lbl}">回程車資</span><input id="qarFare" type="number" min="0" value="${fareDefault || ""}" placeholder="必填" style="${inS};width:110px"><span style="font-size:11px;color:#9ca3af">預設帶去程車資，可改</span></div></div>
+        <div style="${sec}"><div style="${h3}">金額怎麼算？</div>
+          <label style="display:flex;gap:8px;align-items:flex-start;padding:4px 0;font-size:13px;cursor:pointer"><input type="radio" name="qarMode" value="separate" checked style="margin-top:3px;accent-color:#f07cad"><span>各算各的<span style="display:block;font-size:11px;color:#9ca3af">去程、回程各自的金額，互不影響</span></span></label>
+          <label style="display:flex;gap:8px;align-items:flex-start;padding:4px 0;font-size:13px;cursor:pointer"><input type="radio" name="qarMode" value="combined" style="margin-top:3px;accent-color:#f07cad"><span>合成「來回總額」<span style="display:block;font-size:11px;color:#9ca3af">兩趟加總後成為一個總額(原單有其他金額調整時不能用)</span></span></label></div>
+        <div style="${sec}"><div style="${h3}">改號之後，要順便做哪些？</div>
+          ${chk("qarCalA", true, "重同步去程行事曆（日曆標題才會變成 -A）")}
+          ${chk("qarCalB", true, "回程也建立行事曆")}
+          <div style="font-size:11px;color:#9ca3af;margin-top:4px">要傳更新卡片給客人、通知去程司機，請到中控台處理。</div></div>`;
+      const r = await Swal.fire({
+        title: "幫這張單補訂回程", width: 640, html, showCancelButton: true,
+        confirmButtonText: "確認補訂回程", cancelButtonText: "取消", confirmButtonColor: "#f07cad",
+        preConfirm: () => {
+          const g = x => document.getElementById(x);
+          if (!g("qarDate").value) { Swal.showValidationMessage("請選回程日期"); return false; }
+          const fareRaw = g("qarFare").value;
+          if (fareRaw === "" || !(Number(fareRaw) >= 0)) { Swal.showValidationMessage("請填回程車資(沒有車資請填 0)"); return false; }
+          return {
+            returnDate: g("qarDate").value, returnTime: `${g("qarHour").value}:${g("qarMin").value}`,
+            returnFlight: g("qarFlight") ? g("qarFlight").value.trim() : "", returnFare: Number(fareRaw),
+            fareMode: (document.querySelector('input[name="qarMode"]:checked') || {}).value || "separate",
+            syncCalendarA: g("qarCalA").checked, syncCalendarB: g("qarCalB").checked
+          };
+        }
+      });
+      if (!r.isConfirmed) return;
+      const v = r.value;
+      if (String(v.returnDate) < String(o.rideDate || "")) {
+        const ok = await Swal.fire({ title: "回程日期比去程早", text: `回程 ${v.returnDate} 比去程 ${o.rideDate} 還早，確定嗎？`, icon: "warning", showCancelButton: true, confirmButtonText: "確定，照這個建立", cancelButtonText: "回去改" });
+        if (!ok.isConfirmed) return openQuickAddReturnLeg();
+      }
+      Swal.fire({ title: "建立回程中…", text: "會一併處理單號與行事曆，請稍候", allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      let res;
+      try {
+        res = await fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "addReturnLegToReservation", data: Object.assign({ orderId: baseId, reservationId: baseId }, v) }) }).then(x => safeJsonParse(x));
+      } catch (e) { res = { success: false, error: (e && e.message) || "連線失敗，請稍後再試" }; }
+      if (!res || !res.success) {
+        Swal.fire("補訂回程失敗", (res && (res.error || res.message)) || "請稍後再試（若後端還沒更新到 v2.2.420 以上也會失敗）", "error");
+        return;
+      }
+      const done = await Swal.fire({
+        icon: "success", title: "已補訂回程",
+        html: `<div style="text-align:left;font-size:13px;line-height:1.9">去程：<b>${escapeHtml(res.orderIdA || baseId + "-A")}</b><br>回程：<b>${escapeHtml(res.orderIdB || baseId + "-B")}</b><br>${res.totalAfter != null ? "來回合計：$" + Number(res.totalAfter).toLocaleString() + "<br>" : ""}${res.refsUpdated ? "已同步更新對帳／折扣券等記錄的單號<br>" : ""}${res.calendar && res.calendar.A ? "去程日曆：" + escapeHtml(res.calendar.A) + "<br>" : ""}${res.calendar && res.calendar.B ? "回程日曆：" + escapeHtml(res.calendar.B) : ""}</div>`,
+        showCancelButton: true, confirmButtonText: "產生客人確認文字", cancelButtonText: "關閉", confirmButtonColor: "#553f62"
+      });
+      if (done.isConfirmed) { $("lookupReservationId").value = baseId; await generateMessageByReservationId(); }
+    }
+
     async function generateMessageByReservationId() {
       const input = $("lookupReservationId");
       const reservationId = (input?.value || "").trim();
@@ -2876,7 +3024,7 @@
       const infoRows = [
         ["單號", order.reservationId], ["姓名", order.customerName], ["電話", order.phone],
         ["車型", order.carType], ["人數", formatCustomerPax(order.paxCount)], ["行李", formatCustomerLuggage(order.luggageCount, order.sportLuggage, "")],
-        ["地址", stopTextWithContacts(order.address, "")], ["加點", stopTextWithContacts(order.extraLocation, "")], ["付款", order.paymentLabel || order.paymentMethod],
+        ...((isOneWayService(order.serviceType) ? null : numberedAddressInfoRows(order.address, order.extraLocation, paxContactText(order.customerName, order.phone))) || [["地址", stopTextWithContacts(order.address, "")], ["加點", stopTextWithContacts(order.extraLocation, "")]]), ["付款", order.paymentLabel || order.paymentMethod],
         ["座椅", order.seatDetails], ...(/^(無|不需要|否|不用)?$/.test(String(order.signboard || "").trim()) ? [] : [["舉牌", String(order.signboard).trim() === "需要" ? "需舉牌" : String(order.signboard).trim()]]), ["備註", order.remarks]
       ];
       return `
@@ -3010,11 +3158,11 @@
         `．行李件數：${formatCustomerLuggage(order.luggageCount, order.sportLuggage)}`,
         ...(oneWay
           ? buildOneWayRouteLines(order.address, order.extraLocation, order.airport, false)
-          : [
+          : (numberedAddressTextLines(order.address, order.extraLocation, paxContactText(order.customerName, order.phone)) || [
             "．接送地址：",
             `    ${stopTextWithContacts(order.address, "    ") || "無"}`,
             order.extraLocation ? `．加點地址：\n    ${stopTextWithContacts(order.extraLocation, "    ")}` : null
-          ]),
+          ])),
         "",
         "▌費用資訊────────",
         `．乘車車型：${order.carType || "無"}`,
@@ -3050,11 +3198,11 @@
         `．行李件數：${luggage}`,
         ...(oneWay
           ? buildOneWayRouteLines(p.address, p.extraLocation, p.airport, trip.label === "回程")
-          : [
+          : (numberedAddressTextLines(p.address, p.extraLocation, paxContactText(displayCustomerName(p), p.phone)) || [
             "．接送地址：",
             `    ${stopTextWithContacts(p.address, "    ") || "無"}`,
             extraLocation ? `．加點地址：\n    ${extraLocation}` : null
-          ]),
+          ])),
         "",
         "▌費用資訊────────",
         `．乘車車型：${p.carType || "無"}`,
