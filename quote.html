@@ -257,7 +257,7 @@
     </div>
   </div>
   <script>
-    const APP_VERSION = "quote-v1.0.21"; // v1.0.21：車型顯示名稱跟客人訂車頁一致(New Alphard 40系、進口商務車不再帶括號)。 // 新增「單程」(多接送點)與「包車」(可填行程、緩衝/超時、跨夜住宿補貼)報價：金額由客服手動填，可同時報2種車型，座椅/增高墊每張$200；文字版與圖片版同步支援
+    const APP_VERSION = "quote-v1.0.23"; // v1.0.23：急單加價等「有金額又有備註」的項目，報價文字／畫面／圖片都同時顯示金額(+NT$500)與備註，明細加起來等於預估總額。 v1.0.22：加點費自動試算的起點改帶「縣市＋鄉鎮區＋地址」(跟客人預約系統一致，以前只用地址文字導致算出不同距離與加點費)，改地區也會重算。 v1.0.21：車型顯示名稱跟客人訂車頁一致(New Alphard 40系、進口商務車不再帶括號)。 // 新增「單程」(多接送點)與「包車」(可填行程、緩衝/超時、跨夜住宿補貼)報價：金額由客服手動填，可同時報2種車型，座椅/增高墊每張$200；文字版與圖片版同步支援
     const GAS_URL = "https://script.google.com/macros/s/AKfycbz6wgk6T8ypEI1pW5ih7M3Bom54Tu7unv-sc_ldFtPSBWw4yAbahs70GErKGpsRqcG3/exec";
     const BOOKING_URL = location.href.includes("quote.html") ? location.href.replace("quote.html", "index.html") : "index.html";
     let priceRows = [];
@@ -328,12 +328,26 @@
       const t = String(text || "").replace(/臺/g, "台");
       return TW_CITIES_FOR_DISTANCE.find(c => t.includes(c)) || "";
     }
+    // v1.0.22：算加點費的「起點」要帶縣市＋鄉鎮區(跟客人預約系統 index.html 的 getFullAddressText 一樣)。
+    // 以前直接拿「提供給客人的地址文字」(例如只有「關西鎮長安街150巷22號」)丟給 Google，沒有縣市會被猜到別的地方，
+    // 距離變成別的數字，所以客服快速報價的加點費跟客人系統不一樣。
+    function fullMainOrigin() {
+      let addr = ($("mainAddress").value || "").trim();
+      if (!addr) return "";
+      if (extractCityFromText(addr)) return addr;
+      const zone = ($("mainZone").value || "").replace(/^\s*\d{3,6}\s*/, "").replace(/\s+/g, "");
+      if (!zone) return addr;
+      const city = extractCityFromText(zone);
+      const district = city ? zone.replace(city.replace(/臺/g, "台"), "").replace(/^臺/, "") : "";
+      if (district && addr.indexOf(district) === 0) addr = addr.slice(district.length);
+      return zone + addr;
+    }
     function calcExtraStopDistanceFee(idx) {
       const hintEl = document.querySelector(`[data-stop-hint-idx="${idx}"]`);
       // 「提供給客人的地址文字」欄位可能只填門牌巷弄、不含縣市（跟「主要地區」是分開的兩個欄位），
       // 判斷同縣市不能只看這欄文字，優先用「主要地區」(mainZone，格式是「郵遞區號 縣市 鄉鎮市區」)反查縣市，
       // 抓不到才退回用地址文字本身找。
-      const addr1 = $("mainAddress").value.trim();
+      const addr1 = fullMainOrigin();
       const addr2 = (extraStops[idx] && extraStops[idx].address || "").trim();
       if (!hintEl) return;
       if (!addr1 || !addr2) { hintEl.textContent = ""; return; }
@@ -586,8 +600,18 @@
         });
       return groups;
     }
+    // v1.0.23：有金額又有備註的項目(例如急單加價 +$500「需客服確認…」)，原本只顯示備註、金額不見了，
+    // 明細加起來就跟預估總額對不上；現在金額跟備註一起顯示。金額是0的項目(客服確認、依實際距離確認)維持只顯示備註。
+    function itemValueText(item, short) {
+      const amt = Number(item.amount || 0);
+      if (item.note && amt > 0) {
+        const note = short ? String(item.note).replace("需客服確認有車輛提供才算完成預約", "需客服確認有車") : item.note;
+        return `${formatQuoteMoney(amt, item.isExtra)}（${note}）`;
+      }
+      return item.note || "";
+    }
     function quoteItemLine(item) {
-      if (item.note) return `${item.label}｜${item.note}`;
+      if (item.note) return `${item.label}｜${itemValueText(item, false)}`;
       return `${item.label}｜${formatQuoteMoney(item.amount, item.isExtra)}`;
     }
     function includedLines() {
@@ -733,7 +757,7 @@
       if (result.manual) {
         $("feeList").innerHTML = result.cars.map(car => `
           ${result.cars.length > 1 ? `<div class="font-semibold text-[#553f62] mt-2">${escapeQuoteHtml(car.name)}</div>` : ""}
-          ${car.items.map(it => `<div class="money-row"><span>${escapeQuoteHtml(it.label)}</span><span>${escapeQuoteHtml(it.note || money(it.amount, it.isExtra))}</span></div>`).join("")}
+          ${car.items.map(it => `<div class="money-row"><span>${escapeQuoteHtml(it.label)}</span><span>${escapeQuoteHtml(itemValueText(it, true) || money(it.amount, it.isExtra))}</span></div>`).join("")}
           <div class="money-row total"><span>預估總額</span><span>${money(car.total)}</span></div>`).join("");
         $("totalText").textContent = result.cars.map(c => `$${c.total.toLocaleString("en-US")}`).join(" / ");
         $("quoteText").value = buildQuoteText(payload, result);
@@ -742,7 +766,7 @@
         return;
       }
       const rows = (result.items || []).map(item => {
-        if (item.note) return `<div class="money-row"><span>${item.label}</span><span>${item.note}</span></div>`;
+        if (item.note) return `<div class="money-row"><span>${item.label}</span><span>${escapeQuoteHtml(itemValueText(item, true))}</span></div>`;
         return `<div class="money-row ${item.isTotal ? "total" : ""}"><span>${item.label}</span><span>${money(item.amount, item.isExtra)}</span></div>`;
       }).join("");
       $("feeList").innerHTML = rows;
@@ -760,7 +784,7 @@
       const feeGroups = groupQuoteItems(result.items);
       const rows = feeGroups.map((group, gi) => {
         const inner = group.map(item => {
-          const value = item.note || formatQuoteMoney(item.amount, item.isExtra);
+          const value = itemValueText(item, true) || formatQuoteMoney(item.amount, item.isExtra);
           return `<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:15.5px;color:#4b4553;"><span>${escapeQuoteHtml(item.label)}</span><span>${escapeQuoteHtml(value)}</span></div>`;
         }).join("");
         const isLast = gi === feeGroups.length - 1;
@@ -797,7 +821,7 @@
         return result.cars.map(car => `
           <div style="${multi ? "border:1px solid #e7ddea;border-radius:10px;padding:12px 16px;margin-bottom:12px;" : ""}">
             ${multi ? `<div style="font-size:16px;font-weight:700;color:#553f62;margin-bottom:4px;">${escapeQuoteHtml(car.name)}</div>` : ""}
-            ${car.items.map(it => `<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:15.5px;color:#4b4553;"><span>${escapeQuoteHtml(it.label)}</span><span>${escapeQuoteHtml(it.note || formatQuoteMoney(it.amount, it.isExtra))}</span></div>`).join("")}
+            ${car.items.map(it => `<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:15.5px;color:#4b4553;"><span>${escapeQuoteHtml(it.label)}</span><span>${escapeQuoteHtml(itemValueText(it, true) || formatQuoteMoney(it.amount, it.isExtra))}</span></div>`).join("")}
             <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:baseline;background:#FBF7FA;border-radius:10px;padding:${multi ? "12px 16px" : "18px 20px"};">
               <span style="font-size:16px;font-weight:600;color:#553f62;">預估總額</span>
               <span style="font-size:${multi ? 24 : 30}px;font-weight:700;color:#993556;">$${car.total.toLocaleString("en-US")}</span>
@@ -984,6 +1008,7 @@
       $("btnReload").addEventListener("click", loadPrices);
       $("addExtraStopBtn").addEventListener("click", addExtraStop);
       $("mainAddress").addEventListener("blur", () => extraStops.forEach((_, idx) => calcExtraStopDistanceFee(idx)));
+      $("mainZone").addEventListener("change", () => extraStops.forEach((_, idx) => calcExtraStopDistanceFee(idx)));
       renderExtraStops();
       loadPrices();
     }
