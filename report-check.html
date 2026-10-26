@@ -64,6 +64,12 @@
           <button id="tabCustomer" class="tab secondary" onclick="setMode('customer')">搜尋客人</button>
           <button id="tabDriver" class="tab secondary" onclick="setMode('driver')">搜尋司機</button>
         </div>
+        <div id="dateRow" class="flex gap-2 mb-3 items-center">
+          <button class="secondary" onclick="shiftDate(-1)">‹ 前一天</button>
+          <input id="dateInput" type="date" class="flex-1 text-center font-bold text-[#553f62]" onchange="onDateChange()">
+          <button class="secondary" onclick="shiftDate(1)">後一天 ›</button>
+          <button class="secondary" onclick="gotoToday()">今天</button>
+        </div>
         <div class="flex gap-2">
           <input id="keyword" class="flex-1" placeholder="輸入單號、姓名或電話" onkeydown="if(event.key==='Enter') loadOrders()">
           <button class="primary" onclick="loadOrders()">查詢</button>
@@ -83,7 +89,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "report-check-v1.0.9"; // ①路線文字用\n改用<br>渲染，跟gas.html v2.2.249同步，不再依賴瀏覽器自然斷行(送機/接機兩種方向斷行位置不一致、接機常常斷在地址中間很亂)，現在兩種方向都固定「起點/終點各自一行」。②配色收斂：電話號碼原本用亮粉紅+無底線，跟「需收現」的紅色混在一起太搶眼、整頁看起來紅通通的。改成深紫色+虛線底線(有明確的可點擊感、但不會搶過真正該注意的地方)，紅/粉紅只留給「未確實回報」徽章跟「需收現」金額這兩個真正需要立即注意的資訊
+    const APP_VERSION = "report-check-v1.1.0"; // v1.1.0：①今日回報可選日期(前一天/後一天/今天/日期選擇)；②有加點的行程改成「1︱2︱→」行車順序(跟gas v2.2.434同步)。v1.0.9： ①路線文字用\n改用<br>渲染，跟gas.html v2.2.249同步，不再依賴瀏覽器自然斷行(送機/接機兩種方向斷行位置不一致、接機常常斷在地址中間很亂)，現在兩種方向都固定「起點/終點各自一行」。②配色收斂：電話號碼原本用亮粉紅+無底線，跟「需收現」的紅色混在一起太搶眼、整頁看起來紅通通的。改成深紫色+虛線底線(有明確的可點擊感、但不會搶過真正該注意的地方)，紅/粉紅只留給「未確實回報」徽章跟「需收現」金額這兩個真正需要立即注意的資訊
     const GAS_URL = "https://script.google.com/macros/s/AKfycbz6wgk6T8ypEI1pW5ih7M3Bom54Tu7unv-sc_ldFtPSBWw4yAbahs70GErKGpsRqcG3/exec";
 
     async function safeJsonParse(r) {
@@ -98,9 +104,17 @@
     let session = JSON.parse(localStorage.getItem("reportCheckSession") || "null");
     let mode = "today";
     let lastOrders = [];
+    const todayStr = () => { const d = new Date(Date.now() + (new Date().getTimezoneOffset() + 480) * 60000); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+    let selDate = todayStr();
+    const WEEK = ["日", "一", "二", "三", "四", "五", "六"];
+    function dateLabel(ds) { const [y, m, d] = ds.split("-").map(Number); return `${m}/${d}（${WEEK[new Date(y, m - 1, d).getDay()]}）`; }
+    function shiftDate(n) { const [y, m, d] = selDate.split("-").map(Number); const t = new Date(y, m - 1, d + n); selDate = t.getFullYear() + "-" + String(t.getMonth() + 1).padStart(2, "0") + "-" + String(t.getDate()).padStart(2, "0"); $("dateInput").value = selDate; loadOrders(); }
+    function onDateChange() { const v = $("dateInput").value; if (!v) return; selDate = v; loadOrders(); }
+    function gotoToday() { selDate = todayStr(); $("dateInput").value = selDate; loadOrders(); }
 
     document.addEventListener("DOMContentLoaded", () => {
       $("versionText").textContent = APP_VERSION;
+      $("dateInput").value = selDate;
       if (session && session.account && session.password) showApp();
     });
 
@@ -143,6 +157,7 @@
         : (mode === "order" ? "輸入單號，例如 AS-20260608" : mode === "driver" ? "輸入司機姓名，例如 陳" : "輸入姓名、電話或後三碼");
       $("keyword").value = "";
       lastOrders = [];
+      $("dateRow").classList.toggle("hidden", mode !== "today");
       $("summary").textContent = mode === "today" ? "查詢中..." : "請輸入搜尋內容後按查詢";
       $("orders").innerHTML = "";
       if (mode === "today") loadOrders();
@@ -159,7 +174,7 @@
       $("summary").textContent = "查詢中...";
       $("orders").innerHTML = "";
       try {
-        const res = await post("getReportCheckOrders", { ...session, mode, keyword });
+        const res = await post("getReportCheckOrders", { ...session, mode, keyword, date: selDate });
         if (!res.success) throw new Error(res.error || "查詢失敗");
         lastOrders = res.orders || [];
         renderOrders();
@@ -173,7 +188,7 @@
       const onlyMissing = $("onlyMissing").checked;
       const rows = onlyMissing ? lastOrders.filter(o => o.needsReport) : lastOrders;
       const missing = lastOrders.filter(o => o.needsReport).length;
-      $("summary").innerHTML = `${mode === "today" ? "今日回報" : "搜尋結果"}：${rows.length} 筆｜未確實回報 ${missing} 筆${missing ? '<span class="ml-2 text-rose-600">提示：標示未確實回報者，請優先確認司機是否已完成收/發/抵/上/結。</span>' : ''}`;
+      $("summary").innerHTML = `${mode === "today" ? (selDate === todayStr() ? "今日回報" : dateLabel(selDate) + " 回報") : "搜尋結果"}：${rows.length} 筆｜未確實回報 ${missing} 筆${missing ? '<span class="ml-2 text-rose-600">提示：標示未確實回報者，請優先確認司機是否已完成收/發/抵/上/結。</span>' : ''}`;
       $("orders").innerHTML = rows.map(renderOrder).join("") || `<div class="card p-8 text-center text-gray-400">查無資料</div>`;
     }
 
