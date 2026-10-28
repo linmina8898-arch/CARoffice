@@ -706,7 +706,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.2.6"; // v1.2.6：①折扣項目選「回程／去回程各扣」但沒勾同時預約回程(例如單號複製後單獨訂回程)不再被擋，直接扣在這一趟；②新增「＋預約來回優惠 -$100」快速鈕；③新增「我是（客服名稱）」欄位(記住)，每筆折扣後端都記錄是哪位客服；④補訂回程視窗可勾「給預約來回優惠 -$100」；v1.2.5：胖胖箱尺寸改選填(客人預約頁不再收尺寸)；載入舊單時保留客人預約頁新增的「長型／其他」細項、客人文字也會顯示出來； // v1.2.4：客人文字的備註照原樣顯示(「空白收據」不再被改寫成「需開立收據」)； v1.2.3：「補訂回程」的回程航班欄位強制英文大寫；v1.2.2：加點只是航廈名稱(第一航廈/第二航廈)時不帶乘車人聯絡資料；v1.2.1：「地址1／地址2…」沒填聯絡人的地址預設帶乘車人姓名＋電話；v1.2.0：新增「➕ 補訂回程」(客人先訂單趟、之後才訂回程：原單改成 單號-A、新增 單號-B，同中控台功能，需gas v2.2.420)；接送機有加點時，客人確認文字／預約明細圖改成像司機系統「地址1／地址2／地址3…」依行車順序編號、每個地址下一行「聯絡 姓名 電話」(行事曆、客人卡片同步，需gas v2.2.428)；v1.1.3：新增「帳務備註」欄(選固定客戶範本會自動帶入「固定客戶」表的「帳務備註」欄，複製舊單也會帶，只有客服/中控看得到，司機看不到；需gas v2.2.423)； // v1.1.2：路線的箭頭改成「→ 」(後面多一個空格，跟系統卡片一樣)； // v1.1.1：客人確認文字(預約成功通知)單程拿掉「航班編號／接送機場／加點地址」，接送地址改成「起點→加點→終點」一條路線，回程整條反過來； // v1.1.0：複製舊單／帶入另一腿時，姓名欄只放名字、稱謂自動選進「稱謂」下拉(不再整串帶「王小姐」)(搭配gas v2.2.419更準，沒更新也會自己拆)； // v1.0.99：行李欄位順序改「大型→中型→登機」； // v1.0.98：貼上客人訊息解析地址時，自動拿掉地址尾巴的手機/市話(例如「…4樓之2；0912580590」)； v1.0.97：多台車(C2起)每台可選填不同的乘車人姓名／稱謂／電話／地址／加點(預設收合、空白沿用C1，訂車人維持C1，需gas v2.2.411)。 v1.0.96：車型選單補上「New Alphard 40系」(原本只有小車/大車/進口商務車，跟客人訂車頁不一致；第2台起的車型也同步)，貼文字解析車型時Alphard歸到New Alphard 40系、不再被當成進口商務車。 // v1.0.95：新增「特約／月結企業客戶」欄(輸入統編或特約代號，查到公司後帶入、付款方式改月結簽單，需gas v2.2.407)；  v1.0.94：數字欄位(車資等)拿掉上下箭頭，滾輪/方向鍵不會再改數字； v1.0.93：航班欄位(去程/回程)手機鍵盤預設英文＋自動大寫； v1.0.92：來回預約新增「回程機場」(預設同去程)，機場不同時回程單存回程機場、航廈T1/T2依各趟機場決定、確認畫面/客人確認文字回程顯示回程機場，複製舊單會帶回程機場(需gas v2.2.393)； v1.0.91：行李分類改版——登機/托運中型(21-26吋)/托運大型(27-29吋)三個欄位，另有「含推車」「含胖胖箱(+尺寸)」細項(包含在大型內)；客人確認文字、預約明細圖、確認視窗行李改成「登機 1 + 中型 1 + 大型 2」，細項另起一行「含 …」；載入舊單會帶回細項(需gas v2.2.390)； v1.0.90：修正客人確認文字「特殊備註」只要備註內有「收據」兩個字就整段被換成「需開立收據」，其他備註內容消失；現在只把含收據的片段換成「需開立收據」，其餘內容保留； v1.0.89：預約明細圖片資訊欄有選舉牌時多一列「舉牌」(需gas v2.2.388)； v1.0.88：「對話文字快速帶入」移到頁面最上面，標題可點擊收折/展開(記住上次狀態)； v1.0.87：新增「訂車人同乘客」勾選(預設勾選＝跟以前一樣)，取消勾選可另外填訂車人姓名/稱謂/電話(代訂)；折扣碼查詢用訂車人電話；訂車人與乘客不同時客人確認文字多一行「訂車貴賓」；載入舊單會帶回訂車人(需gas v2.2.369)； v1.0.86：客人確認文字改成顯示每個地址下面的「聯絡人 電話」(原本會拿掉)，聯絡人欄提示字改成「客人確認文字會顯示此聯絡人與電話；司機端只看得到電話圖示」(需gas v2.2.367)； v1.0.85：每個地址(接送地址/起點/終點/各加點)可展開填「聯絡人稱呼＋電話」，存成「地址（聯絡：王小姐 0912-345-678）」，司機端自動拆成獨立一行可直接撥打；客人確認文字會拿掉這段，不外流；v1.0.84：建立成功後的「客人確認文字」來回單可分開複製「去程」「回程」或「兩則合併」(單台來回、多台車每一台都適用)；v1.0.83：修正「其他車輛設定」(C2起各台車型/車資/折扣)原本放在頁面上方、往下捲看不到，改放在「車輛台數」正下方，選台數後自動捲到那裡；v1.0.82：新增「車輛台數」(多台車)：C2 起各自車型/車資/回程車資/現收/折扣/加值，確認視窗逐台列出，建立後每台一份客人確認文字，單號=基底-C1/-C2…(需gas v2.2.360)；v1.0.81：電話可填分機(ext.56082、#13、分機13、轉13 都會整理成「03-571-2121 #56082」)，司機撥號會自動帶分機；v1.0.80：電話欄可輸入市話(02-1234-5678、03-123-4567…)，新增「客人沒有電話」勾選(記為0900-000-000，司機端顯示無電話，客人確認文字顯示「無」)；v1.0.79：①不填航班編號、只選航廈時，航廈也會送出(顯示「航廈 T2」)，編輯舊單時會拆回航廈欄位 ②金額欄位拿掉右邊上下箭頭、滾輪不會再改到金額。 v1.0.78：依使用者要求，同時預約來回有加點時，回程的行程順序要跟去程相反(去程 新竹→竹北(加點)→機場，回程 機場→竹北→新竹)：送出前的確認預覽，回程那腿的行程/加點改成顯示反轉後的順序(跟後端gas.html v2.2.345實際寫入一致)，去程與沒有加點的預約不變。 v1.0.77：依使用者要求，航班編號旁邊新增「航廈」選單(第一航廈T1/第二航廈T2/不確定，幫我查詢)，只有選「桃園機場」才出現，有填航班編號就一定要選(沒選送出會跳出缺漏欄位提示)；去程/回程各一個；選了以「航班｜T1/T2/？」(例如CI108｜T2)接在航班編號後面送出，複製舊單/載入舊單時會把已存的「CI108｜T2」拆回兩個欄位。 v1.0.76： 🚨修正buildOrderFeeRows來回程「來回總額」算錯的問題：客服用「補套用折扣碼」只對來回其中一腿單獨套用時(去程/回程的折扣碼/折扣金額欄位各自獨立)，原本只扣這一腿自己的discountAmount，另一腿單獨套用的那組折扣完全沒被扣到，導致來回總額比實際應付多。修正：合併去程/回程兩腿各自的discountAmt，「來回總額」的扣除改用合併後的金額。跟gas.html v2.2.292 buildBookingFeeContents_、admin.html buildReservationUpdateFeePreview同一套邏輯
+    const APP_VERSION = "manual-booking-v1.2.7"; // v1.2.7：①建立成功後，客人確認文字改用預約單「實際存的」日期時間產生(後端回傳savedTrips)，跟表單不一致時先跳紅色警告；②成功視窗最上面大字顯示系統存的乘車日期時間；③所有「傳給客人的確認文字」框改唯讀並註明「改這裡不會改到預約單」，要改請回表單或中控台「修改資料」(起因：NA-C-202610201028AEDW 系統存12:00、傳給客人的文字09:00)，需gas v2.2.446； v1.2.6：①折扣項目選「回程／去回程各扣」但沒勾同時預約回程(例如單號複製後單獨訂回程)不再被擋，直接扣在這一趟；②新增「＋預約來回優惠 -$100」快速鈕；③新增「我是（客服名稱）」欄位(記住)，每筆折扣後端都記錄是哪位客服；④補訂回程視窗可勾「給預約來回優惠 -$100」；v1.2.5：胖胖箱尺寸改選填(客人預約頁不再收尺寸)；載入舊單時保留客人預約頁新增的「長型／其他」細項、客人文字也會顯示出來； // v1.2.4：客人文字的備註照原樣顯示(「空白收據」不再被改寫成「需開立收據」)； v1.2.3：「補訂回程」的回程航班欄位強制英文大寫；v1.2.2：加點只是航廈名稱(第一航廈/第二航廈)時不帶乘車人聯絡資料；v1.2.1：「地址1／地址2…」沒填聯絡人的地址預設帶乘車人姓名＋電話；v1.2.0：新增「➕ 補訂回程」(客人先訂單趟、之後才訂回程：原單改成 單號-A、新增 單號-B，同中控台功能，需gas v2.2.420)；接送機有加點時，客人確認文字／預約明細圖改成像司機系統「地址1／地址2／地址3…」依行車順序編號、每個地址下一行「聯絡 姓名 電話」(行事曆、客人卡片同步，需gas v2.2.428)；v1.1.3：新增「帳務備註」欄(選固定客戶範本會自動帶入「固定客戶」表的「帳務備註」欄，複製舊單也會帶，只有客服/中控看得到，司機看不到；需gas v2.2.423)； // v1.1.2：路線的箭頭改成「→ 」(後面多一個空格，跟系統卡片一樣)； // v1.1.1：客人確認文字(預約成功通知)單程拿掉「航班編號／接送機場／加點地址」，接送地址改成「起點→加點→終點」一條路線，回程整條反過來； // v1.1.0：複製舊單／帶入另一腿時，姓名欄只放名字、稱謂自動選進「稱謂」下拉(不再整串帶「王小姐」)(搭配gas v2.2.419更準，沒更新也會自己拆)； // v1.0.99：行李欄位順序改「大型→中型→登機」； // v1.0.98：貼上客人訊息解析地址時，自動拿掉地址尾巴的手機/市話(例如「…4樓之2；0912580590」)； v1.0.97：多台車(C2起)每台可選填不同的乘車人姓名／稱謂／電話／地址／加點(預設收合、空白沿用C1，訂車人維持C1，需gas v2.2.411)。 v1.0.96：車型選單補上「New Alphard 40系」(原本只有小車/大車/進口商務車，跟客人訂車頁不一致；第2台起的車型也同步)，貼文字解析車型時Alphard歸到New Alphard 40系、不再被當成進口商務車。 // v1.0.95：新增「特約／月結企業客戶」欄(輸入統編或特約代號，查到公司後帶入、付款方式改月結簽單，需gas v2.2.407)；  v1.0.94：數字欄位(車資等)拿掉上下箭頭，滾輪/方向鍵不會再改數字； v1.0.93：航班欄位(去程/回程)手機鍵盤預設英文＋自動大寫； v1.0.92：來回預約新增「回程機場」(預設同去程)，機場不同時回程單存回程機場、航廈T1/T2依各趟機場決定、確認畫面/客人確認文字回程顯示回程機場，複製舊單會帶回程機場(需gas v2.2.393)； v1.0.91：行李分類改版——登機/托運中型(21-26吋)/托運大型(27-29吋)三個欄位，另有「含推車」「含胖胖箱(+尺寸)」細項(包含在大型內)；客人確認文字、預約明細圖、確認視窗行李改成「登機 1 + 中型 1 + 大型 2」，細項另起一行「含 …」；載入舊單會帶回細項(需gas v2.2.390)； v1.0.90：修正客人確認文字「特殊備註」只要備註內有「收據」兩個字就整段被換成「需開立收據」，其他備註內容消失；現在只把含收據的片段換成「需開立收據」，其餘內容保留； v1.0.89：預約明細圖片資訊欄有選舉牌時多一列「舉牌」(需gas v2.2.388)； v1.0.88：「對話文字快速帶入」移到頁面最上面，標題可點擊收折/展開(記住上次狀態)； v1.0.87：新增「訂車人同乘客」勾選(預設勾選＝跟以前一樣)，取消勾選可另外填訂車人姓名/稱謂/電話(代訂)；折扣碼查詢用訂車人電話；訂車人與乘客不同時客人確認文字多一行「訂車貴賓」；載入舊單會帶回訂車人(需gas v2.2.369)； v1.0.86：客人確認文字改成顯示每個地址下面的「聯絡人 電話」(原本會拿掉)，聯絡人欄提示字改成「客人確認文字會顯示此聯絡人與電話；司機端只看得到電話圖示」(需gas v2.2.367)； v1.0.85：每個地址(接送地址/起點/終點/各加點)可展開填「聯絡人稱呼＋電話」，存成「地址（聯絡：王小姐 0912-345-678）」，司機端自動拆成獨立一行可直接撥打；客人確認文字會拿掉這段，不外流；v1.0.84：建立成功後的「客人確認文字」來回單可分開複製「去程」「回程」或「兩則合併」(單台來回、多台車每一台都適用)；v1.0.83：修正「其他車輛設定」(C2起各台車型/車資/折扣)原本放在頁面上方、往下捲看不到，改放在「車輛台數」正下方，選台數後自動捲到那裡；v1.0.82：新增「車輛台數」(多台車)：C2 起各自車型/車資/回程車資/現收/折扣/加值，確認視窗逐台列出，建立後每台一份客人確認文字，單號=基底-C1/-C2…(需gas v2.2.360)；v1.0.81：電話可填分機(ext.56082、#13、分機13、轉13 都會整理成「03-571-2121 #56082」)，司機撥號會自動帶分機；v1.0.80：電話欄可輸入市話(02-1234-5678、03-123-4567…)，新增「客人沒有電話」勾選(記為0900-000-000，司機端顯示無電話，客人確認文字顯示「無」)；v1.0.79：①不填航班編號、只選航廈時，航廈也會送出(顯示「航廈 T2」)，編輯舊單時會拆回航廈欄位 ②金額欄位拿掉右邊上下箭頭、滾輪不會再改到金額。 v1.0.78：依使用者要求，同時預約來回有加點時，回程的行程順序要跟去程相反(去程 新竹→竹北(加點)→機場，回程 機場→竹北→新竹)：送出前的確認預覽，回程那腿的行程/加點改成顯示反轉後的順序(跟後端gas.html v2.2.345實際寫入一致)，去程與沒有加點的預約不變。 v1.0.77：依使用者要求，航班編號旁邊新增「航廈」選單(第一航廈T1/第二航廈T2/不確定，幫我查詢)，只有選「桃園機場」才出現，有填航班編號就一定要選(沒選送出會跳出缺漏欄位提示)；去程/回程各一個；選了以「航班｜T1/T2/？」(例如CI108｜T2)接在航班編號後面送出，複製舊單/載入舊單時會把已存的「CI108｜T2」拆回兩個欄位。 v1.0.76： 🚨修正buildOrderFeeRows來回程「來回總額」算錯的問題：客服用「補套用折扣碼」只對來回其中一腿單獨套用時(去程/回程的折扣碼/折扣金額欄位各自獨立)，原本只扣這一腿自己的discountAmount，另一腿單獨套用的那組折扣完全沒被扣到，導致來回總額比實際應付多。修正：合併去程/回程兩腿各自的discountAmt，「來回總額」的扣除改用合併後的金額。跟gas.html v2.2.292 buildBookingFeeContents_、admin.html buildReservationUpdateFeePreview同一套邏輯
     // v1.0.72 - 新增「複製舊單，快速建立新預約」功能：取消的訂單客人又想用同樣行程重新預約時(只是要換日期/時間)，不用整張表單重填，填舊單號查詢後，客人資料/地址/車型/人數行李/金額/加值折扣項目會整包帶入下面表單，唯獨日期時間留白由客服自行填寫新的時段。跟既有的「補建遺漏的去程/回程」是兩個獨立功能：那個查完會用recoveryBaseId/recoveryLegSuffix掛回舊單底下(維持-A/-B配對)，這個完全不動那兩個欄位，送出後一律是全新單號，不影響原本那筆舊單。實作參考fetchRecoveryAutoFill同一套用getManualBookingTextData查單、setValue逐欄位帶入的做法，額外處理了：單程行程起訖點分別對應到address/airport欄位、回程行程/金額/航班另外從回程那筆資料帶入、加值服務用parseStoredFeeExtras依去程/回程分別還原明細、折扣只取去程那筆避免兩腿重複記的折扣被加乘兩次、現場收現金額只在付款方式真的需要時才帶入
     // 「固定客戶範本」選擇改成自訂清單，不再用原生下拉選單(在手機上選項一長就變成一長串塞在一起完全看不清楚)。改成一張張獨立卡片：來源標籤(粉紅底)+姓名+電話在同一行，地址另起一行，點擊即可帶入，選中的那筆會highlight。原本的select仍保留(隱藏)當作資料狀態，不影響既有的applyTemplate等邏輯
     // 不再用 Google callback 機制初始化地圖（callback 容易撞上 async 腳本執行時機競速問題，
@@ -2513,7 +2513,8 @@
           <div style="color:#6b7280;margin-bottom:10px;">${noteText}</div>
           <label style="display:block;color:#553f62;font-weight:700;margin-bottom:6px;">傳給客人的確認文字<span id="crLabel" style="margin-left:6px;color:#d85c8f"></span></label>
           ${carTabs}${viewTabs}
-          <textarea id="crBox" style="width:100%;height:260px;border:1px solid #e7dde8;border-radius:12px;padding:10px;font-size:13px;line-height:1.6;"></textarea>
+          ${READONLY_NOTE_HTML_}
+          <textarea id="crBox" readonly style="background:#faf7fb;width:100%;height:260px;border:1px solid #e7dde8;border-radius:12px;padding:10px;font-size:13px;line-height:1.6;"></textarea>
         </div>`,
         icon: "success",
         confirmButtonText: multi ? "複製全部" : "複製目前這份",
@@ -2654,6 +2655,8 @@
           headers: { "Content-Type": "text/plain;charset=utf-8" }
         }).then(r => safeJsonParse(r));
         if (!res.success) throw new Error(res.error || "建立失敗");
+        // v1.2.7：用預約單上「實際存的」日期時間產生客人確認文字；跟表單不一致就先跳紅色警告(起因：AEDW 系統存12:00、傳給客人的文字是09:00)
+        if (!isMulti) await applySavedTripTimes_(payload, res);
         manualBookingIdemKey = null; // 這筆成功了，清空，下一筆新訂單才會產生新的 key
         if (isMulti) {
           await showMultiCarSuccess(payload, res);
@@ -2665,7 +2668,7 @@
         saveLastCustomerMessage(customerText);
         if (payload.hasReturn && !isRecoveryMode) {
           // 來回：可分開複製「去程」「回程」或兩則合併
-          await showCopyResultDialog("預約已建立", "已寫入預約單、原始檔，並同步建立行事曆。", ids, [{ label: "", carType: payload.carType, ids: res.reservationIds || [], parts: buildCustomerConfirmMessageParts(payload, res.reservationIds || []) }]);
+          await showCopyResultDialog("預約已建立", savedTimeBannerHtml_(payload) + "已寫入預約單、原始檔，並同步建立行事曆。", ids, [{ label: "", carType: payload.carType, ids: res.reservationIds || [], parts: buildCustomerConfirmMessageParts(payload, res.reservationIds || []) }]);
           updateSummary(ids.replace(/\n/g, "、") || "已建立");
           return;
         }
@@ -2673,9 +2676,11 @@
           title: "預約已建立",
           html: `<div style="text-align:left;line-height:1.7;font-size:14px;">
             單號：<br><pre style="white-space:pre-wrap;background:#f8f3f7;border-radius:10px;padding:10px;">${escapeHtml(ids)}</pre>
+            ${savedTimeBannerHtml_(payload)}
             <div style="color:#6b7280;margin-bottom:10px;">已寫入預約單、原始檔，並同步建立行事曆。</div>
             <label style="display:block;color:#553f62;font-weight:700;margin-bottom:6px;">傳給客人的確認文字</label>
-            <textarea id="customerConfirmText" style="width:100%;height:260px;border:1px solid #e7dde8;border-radius:12px;padding:10px;font-size:13px;line-height:1.6;">${escapeHtml(customerText)}</textarea>
+            ${READONLY_NOTE_HTML_}
+            <textarea id="customerConfirmText" readonly style="background:#faf7fb;width:100%;height:260px;border:1px solid #e7dde8;border-radius:12px;padding:10px;font-size:13px;line-height:1.6;">${escapeHtml(customerText)}</textarea>
           </div>`,
           icon: "success",
           confirmButtonText: "複製文字",
@@ -2738,6 +2743,40 @@
         if (retSpecial && retAmount > 0) retEl.textContent = `⚠️ ${retDate} 是「${retSpecial.label}」，${p.carType || "此車型"}建議加價 $${retAmount.toLocaleString()}（不會自動加進車資，請自行加總；特殊節日恕無法使用折扣）`;
       }
     }
+
+    // v1.2.7：把後端回傳的 savedTrips(預約單實際存的日期時間)套回 payload，客人確認文字一律以系統資料為準。
+    // savedTrips 順序＝建立順序：[0]去程(或補建的那一腿)、[1]回程。舊版後端沒回傳就略過(照舊用表單)。
+    async function applySavedTripTimes_(p, res) {
+      const saved = (res && Array.isArray(res.savedTrips)) ? res.savedTrips : [];
+      if (!saved.length) return;
+      const legs = [{ key: "去程", d: "rideDate", t: "rideTime", s: saved[0] }];
+      if (p.hasReturn && saved[1]) legs.push({ key: "回程", d: "returnDate", t: "returnTime", s: saved[1] });
+      const diffs = [];
+      legs.forEach(l => {
+        if (!l.s) return;
+        const fd = String(p[l.d] || ""), ft = String(p[l.t] || "");
+        if ((l.s.rideDate && l.s.rideDate !== fd) || (l.s.rideTime && l.s.rideTime !== ft)) diffs.push(`${l.key}：表單 ${fd} ${ft} ➜ 系統存成 <b>${escapeHtml(l.s.rideDate)} ${escapeHtml(l.s.rideTime)}</b>`);
+        if (l.s.rideDate) p[l.d] = l.s.rideDate;
+        if (l.s.rideTime) p[l.t] = l.s.rideTime;
+      });
+      if (diffs.length) {
+        await Swal.fire({
+          icon: "error", title: "⚠️ 系統存的時間跟表單不一樣",
+          html: `<div style="text-align:left;line-height:1.8">${diffs.join("<br>")}<br><br><span style="color:#b91c1c;font-weight:700">客人確認文字已改用系統存的時間。如果系統存錯了，請到中控台「修改資料」改正後再傳給客人。</span></div>`,
+          confirmButtonText: "我知道了", confirmButtonColor: "#b91c1c"
+        });
+      }
+    }
+    // v1.2.7：建立成功視窗最上面，用大字顯示「系統實際存的」日期時間，傳給客人前再看一眼
+    function savedTimeBannerHtml_(p) {
+      const leg = (label, d, t) => `<div style="font-size:20px;font-weight:900;color:#b03060;letter-spacing:.5px">${label}${escapeHtml(formatCustomerDate(d))} ${escapeHtml(t || "")}</div>`;
+      return `<div style="background:#fff5f8;border:2px solid #f0d6e2;border-radius:12px;padding:10px 12px;margin-bottom:10px">
+        <div style="font-size:12px;color:#6b7280;margin-bottom:2px">系統已存的乘車日期時間（請跟客人要的時間核對）</div>
+        ${leg(p.hasReturn ? "去程　" : "", p.rideDate, p.rideTime)}
+        ${p.hasReturn ? leg("回程　", p.returnDate, p.returnTime) : ""}
+      </div>`;
+    }
+    const READONLY_NOTE_HTML_ = `<div style="font-size:12px;color:#b91c1c;margin:-2px 0 6px">這段文字不能直接改；要改時間或內容，請回表單或到中控台「修改資料」，系統才會一起更新。</div>`;
 
     function buildCustomerConfirmMessage(p, reservationIds = []) {
       return buildCustomerConfirmMessageParts(p, reservationIds).join("\n\n");
@@ -3284,14 +3323,13 @@
       }
       await Swal.fire({
         title: "最近建立的預約文字",
-        html: `<textarea id="customerConfirmText" style="width:100%;height:300px;border:1px solid #e7dde8;border-radius:12px;padding:10px;font-size:13px;line-height:1.6;">${escapeHtml(lastCustomerMessage)}</textarea>`,
+        html: `${READONLY_NOTE_HTML_}<textarea id="customerConfirmText" readonly style="background:#faf7fb;width:100%;height:300px;border:1px solid #e7dde8;border-radius:12px;padding:10px;font-size:13px;line-height:1.6;">${escapeHtml(lastCustomerMessage)}</textarea>`,
         confirmButtonText: "複製文字",
         showCancelButton: true,
         cancelButtonText: "關閉",
         confirmButtonColor: "#553f62",
         preConfirm: async () => {
-          const text = document.getElementById("customerConfirmText")?.value || lastCustomerMessage;
-          saveLastCustomerMessage(text);
+          const text = lastCustomerMessage; // v1.2.7：唯讀，一律複製系統產生的原文
           try { await navigator.clipboard.writeText(text); } catch (e) {}
           return true;
         }
