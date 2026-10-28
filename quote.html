@@ -257,7 +257,7 @@
     </div>
   </div>
   <script>
-    const APP_VERSION = "quote-v1.0.23"; // v1.0.23：急單加價等「有金額又有備註」的項目，報價文字／畫面／圖片都同時顯示金額(+NT$500)與備註，明細加起來等於預估總額。 v1.0.22：加點費自動試算的起點改帶「縣市＋鄉鎮區＋地址」(跟客人預約系統一致，以前只用地址文字導致算出不同距離與加點費)，改地區也會重算。 v1.0.21：車型顯示名稱跟客人訂車頁一致(New Alphard 40系、進口商務車不再帶括號)。 // 新增「單程」(多接送點)與「包車」(可填行程、緩衝/超時、跨夜住宿補貼)報價：金額由客服手動填，可同時報2種車型，座椅/增高墊每張$200；文字版與圖片版同步支援
+    const APP_VERSION = "quote-v1.0.24"; // v1.0.24：報價圖片標題底色由#574266統一改成品牌主紫#553F62； v1.0.23：急單加價等「有金額又有備註」的項目，報價文字／畫面／圖片都同時顯示金額(+NT$500)與備註，明細加起來等於預估總額。 v1.0.22：加點費自動試算的起點改帶「縣市＋鄉鎮區＋地址」(跟客人預約系統一致，以前只用地址文字導致算出不同距離與加點費)，改地區也會重算。 v1.0.21：車型顯示名稱跟客人訂車頁一致(New Alphard 40系、進口商務車不再帶括號)。 // 新增「單程」(多接送點)與「包車」(可填行程、緩衝/超時、跨夜住宿補貼)報價：金額由客服手動填，可同時報2種車型，座椅/增高墊每張$200；文字版與圖片版同步支援
     const GAS_URL = "https://script.google.com/macros/s/AKfycbz6wgk6T8ypEI1pW5ih7M3Bom54Tu7unv-sc_ldFtPSBWw4yAbahs70GErKGpsRqcG3/exec";
     const BOOKING_URL = location.href.includes("quote.html") ? location.href.replace("quote.html", "index.html") : "index.html";
     let priceRows = [];
@@ -830,7 +830,7 @@
       })() : "";
       return `
         <div style="width:480px;background:#fff;font-family:-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif;">
-          <div style="background:#574266;padding:16px 30px;text-align:center;color:#fff;">
+          <div style="background:#553F62;padding:16px 30px;text-align:center;color:#fff;">
             <div style="font-size:17px;font-weight:700;letter-spacing:2px;">安興專車接送｜參考報價</div>
           </div>
 
