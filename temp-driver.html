@@ -88,7 +88,7 @@
         </div>
     </div>
     <script>
-        const APP_VERSION = "v1.0.57"; // v1.0.57：行李細項顯示支援「長型物件／其他」； // v1.0.56：單程卡片拿掉「接送機場／航班編號」，改顯示上車地址／加點／下車地址(跟司機頁一致)； // v1.0.55：行李順序改「大型→中型→登機」； // v1.0.54：人數／行李還原成分開兩列(撤回v1.0.53合併一行)； // v1.0.52：行李附註改「┖含推車1」(跟客人卡片、行事曆一致)；  v1.0.51：月結單付款文字帶公司簡稱，例：月結簽單(昕鴻)(需gas v2.2.399)； v1.0.50：月結客戶「免簽名」(企業客戶工作表「司機要簽單」填否)：結案不跳簽名板、顯示「月結，免簽名」(需gas v2.2.398)； v1.0.49：行李件數分2行(登機/中型/大型 + 含推車/胖胖箱)，乘車人數改「大人 2 + 兒童 1」(需gas v2.2.390)；  v1.0.48：臨時司機明細新增「司機備註」列(試算表AI欄)； v1.0.47：有加點時地址改「地址1/地址2…」編號；轉帳/月結＋現場收現時付款方式寫清楚「轉帳＋現場收現 $X（只收這筆現金，其餘客人已轉帳）」； v1.0.46：電話辨識支援國際電話(+國碼開頭)，一樣只顯示圖示； v1.0.45：依使用者要求，任務明細不再顯示任何電話號碼，電話只留「☎ 電話圖示」點了直接撥號(跟司機端 v1.17.0 同一套)； v1.0.44：備註/司機提醒/地址裡的電話自動變撥號連結，站點聯絡人拆成獨立一行(跟司機端 v1.16.0 同一套)。v1.0.43：客人電話帶分機時，致電按鈕先撥主號碼、停4秒再撥分機；依使用者要求(先確認過示意圖)：畫面最後面新增「本趟車輛」一行(車號︱車型︱車色)，放在付款方式(含實拿車資)後面、中間空一格(空格高度跟其他每一行一樣)；沒填車色就只顯示車號︱車型，三項都沒有時整行(含空格)不顯示；車色已包含在車型文字裡時不重複顯示。配合gas.html v2.2.344。 依使用者要求：有現場收現且有給司機車資時，「付款方式」下面多一行「實拿車資 $X」，避免臨時司機看到「現場收現 $1,800」誤以為車資是1,800(收現備註按鈕保留)。 v1.0.40： 依使用者要求，畫面抬頭改成公司全名：分頁標題「AS派車 - 臨時派遣任務」→「瑞陞汽車租賃有限公司 派車單 - 臨時派遣任務(AS)」，頁面上方標頭「AS派車」→「瑞陞汽車租賃有限公司 派車」。v1.0.39：修正LIFF withLoginOnExternalBrowser登入流程導回頁面時，網址上的?token=有時候會遺失、導致顯示「無法開啟任務」的問題：進頁面時把token先存到sessionStorage，網址讀不到token時改用暫存的這份
+        const APP_VERSION = "v1.0.58"; // v1.0.58：包車：顯示用車時數(起訖＋緩衝規則)與行程，不顯示金額，付款下面加「超時」提醒(需gas v2.2.448)； v1.0.57：行李細項顯示支援「長型物件／其他」； // v1.0.56：單程卡片拿掉「接送機場／航班編號」，改顯示上車地址／加點／下車地址(跟司機頁一致)； // v1.0.55：行李順序改「大型→中型→登機」； // v1.0.54：人數／行李還原成分開兩列(撤回v1.0.53合併一行)； // v1.0.52：行李附註改「┖含推車1」(跟客人卡片、行事曆一致)；  v1.0.51：月結單付款文字帶公司簡稱，例：月結簽單(昕鴻)(需gas v2.2.399)； v1.0.50：月結客戶「免簽名」(企業客戶工作表「司機要簽單」填否)：結案不跳簽名板、顯示「月結，免簽名」(需gas v2.2.398)； v1.0.49：行李件數分2行(登機/中型/大型 + 含推車/胖胖箱)，乘車人數改「大人 2 + 兒童 1」(需gas v2.2.390)；  v1.0.48：臨時司機明細新增「司機備註」列(試算表AI欄)； v1.0.47：有加點時地址改「地址1/地址2…」編號；轉帳/月結＋現場收現時付款方式寫清楚「轉帳＋現場收現 $X（只收這筆現金，其餘客人已轉帳）」； v1.0.46：電話辨識支援國際電話(+國碼開頭)，一樣只顯示圖示； v1.0.45：依使用者要求，任務明細不再顯示任何電話號碼，電話只留「☎ 電話圖示」點了直接撥號(跟司機端 v1.17.0 同一套)； v1.0.44：備註/司機提醒/地址裡的電話自動變撥號連結，站點聯絡人拆成獨立一行(跟司機端 v1.16.0 同一套)。v1.0.43：客人電話帶分機時，致電按鈕先撥主號碼、停4秒再撥分機；依使用者要求(先確認過示意圖)：畫面最後面新增「本趟車輛」一行(車號︱車型︱車色)，放在付款方式(含實拿車資)後面、中間空一格(空格高度跟其他每一行一樣)；沒填車色就只顯示車號︱車型，三項都沒有時整行(含空格)不顯示；車色已包含在車型文字裡時不重複顯示。配合gas.html v2.2.344。 依使用者要求：有現場收現且有給司機車資時，「付款方式」下面多一行「實拿車資 $X」，避免臨時司機看到「現場收現 $1,800」誤以為車資是1,800(收現備註按鈕保留)。 v1.0.40： 依使用者要求，畫面抬頭改成公司全名：分頁標題「AS派車 - 臨時派遣任務」→「瑞陞汽車租賃有限公司 派車單 - 臨時派遣任務(AS)」，頁面上方標頭「AS派車」→「瑞陞汽車租賃有限公司 派車」。v1.0.39：修正LIFF withLoginOnExternalBrowser登入流程導回頁面時，網址上的?token=有時候會遺失、導致顯示「無法開啟任務」的問題：進頁面時把token先存到sessionStorage，網址讀不到token時改用暫存的這份
         const GAS_URL = "https://script.google.com/macros/s/AKfycbz6wgk6T8ypEI1pW5ih7M3Bom54Tu7unv-sc_ldFtPSBWw4yAbahs70GErKGpsRqcG3/exec";
         const LIFF_ID = "2009971109-EdjC9QlC";
         let lineUserId = "";
@@ -267,10 +267,18 @@
                 : (extraLinesArr.length
                     ? [task.address].concat(extraLinesArr).map((v, i) => ["地址" + (i + 1), v])
                     : [["接送地址", task.address], ["加點地址", task.extraStop]]);
-            const headFields = isOneWay
+            // v1.0.58：包車：用車時數＋行程(沒有任何金額)，取代機場／航班／地址
+            const isCharter = task.type === "包車";
+            const chH = Number(clean(task.charterHours)) || 0, chBuf = clean(task.charterBuffer) === "" ? 15 : Number(task.charterBuffer) || 0;
+            const chRange = (() => { const m = String(task.time || "").match(/(\d{1,2}):(\d{2})/); if (!m || !chH) return ""; const e = Number(m[1]) * 60 + Number(m[2]) + Math.round(chH * 60); return `（${task.time}～${String(Math.floor(e / 60) % 24).padStart(2, "0")}:${String(e % 60).padStart(2, "0")}）`; })();
+            const headFields = isCharter
+                ? [["用車時數", (clean(task.charterDayText) ? clean(task.charterDayText) + "｜" : "") + (chH ? chH + "小時" + chRange : "未填") + "\n緩衝" + chBuf + "分鐘，超過以1小時計"],
+                   ["行程", clean(task.charterItinerary) || [task.address, task.airport].filter(Boolean).join("\n➔")],
+                   ["客戶姓名", maskCustomerName(task.custName)]]
+                : isOneWay
                 ? [["客戶姓名", maskCustomerName(task.custName)]]
                 : [["接送機場", task.airport], ["航班編號", task.flightNo], ["客戶姓名", maskCustomerName(task.custName)]];
-            const fields = headFields.concat(addrFields).concat([
+            const fields = headFields.concat(isCharter ? [] : addrFields).concat([
                 ["乘車人數", formatPaxLabel(task.paxCount)],
                 ["行李件數", formatLuggageWithSport(task.luggage, task.sportLuggage)],
                 ["預約車型", task.car],
@@ -279,7 +287,8 @@
                 ["司機提醒", task.driverAlert],
                 ["司機備註", task.driverNote],
                 ["客戶備註", task.remarks],
-                ["付款方式", payment]
+                ["付款方式", payment],
+                ["超時", isCharter ? (cash > 0 ? "如有超時，請先通知客服；由客服跟客人確認金額後，告知你應收的總費用" : "如有超時，請先通知客服；超時費用由客服跟客人確認") : ""]
             ]).filter(item => clean(item[1]));
             // 本趟車輛：車號︱車型︱車色(車色已包含在車型文字裡就不重複)；三項都沒有就整行(含上面的空格)不顯示
             const tripCarType = clean(task.tripCarType);
@@ -319,6 +328,7 @@
                 const noteBtn = payout > 0 ? `<button type="button" onclick="showCashSettlementNote(${cash}, ${payout})" class="ml-2 rounded-full border border-[#EADDE8] bg-[#FBF7FA] px-2 py-0.5 text-[11px] font-bold text-[#7A6A82]">收現備註</button>` : "";
                 return `<span class="text-[#553f62]" style="font-weight:700;">${esc(value)}</span>${noteBtn}`;
             }
+            if (label === "用車時數" || label === "行程" || label === "超時") return String(linkifyPhonesHtml(value)).replace(/\n/g, "<br>");
             return linkifyPhonesHtml(value);
         }
         function isPlaceholderCustomerPhone(value) {

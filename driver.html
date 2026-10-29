@@ -195,7 +195,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.18.11"; // v1.18.11：行李細項顯示支援「長型物件／其他」(球具雪板釣竿、紙箱輪椅等)； // v1.18.10：同一預約加開多台車時，任務卡片顯示粉色標籤「第N台／共M台」，並把後台自動寫的「【同行程共N台｜…】另一台去哪、司機是誰」獨立成一列「同行程車輛」(電話可直接點)，不混在司機備註裡(需gas v2.2.439)； // v1.18.9：行李順序改「大型→中型→登機」； // v1.18.8：人數／行李還原成分開兩列「乘車人數」「行李件數」(撤回v1.18.7合併一行)； // v1.18.6：行李附註改「┖含推車1」(跟客人卡片、行事曆一致)；  v1.18.5：月結單付款文字／標籤帶公司簡稱，例：月結簽單(昕鴻)(需gas v2.2.399)； v1.18.4：月結客戶「免簽名」(企業客戶工作表「司機要簽單」填否)：結案不跳簽名板、直接確認結案，任務卡標籤/付款文字寫「月結（免簽名）」(需gas v2.2.398)； v1.18.3： v1.18.3：行李件數分2行——第1行「大型 2 + 中型 1 + 登機 1」，第2行小字「含 推車 1 + 胖胖箱 1（29吋）」，人數改「大人 2 + 兒童 1」(需gas v2.2.390)；舊單(沒有中型)仍顯示「托運」； v1.18.2：「司機備註」文字顏色由黃褐色改成跟「客戶備註」同一個紫色； v1.18.1：試算表「司機備註」欄(AI)的內容原本後端沒送、司機明細完全看不到，現在會顯示在「司機備註」列(標籤由「車商備註」改成「司機備註」)； v1.18.0：①有加點時地址改成「地址1/地址2/地址3」依行車順序編號(單程含終點、接送機含加點)，加點列維持粉底；②轉帳/月結＋另外現場收現時，付款方式改寫「轉帳＋現場收現」(或「月結簽單＋現場收現」)，收現金額下面補一行說明「只收這筆現金，其餘…」，不再同時出現「轉帳，不簽不收」與現場收現造成混淆； v1.17.1：電話辨識支援國際電話(+國碼開頭)，一樣只顯示圖示、點了直接撥號； v1.17.0：依使用者要求，任務明細不再顯示任何電話號碼，備註/司機提醒/站點聯絡人裡的電話一律只留「☎ 電話圖示」，點圖示直接撥號(聯絡人只顯示名字＋圖示)； v1.16.1：星期改用年月日直接計算，不受手機時區影響。 v1.16.0：備註/司機提醒/地址裡的電話(手機、市話、分機)自動變成可按的撥號連結；站點聯絡人「地址（聯絡：王小姐 0912-345-678）」拆成獨立一行並可直接撥打，地圖連結只吃純地址。v1.15.2：客人電話帶分機時，致電按鈕會先撥主號碼、停4秒再自動撥分機；v1.15.1：v1.15.1：加點地址改粉底醒目，單程放在上車/下車地址中間；v1.15.0：v1.15.0：①手機返回鍵/滑動返回改為退回系統主頁（不再跳出到官方LINE）②任務明細縮成一頁，回報按鈕固定在畫面下方；v1.14.72：v1.14.72：依使用者回報，司機連續按好幾筆「確認收單」都成功，過不久畫面又跳回「待收單」逼司機重按：剛回報成功的保護時間由15秒拉長到3分鐘、存進手機(localStorage，重新開啟App也有效)，且只在後端回來的狀態比剛回報的還早時才蓋回去(後端已一樣或更後面不動)；配合gas.html v2.2.337(寫入後flush＋收尾再清快取)。 v1.14.71：依使用者要求，司機端「該收現金」的備援算法(後端沒給cashCollected時才會用到)改成原始車資扣掉折扣金額，要跟客人卡片付款欄的實付金額一致；主要算法在後端gas.html v2.2.329。v1.14.70：依使用者要求，畫面抬頭改成公司全名：分頁標題「AS派車 - 司機端」→「瑞陞汽車租賃有限公司 派車單 - 司機端(AS)」，頁面上方標頭「AS派車 Driver」→「瑞陞汽車租賃有限公司 派車 Driver」。v1.14.69：單程(不經機場的定點接送)司機端畫面調整：原本沿用接送機場欄位配置，導致單程被標成「接送機場」很奇怪(其實顯示的是終點地址)、還會多顯示用不到的「航班編號」。改成單程專屬格式：「上車地址／下車地址」各自帶地圖連結方便導航，不顯示航班編號。只限定t.type==='單程'才套用，接機/送機畫面完全不受影響
+        const APP_VERSION = "v1.18.12"; // v1.18.12：包車明細改版：拿掉接送機場／航班／接送地址，改顯示「用車時數(起訖時間＋緩衝規則)」「行程」；不顯示任何車資或超時金額；付款下面加「超時」提醒(收現：請先通知客服，由客服確認後告知應收總額；非收現：請先通知客服)；任務列表包車顯示時數＋上車地點，單程改成起點➜終點(原本寫反)；需gas v2.2.448； v1.18.11：行李細項顯示支援「長型物件／其他」(球具雪板釣竿、紙箱輪椅等)； // v1.18.10：同一預約加開多台車時，任務卡片顯示粉色標籤「第N台／共M台」，並把後台自動寫的「【同行程共N台｜…】另一台去哪、司機是誰」獨立成一列「同行程車輛」(電話可直接點)，不混在司機備註裡(需gas v2.2.439)； // v1.18.9：行李順序改「大型→中型→登機」； // v1.18.8：人數／行李還原成分開兩列「乘車人數」「行李件數」(撤回v1.18.7合併一行)； // v1.18.6：行李附註改「┖含推車1」(跟客人卡片、行事曆一致)；  v1.18.5：月結單付款文字／標籤帶公司簡稱，例：月結簽單(昕鴻)(需gas v2.2.399)； v1.18.4：月結客戶「免簽名」(企業客戶工作表「司機要簽單」填否)：結案不跳簽名板、直接確認結案，任務卡標籤/付款文字寫「月結（免簽名）」(需gas v2.2.398)； v1.18.3： v1.18.3：行李件數分2行——第1行「大型 2 + 中型 1 + 登機 1」，第2行小字「含 推車 1 + 胖胖箱 1（29吋）」，人數改「大人 2 + 兒童 1」(需gas v2.2.390)；舊單(沒有中型)仍顯示「托運」； v1.18.2：「司機備註」文字顏色由黃褐色改成跟「客戶備註」同一個紫色； v1.18.1：試算表「司機備註」欄(AI)的內容原本後端沒送、司機明細完全看不到，現在會顯示在「司機備註」列(標籤由「車商備註」改成「司機備註」)； v1.18.0：①有加點時地址改成「地址1/地址2/地址3」依行車順序編號(單程含終點、接送機含加點)，加點列維持粉底；②轉帳/月結＋另外現場收現時，付款方式改寫「轉帳＋現場收現」(或「月結簽單＋現場收現」)，收現金額下面補一行說明「只收這筆現金，其餘…」，不再同時出現「轉帳，不簽不收」與現場收現造成混淆； v1.17.1：電話辨識支援國際電話(+國碼開頭)，一樣只顯示圖示、點了直接撥號； v1.17.0：依使用者要求，任務明細不再顯示任何電話號碼，備註/司機提醒/站點聯絡人裡的電話一律只留「☎ 電話圖示」，點圖示直接撥號(聯絡人只顯示名字＋圖示)； v1.16.1：星期改用年月日直接計算，不受手機時區影響。 v1.16.0：備註/司機提醒/地址裡的電話(手機、市話、分機)自動變成可按的撥號連結；站點聯絡人「地址（聯絡：王小姐 0912-345-678）」拆成獨立一行並可直接撥打，地圖連結只吃純地址。v1.15.2：客人電話帶分機時，致電按鈕會先撥主號碼、停4秒再自動撥分機；v1.15.1：v1.15.1：加點地址改粉底醒目，單程放在上車/下車地址中間；v1.15.0：v1.15.0：①手機返回鍵/滑動返回改為退回系統主頁（不再跳出到官方LINE）②任務明細縮成一頁，回報按鈕固定在畫面下方；v1.14.72：v1.14.72：依使用者回報，司機連續按好幾筆「確認收單」都成功，過不久畫面又跳回「待收單」逼司機重按：剛回報成功的保護時間由15秒拉長到3分鐘、存進手機(localStorage，重新開啟App也有效)，且只在後端回來的狀態比剛回報的還早時才蓋回去(後端已一樣或更後面不動)；配合gas.html v2.2.337(寫入後flush＋收尾再清快取)。 v1.14.71：依使用者要求，司機端「該收現金」的備援算法(後端沒給cashCollected時才會用到)改成原始車資扣掉折扣金額，要跟客人卡片付款欄的實付金額一致；主要算法在後端gas.html v2.2.329。v1.14.70：依使用者要求，畫面抬頭改成公司全名：分頁標題「AS派車 - 司機端」→「瑞陞汽車租賃有限公司 派車單 - 司機端(AS)」，頁面上方標頭「AS派車 Driver」→「瑞陞汽車租賃有限公司 派車 Driver」。v1.14.69：單程(不經機場的定點接送)司機端畫面調整：原本沿用接送機場欄位配置，導致單程被標成「接送機場」很奇怪(其實顯示的是終點地址)、還會多顯示用不到的「航班編號」。改成單程專屬格式：「上車地址／下車地址」各自帶地圖連結方便導航，不顯示航班編號。只限定t.type==='單程'才套用，接機/送機畫面完全不受影響
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -1069,6 +1069,9 @@
                 let addressText = cleanVal(t.address);
                 let shortAddress = addressText.length > 8 ? addressText.substring(0, 8) + '...' : addressText;
                 let summaryRoute = t.type === '送機' ? `${shortAddress} ➜ ${t.airport}` : `${t.airport} ➜ ${shortAddress}`;
+                // v1.18.12：單程是「起點 ➜ 終點」(原本寫反)；包車顯示時數＋上車地點
+                if (t.type === '單程') { const e = cleanVal(t.airport); summaryRoute = `${shortAddress} ➜ ${e.length > 8 ? e.substring(0, 8) + '...' : e}`; }
+                if (t.type === '包車') summaryRoute = `${cleanVal(t.charterDayText) ? cleanVal(t.charterDayText) + '｜' : ''}用車${cleanVal(t.charterHours) || '?'}小時｜${shortAddress}出發`;
 
                 // 判斷是否顯示「確認收單」按鈕在主畫面上
                 let actionArea = '';
@@ -1105,6 +1108,22 @@
                     </div>
                 </div>`;
             }).join('');
+        }
+
+        // v1.18.12：包車明細：用車時數(含起訖時間、緩衝規則)＋行程；不顯示任何金額(後端也不會給超時單價)
+        function charterDetailRowsHtml(t) {
+            const h = Number(cleanVal(t.charterHours)) || 0;
+            const buf = cleanVal(t.charterBuffer) === '' ? 15 : Number(t.charterBuffer) || 0;
+            let range = '';
+            const m = String(t.time || '').match(/(\d{1,2}):(\d{2})/);
+            if (m && h) { const end = Number(m[1]) * 60 + Number(m[2]) + Math.round(h * 60); range = `（${t.time}～${String(Math.floor(end / 60) % 24).padStart(2, '0')}:${String(end % 60).padStart(2, '0')}）`; }
+            const day = cleanVal(t.charterDayText) ? cleanVal(t.charterDayText) + '｜' : '';
+            const itin = cleanVal(t.charterItinerary);
+            const route = itin
+                ? itin.split(/\n+/).map(x => stopHtml(x)).join('<br>')
+                : `${stopHtml(t.address)}${cleanVal(t.airport) && cleanVal(t.airport) !== cleanVal(t.address) ? '<br>➔' + stopHtml(t.airport) : ''}`;
+            return `<div class="driver-field bg-[#fff5f8] -mx-3 px-3 border-y border-[#f07cad]/20"><span class="driver-field-label text-[#b63c6b]" style="font-weight:700;">用車時數</span><span class="driver-field-value">${day}${h ? h + '小時' + range : '未填'}<br>緩衝${buf}分鐘，超過以1小時計</span></div>
+                <div class="driver-field"><span class="driver-field-label">行程</span><span class="driver-field-value">${route}</span></div>`;
         }
 
         // --- 打開/關閉 獨立任務明細頁 ---
@@ -1215,7 +1234,7 @@
                     </div>
                     
                     <div class="space-y-0 text-sm bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
-                        ${t.type === '單程'
+                        ${t.type === '包車' ? charterDetailRowsHtml(t) : t.type === '單程'
                           ? (numberedRoute || `<div class="driver-field"><span class="driver-field-label">上車地址</span><span class="driver-field-value">${addressHtml}</span></div>
                              ${extraStopRowHtml}
                              <div class="driver-field"><span class="driver-field-label">下車地址</span><span class="driver-field-value">${stopHtml(t.airport)}</span></div>`)
@@ -1225,7 +1244,7 @@
                             <span class="driver-field-label">客戶姓名</span>
                             <div class="driver-field-value flex items-center justify-end"><span>${cleanVal(t.custName)}</span>${callBtn}</div>
                         </div>
-                        ${t.type !== '單程' ? (numberedRoute || `<div class="driver-field"><span class="driver-field-label">接送地址</span><span class="driver-field-value">${addressHtml}</span></div>${extraStopRowHtml}`) : ''}
+                        ${t.type !== '單程' && t.type !== '包車' ? (numberedRoute || `<div class="driver-field"><span class="driver-field-label">接送地址</span><span class="driver-field-value">${addressHtml}</span></div>${extraStopRowHtml}`) : ''}
                         <div class="driver-field"><span class="driver-field-label">乘車人數</span><span class="driver-field-value">${formatPassengerCount(t.paxCount)}</span></div>
                         ${luggageText === '無'
                           ? `<div class="driver-field bg-[#fff5f8] -mx-3 px-3 border-y border-[#f07cad]/20"><span class="driver-field-label text-[#b63c6b]">行李件數</span><span class="driver-field-value text-[#b63c6b]" style="font-weight:700;">無：出來快，勿遲到！</span></div>`
@@ -1241,6 +1260,7 @@
                         ${paymentGuideHtml}
                         ${companyHtml}
                         ${cashHtml}
+                        ${t.type === '包車' ? `<div class="driver-field bg-[#fff5f8] -mx-3 px-3 border-y border-[#f07cad]/20"><span class="driver-field-label text-[#b63c6b]" style="font-weight:700;">超時</span><span class="driver-field-value">${isCashPayment || paymentInfo.cashCollected > 0 ? '如有超時，請先通知客服；由客服跟客人確認金額後，告知你應收的總費用' : '如有超時，請先通知客服；超時費用由客服跟客人確認'}</span></div>` : ''}
                     </div>
                 </div>
             `;
