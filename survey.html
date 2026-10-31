@@ -66,7 +66,7 @@
                     colors: {
                         primary: '#553f62',
                         secondary: '#9ca3af',
-                        accent: '#f07cad',
+                        accent: '#C2416B',
                         bglight: '#fdfbfb'
                     }
                 }
@@ -78,12 +78,12 @@
             background-color: #f3f4f6;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        .chip { border: 1px solid #d7ccdc; border-radius: 9999px; padding: 6px 14px; font-size: 14px; background: #fff; color: #553f62; }
+        .chip { border: 1px solid #D4D4D6; border-radius: 9999px; padding: 6px 14px; font-size: 14px; background: #fff; color: #553f62; }
         .chip.on { background: #553f62; color: #fff; border-color: #553f62; }
-        .choice-btn { border: 1px solid #d7ccdc; border-radius: 10px; padding: 12px 8px; text-align: center; background: #fff; color: #553f62; font-size: 15px; }
+        .choice-btn { border: 1px solid #D4D4D6; border-radius: 10px; padding: 12px 8px; text-align: center; background: #fff; color: #553f62; font-size: 15px; }
         .choice-btn.on { background: #553f62; color: #fff; border-color: #553f62; }
-        .star-btn { font-size: 40px; line-height: 1; color: #d6cbdb; background: none; border: 0; padding: 0 4px; }
-        .star-btn.on { color: #f07cad; }
+        .star-btn { font-size: 40px; line-height: 1; color: #D3D3D5; background: none; border: 0; padding: 0 4px; }
+        .star-btn.on { color: #C2416B; }
         .rate-btn { flex: 1; border: 1px solid #e5e7eb; border-radius: 6px; padding: 6px 0; text-align: center; font-size: 14px; background: #fff; color: #553f62; }
         .rate-btn.on { background: #553f62; color: #fff; border-color: #553f62; }
         .score-radio:checked + div {
@@ -156,14 +156,14 @@
                     <div id="solicitBox" class="hidden space-y-3">
                         <p class="text-sm font-bold text-primary">是哪一種情況？<span class="text-xs text-gray-500 font-normal">（選填，可複選）</span></p>
                         <div class="flex flex-wrap gap-2" id="solicitChips"></div>
-                        <div class="text-sm leading-relaxed rounded-md px-3 py-2" style="background:#fdeef5;border-left:3px solid #f07cad;color:#5a3a4b">
+                        <div class="text-sm leading-relaxed rounded-md px-3 py-2" style="background:#FDF0F4;border-left:3px solid #C2416B;color:#5a3a4b">
                             謝謝您告訴我們。提醒您：非透過公司預約的搭乘，沒有合法載客保障（保險、行程紀錄、客訴處理），請多留意自身安全。
                         </div>
                     </div>
                 </div>
 
                 <div class="pt-2">
-                    <button type="submit" id="submitBtn" disabled class="w-full text-white font-bold py-3 px-4 rounded-lg transition flex justify-center items-center gap-2 text-lg shadow-md" style="background:#d6cbdb">
+                    <button type="submit" id="submitBtn" disabled class="w-full text-white font-bold py-3 px-4 rounded-lg transition flex justify-center items-center gap-2 text-lg shadow-md" style="background:#D3D3D5">
                         <span>送出，領乘車折扣碼 $50</span>
                     </button>
                     <p id="submitHint" class="text-center text-xs text-gray-400 mt-2">請先點選上面兩題</p>
@@ -200,14 +200,14 @@
                     </div>
                 </div>
                 <div id="upgradeBox" class="w-full max-w-sm mt-8 text-left">
-                    <div class="rounded-xl p-4" style="background:#fdeef5;border:1px solid #f07cad">
-                        <p class="font-bold" style="color:#b63c6b">再送 $50！折扣碼升級成 $100</p>
+                    <div class="rounded-xl p-4" style="background:#FDF0F4;border:1px solid #C2416B">
+                        <p class="font-bold" style="color:#A8345A">再送 $50！折扣碼升級成 $100</p>
                         <p class="text-xs text-gray-600 mt-1">寫下 20 個字以上的真實感受，這張碼就會自動升級</p>
                         <textarea id="comments" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 mt-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent" placeholder="想對我們說的話…"></textarea>
                         <div id="commentCounter" class="text-xs text-gray-400 text-right mt-1">0 / 20 字</div>
                     </div>
-                    <button type="button" id="ratingToggle" class="w-full mt-3 border border-gray-300 rounded-lg py-3 text-sm font-bold text-primary bg-white">＋ 也可以順便評分（選填，不影響折扣） ▾</button>
-                    <div id="ratingBox" class="hidden mt-3 space-y-4 text-sm"></div>
+                    <button type="button" id="ratingToggle" class="w-full mt-3 border border-gray-300 rounded-lg py-3 text-sm font-bold text-primary bg-white">順便幫這趟評分（選填，不影響折扣）　收起 ▴</button>
+                    <div id="ratingBox" class="mt-3 space-y-4 text-sm"></div>
                     <button type="button" id="extraBtn" class="w-full mt-4 border border-primary text-primary rounded-lg py-3 font-bold bg-white">不用了，完成</button>
                 </div>
                 <p id="lineReturnHint" class="mt-8 text-sm text-gray-500">回饋卡片已同步傳送至 LINE 對話，系統將自動返回 LINE。</p>
@@ -348,7 +348,7 @@
             const count = textarea.value.replace(/\s/g, '').length;
             counter.textContent = count >= 20 ? `${count} / 20 字 ✓　已達 20 字，送出即升級 $100` : `${count} / 20 字`;
             counter.className = count >= 20 ? 'text-xs text-right font-bold mt-1' : 'text-xs text-gray-400 text-right mt-1';
-            counter.style.color = count >= 20 ? '#b63c6b' : '';
+            counter.style.color = count >= 20 ? '#A8345A' : '';
             updateExtraBtn();
             return count;
         }
@@ -394,7 +394,7 @@
             const ok = surveyState.nps >= 1 && !!surveyState.solicit;
             const btn = document.getElementById('submitBtn');
             btn.disabled = !ok;
-            btn.style.background = ok ? '#553f62' : '#d6cbdb';
+            btn.style.background = ok ? '#553f62' : '#D3D3D5';
             btn.style.cursor = ok ? 'pointer' : 'not-allowed';
             document.getElementById('submitHint').textContent = ok ? '' : (surveyState.nps ? '請再點選「司機是否有提供名片」這題' : (surveyState.solicit ? '請點選上面的星星' : '請先點選上面兩題'));
         }
@@ -504,7 +504,7 @@
         document.getElementById('ratingToggle')?.addEventListener('click', () => {
             const box = document.getElementById('ratingBox');
             const hidden = box.classList.toggle('hidden');
-            document.getElementById('ratingToggle').textContent = hidden ? '＋ 也可以順便評分（選填，不影響折扣） ▾' : '－ 收起評分 ▴';
+            document.getElementById('ratingToggle').textContent = hidden ? '＋ 也可以順便評分（選填，不影響折扣） ▾' : '順便幫這趟評分（選填，不影響折扣）　收起 ▴'; // 2026-10-31：評分預設打開，客人不用找開關
         });
 
         let extraSending = false, extraDone = false;
