@@ -15,9 +15,17 @@
            3) 整體最多等 60 秒。 */
         (function () {
             var GAS = 'https://script.google.com/macros/s/AKfycbz6wgk6T8ypEI1pW5ih7M3Bom54Tu7unv-sc_ldFtPSBWw4yAbahs70GErKGpsRqcG3/exec';
-            var qs = new URLSearchParams(window.location.search);
-            var stored = ''; try { stored = sessionStorage.getItem('surveyToken') || ''; } catch (e) {}
-            var token = qs.get('token') || qs.get('t') || qs.get('surveyToken') || stored || '';
+            // 2026-10-31：問卷連結的 t 有時候不在網址上(LINE 登入跳轉後被包進 liff.state、或開新分頁 sessionStorage 不見)→ 多找幾個地方
+            window.__findSurveyToken = function () {
+                var qs = new URLSearchParams(window.location.search);
+                var tk = qs.get('token') || qs.get('t') || qs.get('surveyToken') || '';
+                if (!tk && qs.get('liff.state')) { try { var st = new URLSearchParams(decodeURIComponent(qs.get('liff.state')).replace(/^[^?]*\?/, '')); tk = st.get('t') || st.get('token') || ''; } catch (e) {} }
+                if (!tk) { try { tk = sessionStorage.getItem('surveyToken') || ''; } catch (e) {} }
+                if (!tk) { try { var o = JSON.parse(localStorage.getItem('surveyTokenLS') || 'null'); if (o && o.t && Date.now() - o.at < 3600 * 1000) tk = o.t; } catch (e) {} }
+                if (tk) { try { sessionStorage.setItem('surveyToken', tk); localStorage.setItem('surveyTokenLS', JSON.stringify({ t: tk, at: Date.now() })); } catch (e) {} }
+                return tk;
+            };
+            var token = window.__findSurveyToken();
             window.__surveyFetchStartedAt = Date.now();
             if (!token) { window.__surveyInvitation = null; return; }
             function once(signalHolder) {
@@ -236,7 +244,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         const storedToken = sessionStorage.getItem('surveyToken') || '';
         const storedSource = sessionStorage.getItem('surveySource') || '';
-        const tokenParam = urlParams.get('token') || urlParams.get('t') || urlParams.get('surveyToken') || storedToken || '';
+        let tokenParam = (window.__findSurveyToken && window.__findSurveyToken()) || urlParams.get('token') || urlParams.get('t') || urlParams.get('surveyToken') || storedToken || '';
         const sourceParam = (urlParams.get('source') || urlParams.get('s') || storedSource || 'AS').trim().toUpperCase();
         const liffSource = sourceParam === 'AZ' ? 'AZ' : 'AS';
         let liffReady = false;
@@ -284,6 +292,8 @@
 
         async function loadSurvey() {
             if (!tokenParam) {
+                // 2026-10-31：先回報一筆系統日誌(網址、裝置)，方便查客人為什麼拿不到問卷代碼
+                try { fetch('https://script.google.com/macros/s/AKfycbz6wgk6T8ypEI1pW5ih7M3Bom54Tu7unv-sc_ldFtPSBWw4yAbahs70GErKGpsRqcG3/exec', { method: 'POST', body: JSON.stringify({ action: 'logSurveyOpenIssue', data: { url: location.href.slice(0, 300), ref: (document.referrer || '').slice(0, 200), ua: (navigator.userAgent || '').slice(0, 200), lineId: currentLineId || '', lineName: currentLineDisplayName || '' } }) }).catch(() => {}); } catch (e) {}
                 showClosedScreen('請由專屬連結開啟', '問卷需由客服傳送至 LINE 的專屬問卷卡片進入，無法使用固定網址直接填寫。');
                 return;
             }
@@ -319,7 +329,7 @@
             if (!window.liff) return true;
             try {
                 // LIFF 初始化偶爾會卡住：最多等 12 秒，超過就放棄(不影響問卷顯示)
-                await Promise.race([
+                if (!liffReady) await Promise.race([
                     liff.init({ liffId: LIFF_IDS[liffSource] || LIFF_IDS.AS }),
                     new Promise((_, rej) => setTimeout(() => rej(new Error('liff-timeout')), 12000))
                 ]);
@@ -546,6 +556,12 @@
         countCommentChars();
         let liffPromise = Promise.resolve(true);
         async function bootstrapSurvey() {
+            if (!tokenParam && window.liff) {
+                // 網址上沒有代碼：先讓 LIFF 處理一次(會把 liff.state 還原到網址)，最多等 5 秒，再找一次代碼
+                try { await Promise.race([liff.init({ liffId: LIFF_IDS[liffSource] || LIFF_IDS.AS }), new Promise(r => setTimeout(r, 5000))]); liffReady = true; } catch (e) {}
+                tokenParam = (window.__findSurveyToken && window.__findSurveyToken()) || '';
+                if (tokenParam && !window.__surveyInvitation) window.__surveyInvitation = fetch('https://script.google.com/macros/s/AKfycbz6wgk6T8ypEI1pW5ih7M3Bom54Tu7unv-sc_ldFtPSBWw4yAbahs70GErKGpsRqcG3/exec?action=getSurveyInvitation&token=' + encodeURIComponent(tokenParam) + '&t=' + Date.now()).then(r => r.json());
+            }
             if (!tokenParam) { await loadSurvey(); return; }
             startLoadingHints();
             // LIFF 初始化與問卷資料請求「同時進行」，不再一個等一個
