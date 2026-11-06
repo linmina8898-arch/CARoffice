@@ -179,40 +179,33 @@
             </form>
 
             <!-- Success Screen -->
-            <div id="successScreen" class="hidden p-8 text-center bg-white flex flex-col items-center justify-center min-h-[500px]">
-                <div class="w-20 h-20 bg-accent/20 rounded-full flex items-center justify-center mb-6">
-                    <svg class="w-10 h-10 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+            <div id="successScreen" class="hidden p-6 text-center bg-white flex flex-col items-center justify-center">
+                <!-- 2026-10-31：精簡版：小打勾＋標題同一行；不顯示折扣碼號碼和複製鈕(已自動存入會員) -->
+                <div class="flex items-center justify-center gap-2 mb-2">
+                    <span class="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style="background:#FDF0F4"><svg class="w-5 h-5" style="color:#C2416B" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg></span>
+                    <h2 class="text-xl font-bold text-primary">謝謝您！折扣碼已發給您</h2>
                 </div>
-                <h2 class="text-2xl font-bold text-primary mb-2">謝謝您！折扣碼已發給您</h2>
-                <p class="text-gray-600 mb-8 leading-relaxed text-sm md:text-base">
-                    您的每一則回饋，都是我們持續提升服務品質的重要動力。<br>
-                    我們也會用心把每一趟接送服務做得更好，謝謝您的支持與信任。<br><br>
-                    <span class="text-accent font-bold text-sm">系統已將折扣碼歸戶至您的預約手機門號。</span>
-                </p>
+                <p class="text-gray-600 mb-4 leading-relaxed text-sm">您的每一則回饋，都是我們持續提升服務品質的重要動力，謝謝您的支持與信任。</p>
 
                 <!-- Coupon -->
-                <div class="bg-gradient-to-br from-primary to-[#6b527b] text-white rounded-xl shadow-lg p-6 w-full max-w-sm relative border-2 border-dashed border-accent/50">
-                    <div class="absolute -top-3 -left-3 bg-accent text-white text-xs font-bold px-3 py-1 rounded-full transform -rotate-12" id="rewardBadge">乘車折抵金</div>
-                    <p class="text-sm text-secondary opacity-90 mb-1" id="rewardSummary">下次預約點擊「查詢專屬折扣碼」即可直接套用</p>
-                    <div class="text-2xl sm:text-3xl font-extrabold tracking-widest my-4" id="discountCodeText">產生中...</div>
-                    <button onclick="copyCode()" id="copyBtn" class="bg-white text-primary text-sm font-bold py-2 px-6 rounded-full hover:bg-gray-100 transition shadow">複製折扣碼</button>
-                    <div class="mt-4 pt-4 border-t border-white/20 text-xs text-left text-gray-300 space-y-2">
-                        <div class="grid grid-cols-[4.75rem_1fr] gap-x-1 items-start">
-                            <span>有效期限：</span>
-                            <span id="expiryDate" class="font-bold text-white"></span>
-                        </div>
-                        <div class="grid grid-cols-[4.75rem_1fr] gap-x-1 items-start">
-                            <span>使用方式：</span>
-                            <span>下次預約時輸入原手機號碼即可自動帶入，每次限用一張。</span>
-                        </div>
-                    </div>
+                <div class="text-white rounded-xl p-4 w-full max-w-sm text-left" style="background:#553F62">
+                    <div class="text-2xl font-extrabold" id="rewardSummary">$50 乘車折扣碼</div>
+                    <div class="text-sm mt-1">已自動存入您的會員（預約手機門號）</div>
+                    <div class="text-xs mt-1" style="color:#E9DDF0">有效期限：<span id="expiryDate"></span>｜下次預約時自動帶入，每次限用一張</div>
+                    <span id="rewardBadge" class="hidden"></span><span id="discountCodeText" class="hidden"></span><button id="copyBtn" class="hidden" type="button"></button>
                 </div>
-                <div id="upgradeBox" class="w-full max-w-sm mt-8 text-left">
+                <div id="upgradeBox" class="w-full max-w-sm mt-4 text-left">
                     <div class="rounded-xl p-4" style="background:#FDF0F4;border:1px solid #C2416B">
                         <p class="font-bold" style="color:#A8345A">再送 $50！折扣碼升級成 $100</p>
                         <p class="text-xs text-gray-600 mt-1">寫下 20 個字以上的真實感受，這張碼就會自動升級</p>
                         <textarea id="comments" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 mt-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent" placeholder="想對我們說的話…"></textarea>
                         <div id="commentCounter" class="text-xs text-gray-400 text-right mt-1">0 / 20 字</div>
+                    </div>
+                    <div id="replyAskBox" class="hidden mt-3 rounded-xl p-3" style="background:#FDF0F4;border:1px solid #F3C6D5">
+                        <p class="font-bold text-sm" style="color:#A8345A">這則意見需要我們回覆您嗎？</p>
+                        <button type="button" class="reply-opt w-full text-left mt-2 bg-white rounded-lg px-3 py-2 text-sm" data-reply="需要" style="border:1px solid #E2E2E4">○ 需要，請客服跟我聯絡</button>
+                        <button type="button" class="reply-opt w-full text-left mt-2 bg-white rounded-lg px-3 py-2 text-sm" data-reply="不用" style="border:1px solid #E2E2E4">○ 不用，給你們參考就好</button>
+                        <p class="text-xs text-gray-500 mt-2">選「需要」，客服會在 LINE 跟您聯絡</p>
                     </div>
                     <button type="button" id="ratingToggle" class="w-full mt-3 border border-gray-300 rounded-lg py-3 text-sm font-bold text-primary bg-white">順便幫這趟評分（選填，不影響折扣）　收起 ▴</button>
                     <div id="ratingBox" class="mt-3 space-y-4 text-sm"></div>
@@ -474,7 +467,7 @@
             document.getElementById('expiryDate').innerText = expiryDateText;
             const amount = Number(rewardAmount || 50);
             document.getElementById('rewardBadge').innerText = `${amount}元折抵`;
-            document.getElementById('rewardSummary').innerText = `本次獲得 ${amount} 元乘車折扣碼`;
+            document.getElementById('rewardSummary').innerText = `$${amount} 乘車折扣碼`;
             document.getElementById('lineReturnHint').innerText = lineNoticeSent
                 ? '折扣碼已同步傳送至 LINE 對話。'
                 : '折扣碼已成功歸戶。';
@@ -517,12 +510,31 @@
             document.getElementById('ratingToggle').textContent = hidden ? '＋ 也可以順便評分（選填，不影響折扣） ▾' : '順便幫這趟評分（選填，不影響折扣）　收起 ▴'; // 2026-10-31：評分預設打開，客人不用找開關
         });
 
+        // 2026-11-06：有寫留言、或任何一項給 1～3 星(含必填的整體星數)才問「需要回覆嗎」，預設「不用」
+        let replyWanted = '不用';
+        function paintReplyOpts() {
+            document.querySelectorAll('.reply-opt').forEach(b => { const on = b.dataset.reply === replyWanted; b.style.border = on ? '2px solid #553f62' : '1px solid #E2E2E4'; b.textContent = (on ? '◉ ' : '○ ') + b.textContent.replace(/^[○◉]\s*/, ''); });
+        }
+        function replyAskNeeded() {
+            const hasComment = (document.getElementById('comments')?.value || '').trim().length > 0;
+            const lowExtra = RATE_ITEMS.some(([k]) => Number(extraState[k]) >= 1 && Number(extraState[k]) <= 3);
+            const lowNps = surveyState.nps >= 1 && surveyState.nps <= 3;
+            return hasComment || lowExtra || lowNps;
+        }
+        function refreshReplyAsk() {
+            const box = document.getElementById('replyAskBox'); if (!box) return;
+            box.classList.toggle('hidden', !replyAskNeeded() || extraDone);
+        }
+        document.querySelectorAll('.reply-opt').forEach(b => b.addEventListener('click', () => { replyWanted = b.dataset.reply; paintReplyOpts(); updateExtraBtn(); }));
+        paintReplyOpts();
+
         let extraSending = false, extraDone = false;
         function updateExtraBtn() {
+            refreshReplyAsk();
             const btn = document.getElementById('extraBtn');
             if (!btn || extraSending || extraDone) return;
             const count = (document.getElementById('comments')?.value || '').replace(/\s/g, '').length;
-            const any = count > 0 || Object.keys(extraState).length > 0;
+            const any = count > 0 || Object.keys(extraState).length > 0 || (replyAskNeeded() && replyWanted === '需要');
             btn.textContent = count >= 20 ? '送出，升級 $100' : (any ? '送出補充' : '不用了，完成');
             btn.style.background = count >= 20 ? '#553f62' : '#fff';
             btn.style.color = count >= 20 ? '#fff' : '#553f62';
@@ -530,22 +542,24 @@
         document.getElementById('extraBtn')?.addEventListener('click', async () => {
             if (extraSending) return;
             const comments = (document.getElementById('comments').value || '').trim();
-            const any = comments.length > 0 || Object.keys(extraState).length > 0;
+            const askReply = replyAskNeeded();
+            const any = comments.length > 0 || Object.keys(extraState).length > 0 || (askReply && replyWanted === '需要');
             if (!any || extraDone) { closeSurveyWindowSoon(); return; }
             const btn = document.getElementById('extraBtn');
             extraSending = true; btn.disabled = true; btn.textContent = '送出中…';
             try {
-                const result = await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'submitSurvey', data: Object.assign({ stage: 'extra', token: tokenParam, comments }, extraState) }) }).then(r => safeJsonParse(r));
+                const result = await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'submitSurvey', data: Object.assign({ stage: 'extra', token: tokenParam, comments, replyWanted: askReply ? replyWanted : '' }, extraState) }) }).then(r => safeJsonParse(r));
                 if (!result.success) { alert(result.message || '送出失敗，請稍後再試。'); extraSending = false; btn.disabled = false; updateExtraBtn(); return; }
                 extraDone = true; extraSending = false;
                 if (result.upgraded) {
                     document.getElementById('rewardBadge').innerText = `${result.rewardAmount}元折抵`;
-                    document.getElementById('rewardSummary').innerText = `已升級！本次獲得 ${result.rewardAmount} 元乘車折扣碼`;
+                    document.getElementById('rewardSummary').innerText = `$${result.rewardAmount} 乘車折扣碼（已升級）`;
                     document.getElementById('discountCodeText').innerText = result.discountCode;
                 }
                 btn.textContent = result.upgraded ? '已升級 $100，謝謝您！' : '已送出，謝謝您！';
                 btn.disabled = true;
                 document.getElementById('comments').disabled = true;
+                refreshReplyAsk();
                 closeSurveyWindowSoon();
             } catch (err) {
                 alert('網路傳送發生錯誤，請稍後再試！');

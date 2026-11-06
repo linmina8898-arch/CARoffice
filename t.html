@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<!-- t.html 2026-11-06：行程分享頁(代訂／多人同行)。只顯示行程、乘車人、人數行李、車型；行前通知傳過才顯示司機稱呼與車號車款。
+     不含金額、付款、司機電話。資料來自 gas getTripShare(需 v2.2.472)。 -->
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>行程資訊</title>
+  <style>
+    :root{--p:#553F62;--b:#C2416B;--bd:#A8345A;--bs:#FDF0F4;--bl:#F3C6D5;--bg:#F5F5F7;--t:#2b2530;--g:#8E8E93;--line:#E2E2E4}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--t);font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Segoe UI",sans-serif;font-size:15px}
+    .wrap{max-width:460px;margin:0 auto;padding:16px 16px 32px}
+    .brand{text-align:center;color:var(--p);font-weight:800;font-size:18px;margin:6px 0 14px}
+    .card{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.07);margin-bottom:14px}
+    .hd{background:var(--p);color:#fff;padding:12px 16px}
+    .hd .ttl{font-weight:800;font-size:16px}
+    .hd .sub{font-size:12px;opacity:.85;margin-top:2px}
+    .bd{padding:12px 16px}
+    .st{display:inline-block;font-size:12px;padding:2px 10px;border-radius:999px;font-weight:700;background:#EEEAF1;color:var(--p)}
+    .st.cx{background:var(--bs);color:var(--bd)}
+    .kv{display:flex;gap:12px;padding:6px 0;border-bottom:1px dashed #eee}
+    .kv:last-child{border-bottom:0}
+    .k{color:var(--g);width:64px;flex:none;font-size:14px}
+    .v{flex:1;white-space:pre-line;word-break:break-word}
+    .k.sub2{color:var(--bd);font-weight:700}
+    .drv{background:var(--bs);border:1px solid var(--bl);border-radius:12px;padding:10px 12px;margin-top:10px}
+    .drv .dt{color:var(--bd);font-weight:800;margin-bottom:4px}
+    .drv .big{font-size:17px;font-weight:800;color:var(--p)}
+    .wait{color:var(--g);font-size:13px;margin-top:10px;background:#F9F9FB;border-radius:12px;padding:10px 12px}
+    .cancel .bd{opacity:.55}
+    .foot{text-align:center;color:var(--g);font-size:13px;line-height:1.8;margin-top:6px}
+    .foot a{color:var(--p);font-weight:700;text-decoration:none}
+    .msg{background:#fff;border-radius:16px;padding:28px 20px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.07);color:var(--g);line-height:1.8}
+    .msg b{display:block;color:var(--p);font-size:17px;margin-bottom:6px}
+    .sync{background:var(--bs);border:1px solid var(--bl);border-radius:12px;padding:9px 12px;color:var(--bd);font-size:13px;line-height:1.6;margin-bottom:10px}
+    .copy{display:block;width:100%;margin:4px 0 14px;border:1px solid var(--p);background:#fff;color:var(--p);border-radius:12px;padding:10px;font-size:14px;font-weight:700}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand" id="brand">安興租車</div>
+  <div id="app"><div class="msg">讀取行程中…</div></div>
+  <div class="foot">如有任何預約或乘車問題，請聯絡客服<br><a href="tel:0955311306">0955-311-306</a></div>
+</div>
+<script>
+  const GAS_URL = 'https://script.google.com/macros/s/AKfycbz6wgk6T8ypEI1pW5ih7M3Bom54Tu7unv-sc_ldFtPSBWw4yAbahs70GErKGpsRqcG3/exec';
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const kv = (k, v, cls) => v ? `<div class="kv"><span class="k ${cls || ''}">${esc(k)}</span><span class="v">${esc(v)}</span></div>` : ''; // 地址2起只有字樣用莓果深
+  function render(d) {
+    const app = document.getElementById('app');
+    if (d.brand) { document.getElementById('brand').textContent = d.brand; document.title = d.brand + '｜行程資訊'; }
+    if (!d.success) { app.innerHTML = `<div class="msg"><b>打不開這個行程</b>${esc(d.error || '請向訂車人確認連結是否正確')}</div>`; return; }
+    if (d.expired) { app.innerHTML = `<div class="msg"><b>此行程已結束</b>謝謝您搭乘，期待再為您服務。</div>`; return; }
+    const legs = d.legs || [];
+    const multi = legs.length > 1;
+    let html = '';
+    html += `<div class="sync">🔄 這個連結會自動同步最新的預約與司機資料，重新整理即可查看。</div>`;
+    if (navigator.share || navigator.clipboard) html += `<button class="copy" id="copyBtn" type="button">🔗 複製這個連結，分享給同行的人</button>`;
+    legs.forEach((l, i) => {
+      const legLabel = multi ? (i === 0 ? '去程｜' : '回程｜') : '';
+      const addr = (l.addresses || []).map((a, j) => kv(a[0], a[1], j > 0 && /^地址\d+$/.test(a[0]) ? 'sub2' : '')).join('');
+      const drv = l.cancelled ? '' : (l.driver
+        ? `<div class="drv"><div class="dt">接送司機</div><div>${esc(l.driver.name || '')}</div><div class="big">車號：${esc(l.driver.carNo || '')}</div><div class="big">車款：${esc(l.driver.car || '')}</div></div>`
+        : `<div class="wait">出發前一天會通知司機與車輛資料，到時打開這個連結就看得到。</div>`);
+      html += `<div class="card ${l.cancelled ? 'cancel' : ''}">
+        <div class="hd"><div class="ttl">${esc(legLabel + (l.title || ''))}</div><div class="sub">${esc(l.route || '')}</div></div>
+        <div class="bd">
+          <span class="st ${l.cancelled ? 'cx' : ''}">${esc(l.cancelled ? '此行程已取消' : l.status)}</span>
+          <div style="margin-top:6px">
+            ${kv('單號', l.orderId)}${kv('機場', l.airport)}${kv('航班', l.flight)}${addr}
+            ${kv('乘車人', l.passenger)}${kv('人數', l.pax)}${kv('行李', l.luggage)}${kv('車型', l.carType)}
+          </div>
+          ${drv}
+        </div></div>`;
+    });
+    html += `<div class="foot" style="margin-bottom:6px">資料更新時間 ${esc(d.updatedAt || '')}（重新整理可看最新資料）</div>`;
+    app.innerHTML = html;
+    const btn = document.getElementById('copyBtn');
+    if (btn) btn.onclick = async () => {
+      const url = location.href;
+      try {
+        if (navigator.share) { await navigator.share({ title: document.title, url }); return; }
+        await navigator.clipboard.writeText(url); btn.textContent = '✓ 已複製連結';
+      } catch (e) {}
+    };
+  }
+  (async () => {
+    const k = new URLSearchParams(location.search).get('k') || '';
+    if (!k) { render({ success: false, error: '連結不完整，請向訂車人確認' }); return; }
+    try {
+      const r = await fetch(`${GAS_URL}?action=getTripShare&k=${encodeURIComponent(k)}&t=${Date.now()}`);
+      const txt = await r.text();
+      render(JSON.parse(txt));
+    } catch (e) {
+      render({ success: false, error: '網路連線不穩，請稍後重新整理' });
+    }
+  })();
+</script>
+</body>
+</html>

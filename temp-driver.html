@@ -8,21 +8,21 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
-        :root { --primary:#553f62; --accent:#f07cad; --bg:#f3f4f6; }
+        :root { --primary:#553f62; --accent:#C2416B; --bg:#f3f4f6; }
         body { font-family:sans-serif; background:var(--bg); color:#1f2937; font-size:14px; }
         .field { display:grid; grid-template-columns:72px minmax(0,1fr); gap:8px; padding:9px 0; border-bottom:1px solid #e5e7eb; align-items:start; }
         .field-label { color:#6b7280; font-size:12px; }
         .field-value { text-align:right; font-weight:500; overflow-wrap:anywhere; }
         .map-link { color:#1f2937; text-decoration:none; display:inline-flex; align-items:center; justify-content:flex-end; gap:6px; }
-        .map-chip { width:24px; height:24px; color:#553f62; background:#fbf7fa; border:1px solid #eadde8; border-radius:999px; display:inline-flex; align-items:center; justify-content:center; flex:0 0 auto; }
+        .map-chip { width:24px; height:24px; color:#553f62; background:#F9F9FB; border:1px solid #E3E3E5; border-radius:999px; display:inline-flex; align-items:center; justify-content:center; flex:0 0 auto; }
         .map-chip svg { width:13px; height:13px; display:block; }
-        .tel-link { color: #b63c6b; font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; vertical-align: middle; margin-left: 4px; }
+        .tel-link { color: #A8345A; font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; vertical-align: middle; margin-left: 4px; }
         .tel-none { color: #9ca3af; font-size: 12px; }
-        .tel-chip { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 999px; background: #fff5f8; border: 1px solid #efcad8; color: #b63c6b; font-size: 13px; line-height: 1; text-decoration: none; }
+        .tel-chip { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 999px; background: #FDF0F4; border: 1px solid #F3C6D5; color: #A8345A; font-size: 13px; line-height: 1; text-decoration: none; }
         .stop-contacts { margin-top: 4px; text-align: right; }
         .stop-block + .stop-block { margin-top: 8px; }
         .stop-contact { font-size: 12.5px; color: #374151; line-height: 1.7; }
-        .stop-contact-label { display: inline-block; font-size: 10px; font-weight: 800; color: #fff; background: #b63c6b; border-radius: 6px; padding: 0 5px; margin-right: 6px; vertical-align: 1px; }
+        .stop-contact-label { display: inline-block; font-size: 10px; font-weight: 800; color: #fff; background: #A8345A; border-radius: 6px; padding: 0 5px; margin-right: 6px; vertical-align: 1px; }
         .cash-note-popup { border-radius:16px !important; }
         .cash-note-title { color:#1a0b3d !important; font-size:28px !important; font-weight:700 !important; }
         .cash-note-confirm { background:#553f62 !important; color:#fff !important; border-radius:10px !important; padding:10px 28px !important; }
@@ -88,7 +88,7 @@
         </div>
     </div>
     <script>
-        const APP_VERSION = "v1.0.58"; // v1.0.58：包車：顯示用車時數(起訖＋緩衝規則)與行程，不顯示金額，付款下面加「超時」提醒(需gas v2.2.448)； v1.0.57：行李細項顯示支援「長型物件／其他」； // v1.0.56：單程卡片拿掉「接送機場／航班編號」，改顯示上車地址／加點／下車地址(跟司機頁一致)； // v1.0.55：行李順序改「大型→中型→登機」； // v1.0.54：人數／行李還原成分開兩列(撤回v1.0.53合併一行)； // v1.0.52：行李附註改「┖含推車1」(跟客人卡片、行事曆一致)；  v1.0.51：月結單付款文字帶公司簡稱，例：月結簽單(昕鴻)(需gas v2.2.399)； v1.0.50：月結客戶「免簽名」(企業客戶工作表「司機要簽單」填否)：結案不跳簽名板、顯示「月結，免簽名」(需gas v2.2.398)； v1.0.49：行李件數分2行(登機/中型/大型 + 含推車/胖胖箱)，乘車人數改「大人 2 + 兒童 1」(需gas v2.2.390)；  v1.0.48：臨時司機明細新增「司機備註」列(試算表AI欄)； v1.0.47：有加點時地址改「地址1/地址2…」編號；轉帳/月結＋現場收現時付款方式寫清楚「轉帳＋現場收現 $X（只收這筆現金，其餘客人已轉帳）」； v1.0.46：電話辨識支援國際電話(+國碼開頭)，一樣只顯示圖示； v1.0.45：依使用者要求，任務明細不再顯示任何電話號碼，電話只留「☎ 電話圖示」點了直接撥號(跟司機端 v1.17.0 同一套)； v1.0.44：備註/司機提醒/地址裡的電話自動變撥號連結，站點聯絡人拆成獨立一行(跟司機端 v1.16.0 同一套)。v1.0.43：客人電話帶分機時，致電按鈕先撥主號碼、停4秒再撥分機；依使用者要求(先確認過示意圖)：畫面最後面新增「本趟車輛」一行(車號︱車型︱車色)，放在付款方式(含實拿車資)後面、中間空一格(空格高度跟其他每一行一樣)；沒填車色就只顯示車號︱車型，三項都沒有時整行(含空格)不顯示；車色已包含在車型文字裡時不重複顯示。配合gas.html v2.2.344。 依使用者要求：有現場收現且有給司機車資時，「付款方式」下面多一行「實拿車資 $X」，避免臨時司機看到「現場收現 $1,800」誤以為車資是1,800(收現備註按鈕保留)。 v1.0.40： 依使用者要求，畫面抬頭改成公司全名：分頁標題「AS派車 - 臨時派遣任務」→「瑞陞汽車租賃有限公司 派車單 - 臨時派遣任務(AS)」，頁面上方標頭「AS派車」→「瑞陞汽車租賃有限公司 派車」。v1.0.39：修正LIFF withLoginOnExternalBrowser登入流程導回頁面時，網址上的?token=有時候會遺失、導致顯示「無法開啟任務」的問題：進頁面時把token先存到sessionStorage，網址讀不到token時改用暫存的這份
+        const APP_VERSION = "v1.0.60"; // v1.0.60：新配色(紫色＋莓果色)； v1.0.59：只有一個地址時拿掉空的「加點地址」列(有好幾個地址本來就是地址1、地址2…)； v1.0.58：包車：顯示用車時數(起訖＋緩衝規則)與行程，不顯示金額，付款下面加「超時」提醒(需gas v2.2.448)； v1.0.57：行李細項顯示支援「長型物件／其他」； // v1.0.56：單程卡片拿掉「接送機場／航班編號」，改顯示上車地址／加點／下車地址(跟司機頁一致)； // v1.0.55：行李順序改「大型→中型→登機」； // v1.0.54：人數／行李還原成分開兩列(撤回v1.0.53合併一行)； // v1.0.52：行李附註改「┖含推車1」(跟客人卡片、行事曆一致)；  v1.0.51：月結單付款文字帶公司簡稱，例：月結簽單(昕鴻)(需gas v2.2.399)； v1.0.50：月結客戶「免簽名」(企業客戶工作表「司機要簽單」填否)：結案不跳簽名板、顯示「月結，免簽名」(需gas v2.2.398)； v1.0.49：行李件數分2行(登機/中型/大型 + 含推車/胖胖箱)，乘車人數改「大人 2 + 兒童 1」(需gas v2.2.390)；  v1.0.48：臨時司機明細新增「司機備註」列(試算表AI欄)； v1.0.47：有加點時地址改「地址1/地址2…」編號；轉帳/月結＋現場收現時付款方式寫清楚「轉帳＋現場收現 $X（只收這筆現金，其餘客人已轉帳）」； v1.0.46：電話辨識支援國際電話(+國碼開頭)，一樣只顯示圖示； v1.0.45：依使用者要求，任務明細不再顯示任何電話號碼，電話只留「☎ 電話圖示」點了直接撥號(跟司機端 v1.17.0 同一套)； v1.0.44：備註/司機提醒/地址裡的電話自動變撥號連結，站點聯絡人拆成獨立一行(跟司機端 v1.16.0 同一套)。v1.0.43：客人電話帶分機時，致電按鈕先撥主號碼、停4秒再撥分機；依使用者要求(先確認過示意圖)：畫面最後面新增「本趟車輛」一行(車號︱車型︱車色)，放在付款方式(含實拿車資)後面、中間空一格(空格高度跟其他每一行一樣)；沒填車色就只顯示車號︱車型，三項都沒有時整行(含空格)不顯示；車色已包含在車型文字裡時不重複顯示。配合gas.html v2.2.344。 依使用者要求：有現場收現且有給司機車資時，「付款方式」下面多一行「實拿車資 $X」，避免臨時司機看到「現場收現 $1,800」誤以為車資是1,800(收現備註按鈕保留)。 v1.0.40： 依使用者要求，畫面抬頭改成公司全名：分頁標題「AS派車 - 臨時派遣任務」→「瑞陞汽車租賃有限公司 派車單 - 臨時派遣任務(AS)」，頁面上方標頭「AS派車」→「瑞陞汽車租賃有限公司 派車」。v1.0.39：修正LIFF withLoginOnExternalBrowser登入流程導回頁面時，網址上的?token=有時候會遺失、導致顯示「無法開啟任務」的問題：進頁面時把token先存到sessionStorage，網址讀不到token時改用暫存的這份
         const GAS_URL = "https://script.google.com/macros/s/AKfycbz6wgk6T8ypEI1pW5ih7M3Bom54Tu7unv-sc_ldFtPSBWw4yAbahs70GErKGpsRqcG3/exec";
         const LIFF_ID = "2009971109-EdjC9QlC";
         let lineUserId = "";
@@ -253,7 +253,7 @@
                 : basePayment;
             // 有現場收現且有給司機車資時，付款方式下面多一行「實拿車資」，司機一眼看出自己拿多少(收現金額≠車資，差額要回金)
             const payoutAmt = parseCashAmount(task.driverPayout || task.payout);
-            const fareRowHtml = (cash > 0 && payoutAmt > 0) ? `<div class="field" style="background:#fff5f8;margin:0 -12px;padding-left:12px;padding-right:12px;border-top:1px solid #f4c9d9;border-bottom:0"><span class="field-label" style="color:#b63c6b;font-weight:700">實拿車資</span><span class="field-value" style="color:#553f62;font-weight:700;font-size:17px">$${payoutAmt.toLocaleString()}</span></div>` : "";
+            const fareRowHtml = (cash > 0 && payoutAmt > 0) ? `<div class="field" style="background:#FDF0F4;margin:0 -12px;padding-left:12px;padding-right:12px;border-top:1px solid #F3C6D5;border-bottom:0"><span class="field-label" style="color:#A8345A;font-weight:700">實拿車資</span><span class="field-value" style="color:#553f62;font-weight:700;font-size:17px">$${payoutAmt.toLocaleString()}</span></div>` : "";
             const next = { "":"已收單", "未出發":"已收單", "已收單":"已出發", "已出發":"已抵達", "已抵達":"客上", "客上":"已結案" }[task.driverStatus || ""];
             const label = { "已收單":"確認收單", "已出發":"點我出發", "已抵達":"已抵達上車點", "客上":"客戶已上車", "已結案":"客下完成行程" }[next];
             // v1.0.47：有加點時地址改成「地址1/地址2/…」依行車順序編號，避免司機把加點當最後一站
@@ -263,10 +263,10 @@
             const addrFields = isOneWay
                 ? (extraLinesArr.length
                     ? [task.address].concat(extraLinesArr, [task.airport]).map((v, i) => ["地址" + (i + 1), v])
-                    : [["上車地址", task.address], ["加點地址", task.extraStop], ["下車地址", task.airport]])
+                    : [["上車地址", task.address], ["下車地址", task.airport]])
                 : (extraLinesArr.length
                     ? [task.address].concat(extraLinesArr).map((v, i) => ["地址" + (i + 1), v])
-                    : [["接送地址", task.address], ["加點地址", task.extraStop]]);
+                    : [["接送地址", task.address]]);
             // v1.0.58：包車：用車時數＋行程(沒有任何金額)，取代機場／航班／地址
             const isCharter = task.type === "包車";
             const chH = Number(clean(task.charterHours)) || 0, chBuf = clean(task.charterBuffer) === "" ? 15 : Number(task.charterBuffer) || 0;
@@ -305,7 +305,7 @@
                     </div>
                     <div class="flex items-baseline justify-between mb-4">
                         <div class="text-xl text-[#553f62]">${esc(task.date.substring(5).replace("-", "/"))}　${esc(task.time)}</div>
-                        <div class="text-xl ${task.type === "接機" ? "text-[#f07cad]" : "text-[#553f62]"}">${esc(task.type)}</div>
+                        <div class="text-xl ${task.type === "接機" ? "text-[#C2416B]" : "text-[#553f62]"}">${esc(task.type)}</div>
                     </div>
                     <div class="bg-gray-50 border rounded-lg px-3">${fields.map(f => `<div class="field"><span class="field-label">${esc(f[0])}</span><span class="field-value">${fieldValueHtml(f[0], f[1])}</span></div>`).join("")}${fareRowHtml}${vehicleRowHtml}</div>
                     <div class="text-xs text-gray-400 mt-3">連結有效至 ${esc(expiresAt)}，請勿轉傳他人。</div>
@@ -325,7 +325,7 @@
             if (label === "付款方式" && String(value || "").includes("現場收現")) {
                 const cash = parseCashAmount(task && task.cashCollected);
                 const payout = parseCashAmount(task && (task.driverPayout || task.payout));
-                const noteBtn = payout > 0 ? `<button type="button" onclick="showCashSettlementNote(${cash}, ${payout})" class="ml-2 rounded-full border border-[#EADDE8] bg-[#FBF7FA] px-2 py-0.5 text-[11px] font-bold text-[#7A6A82]">收現備註</button>` : "";
+                const noteBtn = payout > 0 ? `<button type="button" onclick="showCashSettlementNote(${cash}, ${payout})" class="ml-2 rounded-full border border-[#E3E3E5] bg-[#F9F9FB] px-2 py-0.5 text-[11px] font-bold text-[#7A6A82]">收現備註</button>` : "";
                 return `<span class="text-[#553f62]" style="font-weight:700;">${esc(value)}</span>${noteBtn}`;
             }
             if (label === "用車時數" || label === "行程" || label === "超時") return String(linkifyPhonesHtml(value)).replace(/\n/g, "<br>");
@@ -342,13 +342,13 @@
             if (!task) return "";
             const phone = task.custPhone;
             if (!hasUsableCustomerPhone(phone)) {
-                return `<button type="button" onclick="showNoPhoneNotice()" class="bg-[#fff5f8] text-[#b64a70] border border-[#efcad8] px-2 py-0.5 rounded-full text-[11px] font-bold shrink-0">無電話</button>`;
+                return `<button type="button" onclick="showNoPhoneNotice()" class="bg-[#FDF0F4] text-[#C2416B] border border-[#F3C6D5] px-2 py-0.5 rounded-full text-[11px] font-bold shrink-0">無電話</button>`;
             }
             // v1.0.43：電話帶分機(「03-571-2121 #56082」)時，先撥主號碼、停4秒再自動撥分機
             const raw = String(phone); const ei = raw.search(/#|＃|分機|ext|轉/i);
             const mainDigits = (ei >= 0 ? raw.slice(0, ei) : raw).replace(/\D/g, ""); const extDigits = ei >= 0 ? raw.slice(ei).replace(/\D/g, "") : "";
             const digits = extDigits ? mainDigits + ",," + extDigits : mainDigits;
-            return `<a href="tel:${digits}" class="bg-red-600 text-white px-2 py-0.5 rounded-full text-[11px] font-bold shadow-sm shrink-0">致電客戶</a>`;
+            return `<a href="tel:${digits}" class="bg-[#C2416B] text-white px-2 py-0.5 rounded-full text-[11px] font-bold shadow-sm shrink-0">致電客戶</a>`;
         }
         function showNoPhoneNotice() {
             Swal.fire({ title:"無電話", text:"請與調度確認聯絡方式", icon:"info", confirmButtonText:"知道了", confirmButtonColor:"#553f62" });
@@ -364,7 +364,7 @@
             Swal.fire({
                 title: "收現備註",
                 html: `<div class="text-left text-sm leading-7 text-[#374151]">
-                    <div class="rounded-xl border border-[#EADDE8] bg-[#FBF7FA] p-3 mb-3">
+                    <div class="rounded-xl border border-[#E3E3E5] bg-[#F9F9FB] p-3 mb-3">
                         <div class="flex justify-between gap-4"><span>此趟收現</span><b class="text-[#553f62]">$${cash.toLocaleString()}</b></div>
                         <div class="flex justify-between gap-4"><span>回金</span><b class="text-[#553f62]">$${returnCash.toLocaleString()}</b></div>
                     </div>
@@ -564,7 +564,7 @@
         async function reportAnomaly() {
             const result = await Swal.fire({
                 title:"異常狀況回報",
-                html:`<select id="type" class="w-full p-3 border rounded-xl mb-3 outline-none text-sm"><option value="" selected disabled>請選擇異常類型</option><option value="人數/行李不符">現場人數/行李不符</option><option value="聯絡不上客人">聯絡不上客人</option><option value="臨時變更行程">客人臨時變更行程(加點等)</option><option value="車輛故障/事故">車輛故障或事故</option><option value="其他">其他緊急狀況</option></select><textarea id="note" class="w-full border rounded-xl p-3 text-sm" rows="3" placeholder="請簡述現場狀況..."></textarea>`,
+                html:`<select id="type" class="w-full p-3 border rounded-xl mb-3 outline-none text-sm"><option value="" selected disabled>請選擇異常類型</option><option value="人數/行李不符">現場人數/行李不符</option><option value="聯絡不上客人">聯絡不上客人</option><option value="臨時變更行程">客人臨時變更行程(多一個地址等)</option><option value="車輛故障/事故">車輛故障或事故</option><option value="其他">其他緊急狀況</option></select><textarea id="note" class="w-full border rounded-xl p-3 text-sm" rows="3" placeholder="請簡述現場狀況..."></textarea>`,
                 showCancelButton:true, confirmButtonText:"送出通報", cancelButtonText:"返回", confirmButtonColor:"#dc2626",
                 preConfirm:()=>{
                     const type = document.getElementById("type").value;
