@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- t.html 2026-11-06：行程分享頁(代訂／多人同行)。只顯示行程、乘車人、人數行李、車型；行前通知傳過才顯示司機稱呼與車號車款。
+<!-- t.html 2026-11-06 v2：加 4 位數驗證碼(錯 5 次鎖 15 分鐘，同手機記住)，乘車當天結束後失效，需gas v2.2.474。
+     t.html 2026-11-06：行程分享頁(代訂／多人同行)。只顯示行程、乘車人、人數行李、車型；行前通知傳過才顯示司機稱呼與車號車款。
      不含金額、付款、司機電話。資料來自 gas getTripShare(需 v2.2.472)。 -->
 <html lang="zh-Hant">
 <head>
@@ -33,6 +34,7 @@
     .foot a{color:var(--p);font-weight:700;text-decoration:none}
     .msg{background:#fff;border-radius:16px;padding:28px 20px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.07);color:var(--g);line-height:1.8}
     .msg b{display:block;color:var(--p);font-size:17px;margin-bottom:6px}
+    .msg span{display:block;font-size:13px}
     .sync{background:var(--bs);border:1px solid var(--bl);border-radius:12px;padding:9px 12px;color:var(--bd);font-size:13px;line-height:1.6;margin-bottom:10px}
     .copy{display:block;width:100%;margin:4px 0 14px;border:1px solid var(--p);background:#fff;color:var(--p);border-radius:12px;padding:10px;font-size:14px;font-weight:700}
   </style>
@@ -56,7 +58,7 @@
     const multi = legs.length > 1;
     let html = '';
     html += `<div class="sync">🔄 這個連結會自動同步最新的預約與司機資料，重新整理即可查看。</div>`;
-    if (navigator.share || navigator.clipboard) html += `<button class="copy" id="copyBtn" type="button">🔗 複製這個連結，分享給同行的人</button>`;
+    if (navigator.share || navigator.clipboard) html += `<button class="copy" id="copyBtn" type="button">🔗 複製這個連結，分享給同行的人</button><div style="font-size:12px;color:var(--g);text-align:center;margin:-8px 0 12px">對方打開也需要驗證碼，請另外告訴他</div>`;
     legs.forEach((l, i) => {
       const legLabel = multi ? (i === 0 ? '去程｜' : '回程｜') : '';
       const addr = (l.addresses || []).map((a, j) => kv(a[0], a[1], j > 0 && /^地址\d+$/.test(a[0]) ? 'sub2' : '')).join('');
@@ -85,16 +87,47 @@
       } catch (e) {}
     };
   }
+  // 11/06：4 位數驗證碼。驗證成功後存 pass(這支手機下次不用再輸入)
+  const K = new URLSearchParams(location.search).get('k') || '';
+  const PASS_KEY = 'tsp_' + K;
+  const getPass = () => { try { return localStorage.getItem(PASS_KEY) || ''; } catch (e) { return ''; } };
+  const setPass = v => { try { v ? localStorage.setItem(PASS_KEY, v) : localStorage.removeItem(PASS_KEY); } catch (e) {} };
+  async function load(code) {
+    const q = new URLSearchParams({ action: 'getTripShare', k: K, t: Date.now() });
+    if (code) q.set('code', code); else if (getPass()) q.set('pass', getPass());
+    const r = await fetch(`${GAS_URL}?${q.toString()}`);
+    return JSON.parse(await r.text());
+  }
+  function renderCodeForm(d) {
+    if (d.brand) { document.getElementById('brand').textContent = d.brand; document.title = d.brand + '｜行程資訊'; }
+    const app = document.getElementById('app');
+    app.innerHTML = `<div class="msg" style="padding:24px 18px">
+      <b>請輸入 4 位數驗證碼</b><span>驗證碼請向分享行程給您的人索取</span>
+      <input id="codeIn" type="tel" inputmode="numeric" maxlength="4" autocomplete="one-time-code" placeholder="••••" ${d.locked ? 'disabled' : ''}
+        style="display:block;margin:16px auto 8px;width:180px;text-align:center;font-size:30px;letter-spacing:14px;font-weight:800;color:#553F62;border:2px solid #E2E2E4;border-radius:12px;padding:10px 0 10px 14px">
+      <button id="codeBtn" type="button" ${d.locked ? 'disabled' : ''} style="display:block;width:100%;background:#553F62;color:#fff;border:0;border-radius:12px;padding:12px;font-size:15px;font-weight:700;margin-top:6px;${d.locked ? 'opacity:.5' : ''}">查看行程</button>
+      <p id="codeErr" style="color:#A8345A;font-size:13px;margin:10px 0 0">${esc(d.error || '')}</p>
+      <p style="font-size:12px;margin:8px 0 0">錯 5 次會鎖住 15 分鐘<br>這支手機輸入成功一次，之後打開不用再輸入</p></div>`;
+    const inp = document.getElementById('codeIn'), btn = document.getElementById('codeBtn');
+    if (d.locked) return;
+    setTimeout(() => inp.focus(), 100);
+    inp.oninput = () => { inp.value = inp.value.replace(/\D/g, '').slice(0, 4); inp.style.borderColor = inp.value.length === 4 ? '#553F62' : '#E2E2E4'; if (inp.value.length === 4) btn.click(); };
+    btn.onclick = async () => {
+      const code = inp.value.replace(/\D/g, '');
+      if (code.length !== 4) { document.getElementById('codeErr').textContent = '請輸入 4 位數字'; return; }
+      btn.disabled = true; btn.textContent = '確認中…';
+      try { handle(await load(code)); } catch (e) { btn.disabled = false; btn.textContent = '查看行程'; document.getElementById('codeErr').textContent = '網路連線不穩，請再試一次'; }
+    };
+  }
+  function handle(d) {
+    if (d && d.success && d.needCode) { setPass(''); renderCodeForm(d); return; }
+    if (d && d.pass) setPass(d.pass);
+    render(d);
+  }
   (async () => {
-    const k = new URLSearchParams(location.search).get('k') || '';
-    if (!k) { render({ success: false, error: '連結不完整，請向訂車人確認' }); return; }
-    try {
-      const r = await fetch(`${GAS_URL}?action=getTripShare&k=${encodeURIComponent(k)}&t=${Date.now()}`);
-      const txt = await r.text();
-      render(JSON.parse(txt));
-    } catch (e) {
-      render({ success: false, error: '網路連線不穩，請稍後重新整理' });
-    }
+    if (!K) { render({ success: false, error: '連結不完整，請向分享給您的人確認' }); return; }
+    try { handle(await load('')); }
+    catch (e) { render({ success: false, error: '網路連線不穩，請稍後重新整理' }); }
   })();
 </script>
 </body>
