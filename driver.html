@@ -847,6 +847,11 @@
         }
 
         // Helper 函式：過濾掉空值或 "無" 的字串
+        // 2026-11-10：航班顯示 CI108(T2)
+        function fmtFlightShort_(v){ const t=String(v==null?'':v).replace(/^'/,'').trim(); if(!t||t==='無') return t; let m=t.match(/^航廈\s*(T1|T2|？|\?)$/); if(m) return m[1]==='T1'?'第一航廈(T1)':(m[1]==='T2'?'第二航廈(T2)':'航廈待確認'); m=t.match(/^(.*?)\s*[｜|]\s*(T1|T2|？|\?)\s*$/); if(m) return m[1].trim()+'('+(/[？?]/.test(m[2])?'航廈待確認':m[2])+')'; return t; }
+        function splitFlightTerm_(v){ const t=String(v==null?'':v).replace(/^'/,'').trim(); if(!t||t==='無') return {no:'',term:''}; let m=t.match(/^航廈\s*(T1|T2|？|\?)$/); if(m) return {no:'',term:/[？?]/.test(m[1])?'？':m[1]}; m=t.match(/^(.*?)\s*[｜|]\s*(T1|T2|？|\?)\s*$/); if(m) return {no:m[1].trim(),term:/[？?]/.test(m[2])?'？':m[2]}; return {no:t,term:''}; }
+        function terminalLong_(term){ return term==='T1'?'第一航廈(T1)':(term==='T2'?'第二航廈(T2)':(term==='？'?'待確認':'')); }
+        
         const cleanVal = (v) => (!v || v === '無' || v === '-' || v === 'undefined') ? '' : String(v).trim();
         const displayDriverName = (v) => cleanVal(v).replace(/（臨時）$/g, '').trim();
         const displayDriverOrderId = (v) => cleanVal(v).replace(/-去程$/g, '-A').replace(/-回程$/g, '-B').replace(/-01$/g, '-A').replace(/-02$/g, '-B');
@@ -1239,7 +1244,7 @@
                              ${extraStopRowHtml}
                              <div class="driver-field"><span class="driver-field-label">下車地址</span><span class="driver-field-value">${stopHtml(t.airport)}</span></div>`)
                           : `<div class="driver-field"><span class="driver-field-label">接送機場</span><span class="driver-field-value">${cleanVal(t.airport)}</span></div>
-                             <div class="driver-field"><span class="driver-field-label">航班編號</span><span class="driver-field-value text-gray-800">${cleanVal(t.flightNo)}</span></div>`}
+                             <div class="driver-field"><span class="driver-field-label">航班編號</span><span class="driver-field-value text-gray-800">${fmtFlightShort_(cleanVal(t.flightNo))}</span></div>`}
                         <div class="driver-field">
                             <span class="driver-field-label">客戶姓名</span>
                             <div class="driver-field-value flex items-center justify-end"><span>${cleanVal(t.custName)}</span>${callBtn}</div>
@@ -1404,7 +1409,7 @@
             setRentalText('rentalCarModel', driverCarType);
             setRentalText('rentalPeriod', formatRentalPeriod(t.date, t.time));
             setRentalText('rentalFare', '━');
-            setRentalText('rentalFlightNo', cleanVal(t.flightNo) === '無' ? '' : cleanVal(t.flightNo));
+            setRentalText('rentalFlightNo', cleanVal(t.flightNo) === '無' ? '' : fmtFlightShort_(cleanVal(t.flightNo)));
             document.getElementById('rentalFormModal').classList.remove('hidden');
             layerOpened_('rental');
         }

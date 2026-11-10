@@ -114,6 +114,11 @@
         const esc = value => String(value || "-").replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
         const clean = value => (!value || value === "無") ? "" : String(value);
         const displayDriverName = value => clean(value).replace(/（臨時）$/g, "").trim();
+        // 2026-11-10：航班顯示 CI108(T2)
+        function fmtFlightShort_(v){ const t=String(v==null?'':v).replace(/^'/,'').trim(); if(!t||t==='無') return t; let m=t.match(/^航廈\s*(T1|T2|？|\?)$/); if(m) return m[1]==='T1'?'第一航廈(T1)':(m[1]==='T2'?'第二航廈(T2)':'航廈待確認'); m=t.match(/^(.*?)\s*[｜|]\s*(T1|T2|？|\?)\s*$/); if(m) return m[1].trim()+'('+(/[？?]/.test(m[2])?'航廈待確認':m[2])+')'; return t; }
+        function splitFlightTerm_(v){ const t=String(v==null?'':v).replace(/^'/,'').trim(); if(!t||t==='無') return {no:'',term:''}; let m=t.match(/^航廈\s*(T1|T2|？|\?)$/); if(m) return {no:'',term:/[？?]/.test(m[1])?'？':m[1]}; m=t.match(/^(.*?)\s*[｜|]\s*(T1|T2|？|\?)\s*$/); if(m) return {no:m[1].trim(),term:/[？?]/.test(m[2])?'？':m[2]}; return {no:t,term:''}; }
+        function terminalLong_(term){ return term==='T1'?'第一航廈(T1)':(term==='T2'?'第二航廈(T2)':(term==='？'?'待確認':'')); }
+        
         function maskCustomerName(value) {
             const raw = clean(value).trim();
             if (!raw) return raw;
@@ -277,7 +282,7 @@
                    ["客戶姓名", maskCustomerName(task.custName)]]
                 : isOneWay
                 ? [["客戶姓名", maskCustomerName(task.custName)]]
-                : [["接送機場", task.airport], ["航班編號", task.flightNo], ["客戶姓名", maskCustomerName(task.custName)]];
+                : [["接送機場", task.airport], ["航班編號", fmtFlightShort_(task.flightNo)], ["客戶姓名", maskCustomerName(task.custName)]];
             const fields = headFields.concat(isCharter ? [] : addrFields).concat([
                 ["乘車人數", formatPaxLabel(task.paxCount)],
                 ["行李件數", formatLuggageWithSport(task.luggage, task.sportLuggage)],
@@ -469,7 +474,7 @@
             setRentalText("rentalCarModel", carModel);
             setRentalText("rentalPeriod", formatRentalPeriod(task.date, task.time));
             setRentalText("rentalFare", "━");
-            setRentalText("rentalFlightNo", clean(task.flightNo) === "無" ? "" : task.flightNo);
+            setRentalText("rentalFlightNo", clean(task.flightNo) === "無" ? "" : fmtFlightShort_(task.flightNo));
             document.getElementById("rentalFormModal").classList.remove("hidden");
         }
         function closeRentalForm() {

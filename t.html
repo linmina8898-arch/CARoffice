@@ -70,7 +70,7 @@
         <div class="bd">
           <span class="st ${l.cancelled ? 'cx' : ''}">${esc(l.cancelled ? '此行程已取消' : l.status)}</span>
           <div style="margin-top:6px">
-            ${kv('單號', l.orderId)}${kv('機場', l.airport)}${kv('航班', l.flight)}${addr}
+            ${kv('單號', l.orderId)}${kv('機場', l.airport)}${kv('航班', l.flight)}${kv('航廈', l.terminal)}${addr}
             ${kv('乘車人', l.passenger)}${kv('人數', l.pax)}${kv('行李', l.luggage)}${kv('車型', l.carType)}
           </div>
           ${drv}
