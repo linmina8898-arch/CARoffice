@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- survey.html v2.1 (2026-11-10)：送出後標題改「謝謝您！」；折扣碼下方新增選填「您會推薦安興給親友嗎？」(點星星就存，需gas v2.2.481)；升級$100說明與提示字改寫 -->
 <!-- survey.html v2.0：必填一頁(整體星數＋名片題，1~3星追問不滿意項目)，送出即領$50；成功頁可選填留言(≥20字升級$100)與細項評分(需gas v2.2.415) -->
 <html lang="zh-TW">
 <head>
@@ -183,7 +184,7 @@
                 <!-- 2026-10-31：精簡版：小打勾＋標題同一行；不顯示折扣碼號碼和複製鈕(已自動存入會員) -->
                 <div class="flex items-center justify-center gap-2 mb-2">
                     <span class="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style="background:#FDF0F4"><svg class="w-5 h-5" style="color:#C2416B" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg></span>
-                    <h2 class="text-xl font-bold text-primary">謝謝您！折扣碼已發給您</h2>
+                    <h2 class="text-xl font-bold text-primary">謝謝您！</h2>
                 </div>
                 <p class="text-gray-600 mb-4 leading-relaxed text-sm">您的每一則回饋，都是我們持續提升服務品質的重要動力，謝謝您的支持與信任。</p>
 
@@ -194,11 +195,23 @@
                     <div class="text-xs mt-1" style="color:#E9DDF0">有效期限：<span id="expiryDate"></span>｜下次預約時自動帶入，每次限用一張</div>
                     <span id="rewardBadge" class="hidden"></span><span id="discountCodeText" class="hidden"></span><button id="copyBtn" class="hidden" type="button"></button>
                 </div>
+                <!-- 2026-11-10：推薦意願(選填，點星星就存) -->
+                <div id="recommendBox" class="w-full max-w-sm mt-4 text-left">
+                    <p class="font-bold text-primary">您會推薦安興給親友嗎？<span class="text-xs text-gray-500 font-normal">（選填）</span></p>
+                    <div id="recStarRow" class="flex justify-center gap-1 py-1">
+                        <button type="button" class="star-btn" data-v="1" aria-label="1 星">☆</button>
+                        <button type="button" class="star-btn" data-v="2" aria-label="2 星">☆</button>
+                        <button type="button" class="star-btn" data-v="3" aria-label="3 星">☆</button>
+                        <button type="button" class="star-btn" data-v="4" aria-label="4 星">☆</button>
+                        <button type="button" class="star-btn" data-v="5" aria-label="5 星">☆</button>
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-400"><span>不會推薦</span><span id="recHint"></span><span>一定推薦</span></div>
+                </div>
                 <div id="upgradeBox" class="w-full max-w-sm mt-4 text-left">
                     <div class="rounded-xl p-4" style="background:#FDF0F4;border:1px solid #C2416B">
                         <p class="font-bold" style="color:#A8345A">再送 $50！折扣碼升級成 $100</p>
-                        <p class="text-xs text-gray-600 mt-1">寫下 20 個字以上的真實感受，這張碼就會自動升級</p>
-                        <textarea id="comments" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 mt-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent" placeholder="想對我們說的話…"></textarea>
+                        <p class="text-sm text-gray-700 mt-1 leading-relaxed">這趟有哪裡讓您印象深刻，或希望我們做得更好的地方嗎？</p><p class="text-xs text-gray-600 mt-1">寫滿 20 個字，這張碼就會自動升級</p>
+                        <textarea id="comments" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 mt-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent" placeholder="例：司機態度親切有禮，非常準時；希望下次能早一點收到司機資訊…"></textarea>
                         <div id="commentCounter" class="text-xs text-gray-400 text-right mt-1">0 / 20 字</div>
                     </div>
                     <div id="replyAskBox" class="hidden mt-3 rounded-xl p-3" style="background:#FDF0F4;border:1px solid #F3C6D5">
@@ -548,7 +561,7 @@
             const btn = document.getElementById('extraBtn');
             extraSending = true; btn.disabled = true; btn.textContent = '送出中…';
             try {
-                const result = await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'submitSurvey', data: Object.assign({ stage: 'extra', token: tokenParam, comments, replyWanted: askReply ? replyWanted : '' }, extraState) }) }).then(r => safeJsonParse(r));
+                const result = await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'submitSurvey', data: Object.assign({ stage: 'extra', token: tokenParam, comments, replyWanted: askReply ? replyWanted : '', recommend: recommendValue ? String(recommendValue) : '' }, extraState) }) }).then(r => safeJsonParse(r));
                 if (!result.success) { alert(result.message || '送出失敗，請稍後再試。'); extraSending = false; btn.disabled = false; updateExtraBtn(); return; }
                 extraDone = true; extraSending = false;
                 if (result.upgraded) {
@@ -566,6 +579,21 @@
                 extraSending = false; btn.disabled = false; updateExtraBtn();
             }
         });
+        // 2026-11-10：推薦意願(選填)：點星星就存到後端(stage=recommend)，不用另外按送出；補充送出時也一併帶上
+        let recommendValue = 0;
+        function saveRecommend_(v, tryNo) {
+            const hint = document.getElementById('recHint');
+            fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'submitSurvey', data: { stage: 'recommend', token: tokenParam, recommend: String(v) } }) })
+                .then(r => safeJsonParse(r))
+                .then(res => { if (recommendValue !== v) return; if (hint) hint.textContent = res && res.success ? '已記下，謝謝您' : ''; if (!(res && res.success) && !tryNo) setTimeout(() => saveRecommend_(v, 1), 1500); })
+                .catch(() => { if (!tryNo && recommendValue === v) setTimeout(() => saveRecommend_(v, 1), 1500); });
+        }
+        document.querySelectorAll('#recStarRow .star-btn').forEach(btn => btn.addEventListener('click', () => {
+            recommendValue = Number(btn.dataset.v);
+            document.querySelectorAll('#recStarRow .star-btn').forEach(x => { const on = Number(x.dataset.v) <= recommendValue; x.classList.toggle('on', on); x.textContent = on ? '★' : '☆'; });
+            const hint = document.getElementById('recHint'); if (hint) hint.textContent = '';
+            saveRecommend_(recommendValue, 0);
+        }));
         document.getElementById('comments')?.addEventListener('input', countCommentChars);
         countCommentChars();
         let liffPromise = Promise.resolve(true);
