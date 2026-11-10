@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- survey.html v2.2 (2026-11-10)：有問卷代碼就先顯示題目，不等後端回應(冷啟動時客人不用看轉圈)；後端在背景確認，已填過／過期／連結無效才切換提示畫面 -->
 <!-- survey.html v2.1 (2026-11-10)：送出後標題改「謝謝您！」；折扣碼下方新增選填「您會推薦安興給親友嗎？」(點星星就存，需gas v2.2.481)；升級$100說明與提示字改寫 -->
 <!-- survey.html v2.0：必填一頁(整體星數＋名片題，1~3星追問不滿意項目)，送出即領$50；成功頁可選填留言(≥20字升級$100)與細項評分(需gas v2.2.415) -->
 <html lang="zh-TW">
@@ -283,7 +284,17 @@
             loadingHintTimers.push(setTimeout(() => { hint.innerText = '還在努力連線中，若超過半分鐘仍沒反應，可點下方重新載入'; if (btn) btn.classList.remove('hidden'); }, 20000));
         }
 
+        // v2.2：先顯示題目、背景確認。送出中或已送出後，背景結果回來就不再動畫面
+        let formShownEarly = false, surveyBusy = false;
+        function showFormEarly_() {
+            if (formShownEarly) return;
+            formShownEarly = true;
+            clearLoadingHints();
+            document.getElementById('loadingScreen').classList.add('hidden');
+            document.getElementById('surveyForm').classList.remove('hidden');
+        }
         function renderInvitation(result) {
+            if (surveyBusy) { if (result && result.success && !result.submitted && !result.expired) { document.getElementById('bookingId').value = result.bookingId || ''; } return; }
             if (!result || !result.success) return showClosedScreen('無法開啟問卷', (result && result.error) || '請聯絡客服協助處理。');
             if (result.submitted) return showClosedScreen('問卷已完成', '此筆行程已完成回饋填寫，謝謝您的支持。');
             if (result.expired) return showClosedScreen('問卷已截止', '此問卷已超過收到問卷後 3 天的填寫期限。');
@@ -308,6 +319,7 @@
                 const result = await (window.__surveyInvitation || Promise.reject(new Error('no-request')));
                 renderInvitation(result);
             } catch (error) {
+                if (formShownEarly) return; // 題目已經顯示，讓客人照填，送出時後端會再確認
                 showClosedScreen('目前無法載入問卷', '連線比較慢或暫時中斷，請點下方「重新載入」再試一次；仍無法開啟請聯絡客服協助處理。', true);
             }
         }
@@ -446,6 +458,7 @@
             surveyForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 if (!(surveyState.nps >= 1 && surveyState.solicit)) return;
+                surveyBusy = true;
                 const submitBtn = document.getElementById('submitBtn');
                 submitBtn.disabled = true;
                 submitBtn.innerHTML = '<span>送出中，請稍候…</span>';
@@ -492,6 +505,7 @@
         function resetSubmitButton() {
             const submitBtn = document.getElementById('submitBtn');
             submitBtn.innerHTML = '<span>送出，領乘車折扣碼 $50</span>';
+            surveyBusy = false;
             updateSubmitState();
         }
 
@@ -605,6 +619,7 @@
                 if (tokenParam && !window.__surveyInvitation) window.__surveyInvitation = fetch('https://script.google.com/macros/s/AKfycbz6wgk6T8ypEI1pW5ih7M3Bom54Tu7unv-sc_ldFtPSBWw4yAbahs70GErKGpsRqcG3/exec?action=getSurveyInvitation&token=' + encodeURIComponent(tokenParam) + '&t=' + Date.now()).then(r => r.json());
             }
             if (!tokenParam) { await loadSurvey(); return; }
+            showFormEarly_(); // v2.2：有代碼就先顯示題目
             startLoadingHints();
             // LIFF 初始化與問卷資料請求「同時進行」，不再一個等一個
             liffPromise = initializeSurveyLiff();
