@@ -251,7 +251,15 @@
     input[type=number] { -moz-appearance: textfield; appearance: textfield; }
     input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   /* v1.2.21 多台車卡片 */
-  .car-card{margin-top:16px;border:2px solid #553F62;border-radius:14px;overflow:hidden;background:#fff}
+  .c1-pill{display:inline-block;font-size:10px;font-weight:800;background:#553F62;color:#fff;border-radius:999px;padding:1px 7px;margin-left:6px;vertical-align:1px;white-space:nowrap}
+  .c1-pill.hidden{display:none}
+  .car-card{margin-top:16px;border:2px solid #553F62;border-radius:14px;background:#fff;position:relative}
+  .car-card .car-head{border-radius:12px 12px 0 0}
+  .copy-menu{position:absolute;right:10px;top:52px;z-index:5;background:#fff;border:1px solid #E2E2E4;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,.15);width:250px;max-width:calc(100% - 20px);overflow:hidden}
+  .cm-head{font-size:11px;color:#8E8E93;font-weight:700;padding:8px 12px 4px}
+  .cm-item{display:flex;gap:8px;align-items:baseline;width:100%;text-align:left;background:#fff;border:0;border-top:1px solid #F2F2F2;padding:9px 12px;font-size:13px;white-space:nowrap;overflow:hidden}
+  .cm-item b{color:#553F62}.cm-item span{color:#8E8E93;font-size:12px;overflow:hidden;text-overflow:ellipsis}
+  .cm-item:active{background:#FDF0F4}
   .car-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;color:#fff;cursor:pointer}
   .car-title{font-size:16px;font-weight:900;white-space:nowrap}
   .car-id{font-size:11px;font-weight:800;background:#fff;color:#553F62;border-radius:999px;padding:1px 8px;margin-left:6px;vertical-align:2px}
@@ -401,7 +409,7 @@
       </section>
 
       <section class="panel">
-        <div class="section-title">加值服務項目（選填）</div>
+        <div class="section-title">加值服務項目（選填） <span class="c1-pill hidden">第1台 C1</span></div>
         <p class="hint !mt-0 mb-2">例如接機服務、加點服務、夜間加成等，可以疊加多筆，全部會加總到車資裡，也會個別列在卡片費用明細上。下面「車資」欄位請只填基本車資，不用把這些服務費也加進去，系統會自動加總。</p>
         <div id="surchargeItemsList" class="mt-2"></div>
         <button type="button" class="secondary-btn mt-2" id="addSurchargeItemBtn">＋ 新增加值服務項目</button>
@@ -409,7 +417,7 @@
       </section>
 
       <section class="panel">
-        <div class="section-title">折扣項目</div>
+        <div class="section-title">折扣項目 <span class="c1-pill hidden">第1台 C1</span></div>
         <p class="hint !mt-0 mb-2">可以疊加多筆折扣（例如：預約來回優惠、客服折讓、新客優惠…），全部會加總從車資扣除。客服不受任何折扣限制（特殊日期、限來回、500 元上限都不擋）；每筆折扣都會記錄是哪位客服操作。</p>
         <div class="mb-2"><label for="operatorName">我是（客服名稱，記錄用）</label>
           <input id="operatorName" placeholder="例如：小美　（會記住，下次不用再填）" autocomplete="off">
@@ -473,7 +481,7 @@
             </div>
           </div>
           <div>
-            <label for="fare">車資金額</label>
+            <label for="fare">車資金額 <span class="c1-pill hidden">第1台 C1</span></label>
             <input id="fare" name="fare" type="number" inputmode="numeric" min="0" required placeholder="由客服手動輸入">
             <div id="specialDateHint" class="hint !mt-1 hidden" style="color:#9a6a1f"></div>
           </div>
@@ -530,7 +538,7 @@
               </select>
             </div>
             <div>
-              <label for="returnFare">回程車資</label>
+              <label for="returnFare">回程車資 <span class="c1-pill hidden">第1台 C1</span></label>
               <input id="returnFare" name="returnFare" type="number" inputmode="numeric" min="0" placeholder="不填則同去程金額">
               <div id="returnSpecialDateHint" class="hint !mt-1 hidden" style="color:#9a6a1f"></div>
             </div>
@@ -612,31 +620,6 @@
             </div>
           </div>
           <div>
-            <label for="carType">車型</label>
-            <select id="carType" name="carType" required>
-              <option value="小車">小車</option>
-              <option value="大車">大車</option>
-              <option value="進口商務車">進口商務車</option>
-              <option value="New Alphard 40系">New Alphard 40系</option>
-            </select>
-          </div>
-          <div class="full" id="vehicleCountWrap">
-            <label>車輛台數</label>
-            <div style="display:flex;align-items:center;gap:10px">
-              <button type="button" id="vehicleMinus" class="secondary-btn" style="min-width:42px" aria-label="減少一台">－</button>
-              <span id="vehicleCountText" style="font-size:20px;font-weight:700;min-width:28px;text-align:center">1</span>
-              <button type="button" id="vehiclePlus" class="secondary-btn" style="min-width:42px" aria-label="增加一台">＋</button>
-            </div>
-            <div class="hint" id="vehicleCountHint">同一個行程要訂多台車時，調整台數。每台車是各自獨立的訂單（各自派車、回報、收款）。</div>
-          </div>
-          <div class="full hidden" id="extraCarsPanel" style="border:1px solid #F3C6D5;background:#FDF0F4;border-radius:14px;padding:12px">
-            <div class="section-title" style="margin-bottom:6px">其他車輛設定 <span style="font-size:11px;font-weight:700;color:#C2416B;background:#FDF0F4;border:1px solid #F3C6D5;border-radius:999px;padding:1px 8px;margin-left:6px">各台獨立計價</span></div>
-            <p class="hint !mt-0 mb-2">上面的「車型、車資、人數、行李、座椅、加值、折扣」是第 1 台（C1）。這裡設定第 2 台起各自的車型、費用、人數、行李；行程、時間、客人資料各台共用。新增時會先複製 C1 的車型、車資、人數、行李與加值，折扣預設為空（各台自己選，折扣碼只能用一次，請只加在一台車）。</p>
-            <div id="carC1Bar"></div>
-            <div id="extraCarsList"></div>
-            <div id="carsTotalBar"></div>
-          </div>
-          <div>
             <label for="paymentMethod">付款方式</label>
             <select id="paymentMethod" name="paymentMethod" required>
               <option value="現金">現金</option>
@@ -653,15 +636,24 @@
             <p id="companyStatus" class="hint" style="font-weight:700;margin-top:6px"></p>
           </div>
           <div id="manualCashWrap" class="full hidden">
-            <label>現場收現金額</label>
+            <label>現場收現金額 <span class="c1-pill hidden">第1台 C1</span></label>
             <div class="mini-grid two">
               <input id="manualCashCollected" inputmode="numeric" placeholder="去程現收，例如 500">
               <input id="returnManualCashCollected" inputmode="numeric" placeholder="回程現收，例如 500">
             </div>
             <div class="hint">選擇「轉帳+收現」或「簽單+收現」時填寫；此金額會直接寫入預約單，司機端會顯示現場需收多少。</div>
           </div>
+          <div>
+            <label for="carType">車型 <span class="c1-pill hidden">第1台 C1</span></label>
+            <select id="carType" name="carType" required>
+              <option value="小車">小車</option>
+              <option value="大車">大車</option>
+              <option value="進口商務車">進口商務車</option>
+              <option value="New Alphard 40系">New Alphard 40系</option>
+            </select>
+          </div>
           <div class="full">
-            <label>人數</label>
+            <label>人數 <span class="c1-pill hidden">第1台 C1</span></label>
             <div class="mini-grid">
               <select id="adultCount" aria-label="成人">
                 <option value="1">1大</option><option value="2">2大</option><option value="3">3大</option><option value="4">4大</option><option value="5">5大</option><option value="6">6大</option><option value="7">7大</option><option value="8">8大</option>
@@ -675,7 +667,7 @@
             </div>
           </div>
           <div class="full">
-            <label>行李</label>
+            <label>行李 <span class="c1-pill hidden">第1台 C1</span></label>
             <div class="mini-grid">
               <select id="checkedLuggageCount" aria-label="托運大型(27-29吋)"><option value="0">0大型</option><option value="1">1大型</option><option value="2">2大型</option><option value="3">3大型</option><option value="4">4大型</option><option value="5">5大型</option><option value="6">6大型</option><option value="7">7大型</option><option value="8">8大型</option></select>
               <select id="mediumLuggageCount" aria-label="托運中型(21-26吋)"><option value="0">0中型</option><option value="1">1中型</option><option value="2">2中型</option><option value="3">3中型</option><option value="4">4中型</option><option value="5">5中型</option><option value="6">6中型</option><option value="7">7中型</option><option value="8">8中型</option></select>
@@ -689,7 +681,7 @@
             <p style="margin:4px 0 0;font-size:12px;color:#7A6A82">大型27-29吋｜中型21-26吋｜登機20吋以下；推車、胖胖箱是「包含在大型內」的細項，不用再另外加到大型件數。</p>
           </div>
           <div>
-            <label for="seatDetails">座椅</label>
+            <label for="seatDetails">座椅 <span class="c1-pill hidden">第1台 C1</span></label>
             <input id="seatDetails" name="seatDetails" value="無">
           </div>
           <div>
@@ -709,6 +701,22 @@
           <div class="full">
             <label for="accountNote">帳務備註 <span class="text-xs font-normal text-gray-500">（只有客服／中控看得到，司機端與客人卡片不會出現）</span></label>
             <textarea id="accountNote" name="accountNote" placeholder="例如 收據抬頭、統編、對帳資訊"></textarea>
+          </div>
+          <div class="full" id="vehicleCountWrap" style="border-top:2px solid #E2E2E4;padding-top:14px;margin-top:6px">
+            <div class="section-title" style="margin-bottom:6px">車輛台數</div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <button type="button" id="vehicleMinus" class="secondary-btn" style="min-width:42px" aria-label="減少一台">－</button>
+              <span id="vehicleCountText" style="font-size:20px;font-weight:700;min-width:28px;text-align:center">1</span>
+              <button type="button" id="vehiclePlus" class="secondary-btn" style="min-width:42px" aria-label="增加一台">＋</button>
+            </div>
+            <div class="hint" id="vehicleCountHint">同一個行程要訂多台車時，調整台數。每台車是各自獨立的訂單（各自派車、回報、收款）。</div>
+          </div>
+          <div class="full hidden" id="extraCarsPanel" style="border:1px solid #F3C6D5;background:#FDF0F4;border-radius:14px;padding:12px">
+            <div class="section-title" style="margin-bottom:6px">其他車輛設定 <span style="font-size:11px;font-weight:700;color:#C2416B;background:#FDF0F4;border:1px solid #F3C6D5;border-radius:999px;padding:1px 8px;margin-left:6px">各台獨立計價</span></div>
+            <p class="hint !mt-0 mb-2">上面標「第1台 C1」的欄位(車型、車資、人數、行李、座椅)和最上面的加值、折扣是第 1 台（C1）。這裡設定第 2 台起各自的車型、費用、人數、行李；行程、時間、客人資料各台共用。新增時會先複製 C1 的車型、車資、人數、行李與加值，折扣預設為空（各台自己選，折扣碼只能用一次，請只加在一台車）。</p>
+            <div id="carC1Bar"></div>
+            <div id="extraCarsList"></div>
+            <div id="carsTotalBar"></div>
           </div>
         </div>
       </section>
@@ -748,7 +756,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.2.21"; // v1.2.21：多台車：①C2起每台多「人數／行李／座椅」三個框(大人兒童幼兒、大型中型登機、推車胖胖箱尺寸、座椅)，加台數時先帶C1的數字；②每台一張卡片，表頭紫／莓果深交替、大字「🚐 第N台 CN」、下面摘要(車型｜人數｜行李｜車資)，可收起；③「其他車輛設定」上面放第1台(C1)摘要、下面「全部車加起來」；④確認視窗每台列出自己的人數行李座椅、共用區不再顯示C1的人數行李；客人確認文字每台照自己的；需gas v2.2.492； v1.2.20：客人確認文字航班／航廈分兩行(航班編號：CI108、航廈：第二航廈(T2))； v1.2.19：貼文字解析：①兩段都用「行程：送機 ➔ 桃園機場／行程：桃園機場 ➔ 接機」開頭(沒有獨立標題行)也會拆成去程＋回程、自動勾來回；②「送機 ➔ 桃園機場」「桃園機場 ➔ 接機」看字的先後判斷送機／接機；③車型、備註寫在最後面也會帶到去程；④地址開頭郵遞區號拿掉； v1.2.18：貼文字解析沒寫車型時，照預約頁同一套規則用人數＋行李自動選車型(例如2人4件行李→大車)；有寫車型但裝不下會提醒； v1.2.17：貼文字解析：①$1600 不再只抓到 160；②一次貼「送機／接機」兩段會自動勾來回、帶回程日期時間航班車資(「去程$1600，回程$2000」分開帶)；③送機抓出發時間、接機抓班機時間，支援 a.m./p.m.；④「行李件數：4」沒寫大小先放大型；⑤同一個地址出現兩次不再變成加點；⑥沒寫年份且日期已過就當明年； v1.2.16：多個地址時，沒填「此站聯絡人」的地址不再自動帶乘車人姓名電話； v1.2.15：「確認建立預約」視窗：單趟不再標「去程」；卡片「車資」改顯示折扣前金額(折扣列在下面、總車資才扣)； v1.2.14：乘車金折抵：填好訂車人手機自動查餘額，可填要折抵多少(列在折扣明細，建單時才扣，來回只折回程)；需gas v2.2.467； v1.2.13：新配色(紫色＋莓果色)，原本粉紅改莓果、淡紫底改灰白； v1.2.12：「加點／中途停靠站」改叫「其他地址（地址2起）」、按鈕「＋ 新增地址」，客人卡片只有一個地址時不再多一行加點(費用名稱「加點費」不變)； v1.2.11：「用預約編號產生通知文字」跟建立時同格式：訂車人(統編公司／訂車人／電話)放最後面一次、拿掉乘車資訊裡的訂車貴賓；包車單顯示行程、用車N小時、基本車資＋超時規則，備註只留客人的；多天包車每天一段；「複製舊單」包車會把時數/超時/緩衝/住宿/行程/天數帶回包車欄位(需gas v2.2.449)； v1.2.10：送機／接機／單程的客人確認文字：拿掉「乘車資訊」裡的「訂車貴賓」那行，改在預約編號下面放「訂車人／統編 公司名稱／訂車人／電話」(跟包車同格式)；來回合併成一則時只放最後一次，分開複製去程/回程時每則各放； v1.2.9：包車照確認版示意圖：①「每天用車時數」改「用車時數」，新增「超時緩衝（分鐘）」預設15；②客人確認文字：有行程只放行程內容、「包車（用車N小時）」、費用改「基本車資（含N小時）」＋超時費用＋超時規則、訂車人資訊(統編公司／訂車人／電話)放在最後面；需gas v2.2.448； v1.2.8：行程新增「包車」：上車/下車地點(下車空白＝回上車地點)、每天用車時數、天數、超時每小時、住宿補貼(每晚)、行程內容(可用「第2天」分段)；多天每天一張單(-D1、-D2…)；確認視窗與客人確認文字顯示包車明細與總額(每天車資×天數＋住宿補貼)；需gas v2.2.447； v1.2.7：①建立成功後，客人確認文字改用預約單「實際存的」日期時間產生(後端回傳savedTrips)，跟表單不一致時先跳紅色警告；②成功視窗最上面大字顯示系統存的乘車日期時間；③所有「傳給客人的確認文字」框改唯讀並註明「改這裡不會改到預約單」，要改請回表單或中控台「修改資料」(起因：NA-C-202610201028AEDW 系統存12:00、傳給客人的文字09:00)，需gas v2.2.446； v1.2.6：①折扣項目選「回程／去回程各扣」但沒勾同時預約回程(例如單號複製後單獨訂回程)不再被擋，直接扣在這一趟；②新增「＋預約來回優惠 -$100」快速鈕；③新增「我是（客服名稱）」欄位(記住)，每筆折扣後端都記錄是哪位客服；④補訂回程視窗可勾「給預約來回優惠 -$100」；v1.2.5：胖胖箱尺寸改選填(客人預約頁不再收尺寸)；載入舊單時保留客人預約頁新增的「長型／其他」細項、客人文字也會顯示出來； // v1.2.4：客人文字的備註照原樣顯示(「空白收據」不再被改寫成「需開立收據」)； v1.2.3：「補訂回程」的回程航班欄位強制英文大寫；v1.2.2：加點只是航廈名稱(第一航廈/第二航廈)時不帶乘車人聯絡資料；v1.2.1：「地址1／地址2…」沒填聯絡人的地址預設帶乘車人姓名＋電話；v1.2.0：新增「➕ 補訂回程」(客人先訂單趟、之後才訂回程：原單改成 單號-A、新增 單號-B，同中控台功能，需gas v2.2.420)；接送機有加點時，客人確認文字／預約明細圖改成像司機系統「地址1／地址2／地址3…」依行車順序編號、每個地址下一行「聯絡 姓名 電話」(行事曆、客人卡片同步，需gas v2.2.428)；v1.1.3：新增「帳務備註」欄(選固定客戶範本會自動帶入「固定客戶」表的「帳務備註」欄，複製舊單也會帶，只有客服/中控看得到，司機看不到；需gas v2.2.423)； // v1.1.2：路線的箭頭改成「→ 」(後面多一個空格，跟系統卡片一樣)； // v1.1.1：客人確認文字(預約成功通知)單程拿掉「航班編號／接送機場／加點地址」，接送地址改成「起點→加點→終點」一條路線，回程整條反過來； // v1.1.0：複製舊單／帶入另一腿時，姓名欄只放名字、稱謂自動選進「稱謂」下拉(不再整串帶「王小姐」)(搭配gas v2.2.419更準，沒更新也會自己拆)； // v1.0.99：行李欄位順序改「大型→中型→登機」； // v1.0.98：貼上客人訊息解析地址時，自動拿掉地址尾巴的手機/市話(例如「…4樓之2；0912580590」)； v1.0.97：多台車(C2起)每台可選填不同的乘車人姓名／稱謂／電話／地址／加點(預設收合、空白沿用C1，訂車人維持C1，需gas v2.2.411)。 v1.0.96：車型選單補上「New Alphard 40系」(原本只有小車/大車/進口商務車，跟客人訂車頁不一致；第2台起的車型也同步)，貼文字解析車型時Alphard歸到New Alphard 40系、不再被當成進口商務車。 // v1.0.95：新增「特約／月結企業客戶」欄(輸入統編或特約代號，查到公司後帶入、付款方式改月結簽單，需gas v2.2.407)；  v1.0.94：數字欄位(車資等)拿掉上下箭頭，滾輪/方向鍵不會再改數字； v1.0.93：航班欄位(去程/回程)手機鍵盤預設英文＋自動大寫； v1.0.92：來回預約新增「回程機場」(預設同去程)，機場不同時回程單存回程機場、航廈T1/T2依各趟機場決定、確認畫面/客人確認文字回程顯示回程機場，複製舊單會帶回程機場(需gas v2.2.393)； v1.0.91：行李分類改版——登機/托運中型(21-26吋)/托運大型(27-29吋)三個欄位，另有「含推車」「含胖胖箱(+尺寸)」細項(包含在大型內)；客人確認文字、預約明細圖、確認視窗行李改成「登機 1 + 中型 1 + 大型 2」，細項另起一行「含 …」；載入舊單會帶回細項(需gas v2.2.390)； v1.0.90：修正客人確認文字「特殊備註」只要備註內有「收據」兩個字就整段被換成「需開立收據」，其他備註內容消失；現在只把含收據的片段換成「需開立收據」，其餘內容保留； v1.0.89：預約明細圖片資訊欄有選舉牌時多一列「舉牌」(需gas v2.2.388)； v1.0.88：「對話文字快速帶入」移到頁面最上面，標題可點擊收折/展開(記住上次狀態)； v1.0.87：新增「訂車人同乘客」勾選(預設勾選＝跟以前一樣)，取消勾選可另外填訂車人姓名/稱謂/電話(代訂)；折扣碼查詢用訂車人電話；訂車人與乘客不同時客人確認文字多一行「訂車貴賓」；載入舊單會帶回訂車人(需gas v2.2.369)； v1.0.86：客人確認文字改成顯示每個地址下面的「聯絡人 電話」(原本會拿掉)，聯絡人欄提示字改成「客人確認文字會顯示此聯絡人與電話；司機端只看得到電話圖示」(需gas v2.2.367)； v1.0.85：每個地址(接送地址/起點/終點/各加點)可展開填「聯絡人稱呼＋電話」，存成「地址（聯絡：王小姐 0912-345-678）」，司機端自動拆成獨立一行可直接撥打；客人確認文字會拿掉這段，不外流；v1.0.84：建立成功後的「客人確認文字」來回單可分開複製「去程」「回程」或「兩則合併」(單台來回、多台車每一台都適用)；v1.0.83：修正「其他車輛設定」(C2起各台車型/車資/折扣)原本放在頁面上方、往下捲看不到，改放在「車輛台數」正下方，選台數後自動捲到那裡；v1.0.82：新增「車輛台數」(多台車)：C2 起各自車型/車資/回程車資/現收/折扣/加值，確認視窗逐台列出，建立後每台一份客人確認文字，單號=基底-C1/-C2…(需gas v2.2.360)；v1.0.81：電話可填分機(ext.56082、#13、分機13、轉13 都會整理成「03-571-2121 #56082」)，司機撥號會自動帶分機；v1.0.80：電話欄可輸入市話(02-1234-5678、03-123-4567…)，新增「客人沒有電話」勾選(記為0900-000-000，司機端顯示無電話，客人確認文字顯示「無」)；v1.0.79：①不填航班編號、只選航廈時，航廈也會送出(顯示「航廈 T2」)，編輯舊單時會拆回航廈欄位 ②金額欄位拿掉右邊上下箭頭、滾輪不會再改到金額。 v1.0.78：依使用者要求，同時預約來回有加點時，回程的行程順序要跟去程相反(去程 新竹→竹北(加點)→機場，回程 機場→竹北→新竹)：送出前的確認預覽，回程那腿的行程/加點改成顯示反轉後的順序(跟後端gas.html v2.2.345實際寫入一致)，去程與沒有加點的預約不變。 v1.0.77：依使用者要求，航班編號旁邊新增「航廈」選單(第一航廈T1/第二航廈T2/不確定，幫我查詢)，只有選「桃園機場」才出現，有填航班編號就一定要選(沒選送出會跳出缺漏欄位提示)；去程/回程各一個；選了以「航班｜T1/T2/？」(例如CI108｜T2)接在航班編號後面送出，複製舊單/載入舊單時會把已存的「CI108｜T2」拆回兩個欄位。 v1.0.76： 🚨修正buildOrderFeeRows來回程「來回總額」算錯的問題：客服用「補套用折扣碼」只對來回其中一腿單獨套用時(去程/回程的折扣碼/折扣金額欄位各自獨立)，原本只扣這一腿自己的discountAmount，另一腿單獨套用的那組折扣完全沒被扣到，導致來回總額比實際應付多。修正：合併去程/回程兩腿各自的discountAmt，「來回總額」的扣除改用合併後的金額。跟gas.html v2.2.292 buildBookingFeeContents_、admin.html buildReservationUpdateFeePreview同一套邏輯
+    const APP_VERSION = "manual-booking-v1.2.23"; // v1.2.23：「車輛台數＋其他車輛設定」搬到表單最後面(帳務備註下面)，C2起下面不會再接到第1台的人數行李；車型移到人數上面；2台以上時第1台的車型、車資、回程車資、現收、人數、行李、座椅、加值、折扣標題旁顯示「第1台 C1」； v1.2.22  v1.2.22：多台車表頭「同 C1 複製」改「📋 複製自 ▾」：可選任何一台(C1、其他各台，附摘要)複製到這台，先確認再複製；車型、車資、現收、人數行李座椅、加值、這台的乘車人／地址都帶，折扣不複製； v1.2.21  v1.2.21：多台車：①C2起每台多「人數／行李／座椅」三個框(大人兒童幼兒、大型中型登機、推車胖胖箱尺寸、座椅)，加台數時先帶C1的數字；②每台一張卡片，表頭紫／莓果深交替、大字「🚐 第N台 CN」、下面摘要(車型｜人數｜行李｜車資)，可收起；③「其他車輛設定」上面放第1台(C1)摘要、下面「全部車加起來」；④確認視窗每台列出自己的人數行李座椅、共用區不再顯示C1的人數行李；客人確認文字每台照自己的；需gas v2.2.492； v1.2.20：客人確認文字航班／航廈分兩行(航班編號：CI108、航廈：第二航廈(T2))； v1.2.19：貼文字解析：①兩段都用「行程：送機 ➔ 桃園機場／行程：桃園機場 ➔ 接機」開頭(沒有獨立標題行)也會拆成去程＋回程、自動勾來回；②「送機 ➔ 桃園機場」「桃園機場 ➔ 接機」看字的先後判斷送機／接機；③車型、備註寫在最後面也會帶到去程；④地址開頭郵遞區號拿掉； v1.2.18：貼文字解析沒寫車型時，照預約頁同一套規則用人數＋行李自動選車型(例如2人4件行李→大車)；有寫車型但裝不下會提醒； v1.2.17：貼文字解析：①$1600 不再只抓到 160；②一次貼「送機／接機」兩段會自動勾來回、帶回程日期時間航班車資(「去程$1600，回程$2000」分開帶)；③送機抓出發時間、接機抓班機時間，支援 a.m./p.m.；④「行李件數：4」沒寫大小先放大型；⑤同一個地址出現兩次不再變成加點；⑥沒寫年份且日期已過就當明年； v1.2.16：多個地址時，沒填「此站聯絡人」的地址不再自動帶乘車人姓名電話； v1.2.15：「確認建立預約」視窗：單趟不再標「去程」；卡片「車資」改顯示折扣前金額(折扣列在下面、總車資才扣)； v1.2.14：乘車金折抵：填好訂車人手機自動查餘額，可填要折抵多少(列在折扣明細，建單時才扣，來回只折回程)；需gas v2.2.467； v1.2.13：新配色(紫色＋莓果色)，原本粉紅改莓果、淡紫底改灰白； v1.2.12：「加點／中途停靠站」改叫「其他地址（地址2起）」、按鈕「＋ 新增地址」，客人卡片只有一個地址時不再多一行加點(費用名稱「加點費」不變)； v1.2.11：「用預約編號產生通知文字」跟建立時同格式：訂車人(統編公司／訂車人／電話)放最後面一次、拿掉乘車資訊裡的訂車貴賓；包車單顯示行程、用車N小時、基本車資＋超時規則，備註只留客人的；多天包車每天一段；「複製舊單」包車會把時數/超時/緩衝/住宿/行程/天數帶回包車欄位(需gas v2.2.449)； v1.2.10：送機／接機／單程的客人確認文字：拿掉「乘車資訊」裡的「訂車貴賓」那行，改在預約編號下面放「訂車人／統編 公司名稱／訂車人／電話」(跟包車同格式)；來回合併成一則時只放最後一次，分開複製去程/回程時每則各放； v1.2.9：包車照確認版示意圖：①「每天用車時數」改「用車時數」，新增「超時緩衝（分鐘）」預設15；②客人確認文字：有行程只放行程內容、「包車（用車N小時）」、費用改「基本車資（含N小時）」＋超時費用＋超時規則、訂車人資訊(統編公司／訂車人／電話)放在最後面；需gas v2.2.448； v1.2.8：行程新增「包車」：上車/下車地點(下車空白＝回上車地點)、每天用車時數、天數、超時每小時、住宿補貼(每晚)、行程內容(可用「第2天」分段)；多天每天一張單(-D1、-D2…)；確認視窗與客人確認文字顯示包車明細與總額(每天車資×天數＋住宿補貼)；需gas v2.2.447； v1.2.7：①建立成功後，客人確認文字改用預約單「實際存的」日期時間產生(後端回傳savedTrips)，跟表單不一致時先跳紅色警告；②成功視窗最上面大字顯示系統存的乘車日期時間；③所有「傳給客人的確認文字」框改唯讀並註明「改這裡不會改到預約單」，要改請回表單或中控台「修改資料」(起因：NA-C-202610201028AEDW 系統存12:00、傳給客人的文字09:00)，需gas v2.2.446； v1.2.6：①折扣項目選「回程／去回程各扣」但沒勾同時預約回程(例如單號複製後單獨訂回程)不再被擋，直接扣在這一趟；②新增「＋預約來回優惠 -$100」快速鈕；③新增「我是（客服名稱）」欄位(記住)，每筆折扣後端都記錄是哪位客服；④補訂回程視窗可勾「給預約來回優惠 -$100」；v1.2.5：胖胖箱尺寸改選填(客人預約頁不再收尺寸)；載入舊單時保留客人預約頁新增的「長型／其他」細項、客人文字也會顯示出來； // v1.2.4：客人文字的備註照原樣顯示(「空白收據」不再被改寫成「需開立收據」)； v1.2.3：「補訂回程」的回程航班欄位強制英文大寫；v1.2.2：加點只是航廈名稱(第一航廈/第二航廈)時不帶乘車人聯絡資料；v1.2.1：「地址1／地址2…」沒填聯絡人的地址預設帶乘車人姓名＋電話；v1.2.0：新增「➕ 補訂回程」(客人先訂單趟、之後才訂回程：原單改成 單號-A、新增 單號-B，同中控台功能，需gas v2.2.420)；接送機有加點時，客人確認文字／預約明細圖改成像司機系統「地址1／地址2／地址3…」依行車順序編號、每個地址下一行「聯絡 姓名 電話」(行事曆、客人卡片同步，需gas v2.2.428)；v1.1.3：新增「帳務備註」欄(選固定客戶範本會自動帶入「固定客戶」表的「帳務備註」欄，複製舊單也會帶，只有客服/中控看得到，司機看不到；需gas v2.2.423)； // v1.1.2：路線的箭頭改成「→ 」(後面多一個空格，跟系統卡片一樣)； // v1.1.1：客人確認文字(預約成功通知)單程拿掉「航班編號／接送機場／加點地址」，接送地址改成「起點→加點→終點」一條路線，回程整條反過來； // v1.1.0：複製舊單／帶入另一腿時，姓名欄只放名字、稱謂自動選進「稱謂」下拉(不再整串帶「王小姐」)(搭配gas v2.2.419更準，沒更新也會自己拆)； // v1.0.99：行李欄位順序改「大型→中型→登機」； // v1.0.98：貼上客人訊息解析地址時，自動拿掉地址尾巴的手機/市話(例如「…4樓之2；0912580590」)； v1.0.97：多台車(C2起)每台可選填不同的乘車人姓名／稱謂／電話／地址／加點(預設收合、空白沿用C1，訂車人維持C1，需gas v2.2.411)。 v1.0.96：車型選單補上「New Alphard 40系」(原本只有小車/大車/進口商務車，跟客人訂車頁不一致；第2台起的車型也同步)，貼文字解析車型時Alphard歸到New Alphard 40系、不再被當成進口商務車。 // v1.0.95：新增「特約／月結企業客戶」欄(輸入統編或特約代號，查到公司後帶入、付款方式改月結簽單，需gas v2.2.407)；  v1.0.94：數字欄位(車資等)拿掉上下箭頭，滾輪/方向鍵不會再改數字； v1.0.93：航班欄位(去程/回程)手機鍵盤預設英文＋自動大寫； v1.0.92：來回預約新增「回程機場」(預設同去程)，機場不同時回程單存回程機場、航廈T1/T2依各趟機場決定、確認畫面/客人確認文字回程顯示回程機場，複製舊單會帶回程機場(需gas v2.2.393)； v1.0.91：行李分類改版——登機/托運中型(21-26吋)/托運大型(27-29吋)三個欄位，另有「含推車」「含胖胖箱(+尺寸)」細項(包含在大型內)；客人確認文字、預約明細圖、確認視窗行李改成「登機 1 + 中型 1 + 大型 2」，細項另起一行「含 …」；載入舊單會帶回細項(需gas v2.2.390)； v1.0.90：修正客人確認文字「特殊備註」只要備註內有「收據」兩個字就整段被換成「需開立收據」，其他備註內容消失；現在只把含收據的片段換成「需開立收據」，其餘內容保留； v1.0.89：預約明細圖片資訊欄有選舉牌時多一列「舉牌」(需gas v2.2.388)； v1.0.88：「對話文字快速帶入」移到頁面最上面，標題可點擊收折/展開(記住上次狀態)； v1.0.87：新增「訂車人同乘客」勾選(預設勾選＝跟以前一樣)，取消勾選可另外填訂車人姓名/稱謂/電話(代訂)；折扣碼查詢用訂車人電話；訂車人與乘客不同時客人確認文字多一行「訂車貴賓」；載入舊單會帶回訂車人(需gas v2.2.369)； v1.0.86：客人確認文字改成顯示每個地址下面的「聯絡人 電話」(原本會拿掉)，聯絡人欄提示字改成「客人確認文字會顯示此聯絡人與電話；司機端只看得到電話圖示」(需gas v2.2.367)； v1.0.85：每個地址(接送地址/起點/終點/各加點)可展開填「聯絡人稱呼＋電話」，存成「地址（聯絡：王小姐 0912-345-678）」，司機端自動拆成獨立一行可直接撥打；客人確認文字會拿掉這段，不外流；v1.0.84：建立成功後的「客人確認文字」來回單可分開複製「去程」「回程」或「兩則合併」(單台來回、多台車每一台都適用)；v1.0.83：修正「其他車輛設定」(C2起各台車型/車資/折扣)原本放在頁面上方、往下捲看不到，改放在「車輛台數」正下方，選台數後自動捲到那裡；v1.0.82：新增「車輛台數」(多台車)：C2 起各自車型/車資/回程車資/現收/折扣/加值，確認視窗逐台列出，建立後每台一份客人確認文字，單號=基底-C1/-C2…(需gas v2.2.360)；v1.0.81：電話可填分機(ext.56082、#13、分機13、轉13 都會整理成「03-571-2121 #56082」)，司機撥號會自動帶分機；v1.0.80：電話欄可輸入市話(02-1234-5678、03-123-4567…)，新增「客人沒有電話」勾選(記為0900-000-000，司機端顯示無電話，客人確認文字顯示「無」)；v1.0.79：①不填航班編號、只選航廈時，航廈也會送出(顯示「航廈 T2」)，編輯舊單時會拆回航廈欄位 ②金額欄位拿掉右邊上下箭頭、滾輪不會再改到金額。 v1.0.78：依使用者要求，同時預約來回有加點時，回程的行程順序要跟去程相反(去程 新竹→竹北(加點)→機場，回程 機場→竹北→新竹)：送出前的確認預覽，回程那腿的行程/加點改成顯示反轉後的順序(跟後端gas.html v2.2.345實際寫入一致)，去程與沒有加點的預約不變。 v1.0.77：依使用者要求，航班編號旁邊新增「航廈」選單(第一航廈T1/第二航廈T2/不確定，幫我查詢)，只有選「桃園機場」才出現，有填航班編號就一定要選(沒選送出會跳出缺漏欄位提示)；去程/回程各一個；選了以「航班｜T1/T2/？」(例如CI108｜T2)接在航班編號後面送出，複製舊單/載入舊單時會把已存的「CI108｜T2」拆回兩個欄位。 v1.0.76： 🚨修正buildOrderFeeRows來回程「來回總額」算錯的問題：客服用「補套用折扣碼」只對來回其中一腿單獨套用時(去程/回程的折扣碼/折扣金額欄位各自獨立)，原本只扣這一腿自己的discountAmount，另一腿單獨套用的那組折扣完全沒被扣到，導致來回總額比實際應付多。修正：合併去程/回程兩腿各自的discountAmt，「來回總額」的扣除改用合併後的金額。跟gas.html v2.2.292 buildBookingFeeContents_、admin.html buildReservationUpdateFeePreview同一套邏輯
     // v1.0.72 - 新增「複製舊單，快速建立新預約」功能：取消的訂單客人又想用同樣行程重新預約時(只是要換日期/時間)，不用整張表單重填，填舊單號查詢後，客人資料/地址/車型/人數行李/金額/加值折扣項目會整包帶入下面表單，唯獨日期時間留白由客服自行填寫新的時段。跟既有的「補建遺漏的去程/回程」是兩個獨立功能：那個查完會用recoveryBaseId/recoveryLegSuffix掛回舊單底下(維持-A/-B配對)，這個完全不動那兩個欄位，送出後一律是全新單號，不影響原本那筆舊單。實作參考fetchRecoveryAutoFill同一套用getManualBookingTextData查單、setValue逐欄位帶入的做法，額外處理了：單程行程起訖點分別對應到address/airport欄位、回程行程/金額/航班另外從回程那筆資料帶入、加值服務用parseStoredFeeExtras依去程/回程分別還原明細、折扣只取去程那筆避免兩腿重複記的折扣被加乘兩次、現場收現金額只在付款方式真的需要時才帶入
     // 「固定客戶範本」選擇改成自訂清單，不再用原生下拉選單(在手機上選項一長就變成一長串塞在一起完全看不清楚)。改成一張張獨立卡片：來源標籤(粉紅底)+姓名+電話在同一行，地址另起一行，點擊即可帶入，選中的那筆會highlight。原本的select仍保留(隱藏)當作資料狀態，不影響既有的applyTemplate等邏輯
     // 不再用 Google callback 機制初始化地圖（callback 容易撞上 async 腳本執行時機競速問題，
@@ -2000,8 +2008,9 @@
       $("vehicleMinus").disabled = vehicleCount <= 1;
       $("vehiclePlus").disabled = vehicleCount >= MAX_VEHICLES;
       $("extraCarsPanel").classList.toggle("hidden", vehicleCount <= 1);
+      document.querySelectorAll(".c1-pill").forEach(el => el.classList.toggle("hidden", vehicleCount <= 1)); // v1.2.23
       $("vehicleCountHint").textContent = vehicleCount > 1
-        ? `共 ${vehicleCount} 台：上面的車型／車資／人數／行李／折扣是 C1，C2 起請看下方「其他車輛設定」。單號會是「基底單號-C1、-C2…」。乘車人／地址不同的車，在該台下方按「這台的乘車人／電話／地址不同」。`
+        ? `共 ${vehicleCount} 台：上面標「第1台 C1」的欄位是第 1 台，C2 起請看下方「其他車輛設定」。單號會是「基底單號-C1、-C2…」。乘車人／地址不同的車，在該台下方按「這台的乘車人／電話／地址不同」。`
         : "同一個行程要訂多台車時，調整台數。每台車是各自獨立的訂單（各自派車、回報、收款）。";
     }
     function setVehicleCount(n) {
@@ -2038,16 +2047,17 @@
       const cash = needsManualCash($("paymentMethod").value);
       wrap.innerHTML = extraCars.map((c, i) => `
         <div class="car-card" style="border-color:${carColor_(i + 2)}">
-          <div class="car-head" style="background:${carColor_(i + 2)}" data-collapse-car="${i}">
+          <div class="car-head" style="background:${carColor_(i + 2)};${c.collapsed ? "border-radius:12px" : ""}" data-collapse-car="${i}">
             <div class="min-w-0">
               <div class="car-title">🚐 第 ${i + 2} 台<span class="car-id">C${i + 2}</span></div>
               <div class="car-sum" id="carSum${i}">${escapeHtml(extraCarSummary_(c))}</div>
             </div>
             <div class="flex gap-1.5 flex-none">
-              <button type="button" class="car-head-btn" data-copy-c1="${i}">同 C1 複製</button>
+              <button type="button" class="car-head-btn" data-copy-menu="${i}" style="${copyMenuOpen === i ? "outline:2px solid #F3C6D5;outline-offset:2px" : ""}">📋 複製自 ▾</button>
               <button type="button" class="car-head-btn" data-collapse-car="${i}">${c.collapsed ? "展開 ▾" : "收起 ▴"}</button>
             </div>
           </div>
+          ${copyMenuOpen === i ? copyMenuHtml_(i) : ""}
           <div class="p-3" style="${c.collapsed ? "display:none" : ""}">
             <div class="grid-form">
               <div><label>車型</label>
@@ -2090,6 +2100,37 @@
       renderCarsBars_();
     }
     // v1.2.21：每台車一張卡片(表頭紫／莓果深交替)，表頭摘要、可收起；C1 摘要＋全部車加起來
+    // v1.2.22：「複製自 ▾」：任何一台複製到這一台(C1＝上面主表單)，折扣不複製
+    let copyMenuOpen = -1;
+    function copyMenuHtml_(i) {
+      const v = id => Number($(id).value) || 0;
+      const c1Sum = [$("carType").value, shortPaxLug_(v("adultCount"), v("childCount"), v("infantCount"), v("checkedLuggageCount"), v("mediumLuggageCount"), v("carryLuggageCount")), money($("fare").value) ? "$" + money($("fare").value).toLocaleString() : "車資未填"].join("｜");
+      const items = [{ src: -1, label: "C1", sum: c1Sum }].concat(extraCars.map((c, k) => ({ src: k, label: "C" + (k + 2), sum: extraCarSummary_(c) })).filter(x => x.src !== i));
+      return `<div class="copy-menu">
+            <div class="cm-head">把哪一台的資料複製到 C${i + 2}？</div>
+            ${items.map(x => `<button type="button" class="cm-item" data-copy-from="${x.src}" data-copy-to="${i}"><b>${x.label}</b><span>${escapeHtml(x.sum)}</span></button>`).join("")}
+          </div>`;
+    }
+    function cloneCarForCopy_(src) {
+      const c = JSON.parse(JSON.stringify(src));
+      c.discountItems = []; // 折扣碼只能用一次，不跟著複製
+      return c;
+    }
+    async function copyCarFrom_(from, to) {
+      const fromLabel = from < 0 ? "C1" : "C" + (from + 2), toLabel = "C" + (to + 2);
+      copyMenuOpen = -1; renderExtraCars();
+      const r = await Swal.fire({
+        title: `把 ${fromLabel} 複製到 ${toLabel}？`,
+        html: `<div style="font-size:14px;line-height:1.8">${toLabel} 目前填的車型、車資、人數、行李…會被換成 ${fromLabel} 的。<br><span style="font-size:12px;color:#8E8E93">折扣不會複製(折扣碼只能用一次)。</span></div>`,
+        showCancelButton: true, confirmButtonText: "確定複製", cancelButtonText: "取消", confirmButtonColor: "#553f62"
+      });
+      if (!r.isConfirmed) return;
+      const keepCollapsed = !!(extraCars[to] && extraCars[to].collapsed);
+      extraCars[to] = from < 0 ? newExtraCar() : cloneCarForCopy_(extraCars[from]);
+      extraCars[to].collapsed = keepCollapsed;
+      renderExtraCars(); updateSummary();
+      Swal.fire({ toast: true, position: "top-end", icon: "success", title: `已把 ${fromLabel} 複製到 ${toLabel}`, showConfirmButton: false, timer: 1800 });
+    }
     function carColor_(n) { return n % 2 === 0 ? "#553F62" : "#A8345A"; }
     function numOpts_(v, max, min) { let h = ""; for (let k = min || 0; k <= max; k++) h += `<option value="${k}" ${String(v) === String(k) ? "selected" : ""}>${k}</option>`; return h; }
     function carPaxText_(c) { return `${c.adult || 0}大 ${c.child || 0}中 ${c.infant || 0}小`; }
@@ -2178,8 +2219,11 @@
           if (!car.diff) { car.customerName = ""; car.customerTitle = "先生"; car.phone = ""; car.address = ""; car.extraLocation = ""; } // 收起＝取消，不會送出殘留的字
           renderExtraCars(); updateSummary(); return;
         }
-        const cp = e.target.closest("[data-copy-c1]");
-        if (cp) { e.stopPropagation(); const k = Number(cp.dataset.copyC1); const keep = extraCars[k] && extraCars[k].collapsed; extraCars[k] = newExtraCar(); extraCars[k].collapsed = !!keep; renderExtraCars(); updateSummary(); return; }
+        const pick = e.target.closest("[data-copy-from]");
+        if (pick) { copyCarFrom_(Number(pick.dataset.copyFrom), Number(pick.dataset.copyTo)); return; }
+        const cm = e.target.closest("[data-copy-menu]");
+        if (cm) { const k = Number(cm.dataset.copyMenu); copyMenuOpen = copyMenuOpen === k ? -1 : k; renderExtraCars(); return; }
+        if (copyMenuOpen !== -1 && !e.target.closest(".copy-menu")) { copyMenuOpen = -1; renderExtraCars(); if (e.target.closest("[data-collapse-car]")) return; }
         const cl = e.target.closest("[data-collapse-car]");
         if (cl) { const car = extraCars[Number(cl.dataset.collapseCar)]; if (car) { car.collapsed = !car.collapsed; renderExtraCars(); } return; }
       });
