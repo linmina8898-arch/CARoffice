@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>地圖功能檢測</title>
+<style>
+body{margin:0;background:#e4d8e9;font-family:-apple-system,"Noto Sans TC",sans-serif;color:#1a0b3d;padding:14px}
+h1{font-size:18px;margin:4px 0 10px}
+.card{background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:10px}
+.row{display:flex;gap:8px;align-items:flex-start;padding:7px 0;border-bottom:1px solid #eee;font-size:14px}
+.row:last-child{border:0}
+.tag{flex:none;min-width:48px;text-align:center;border-radius:999px;padding:2px 8px;font-size:12px;font-weight:800;color:#fff;background:#999}
+.ok{background:#553f62}.bad{background:#d9578a}.wait{background:#999}
+.sub{font-size:12px;color:#6b5b73;word-break:break-all;margin-top:2px}
+textarea{width:100%;height:150px;font-size:12px;border:1px solid #cfc2d6;border-radius:8px;padding:6px;box-sizing:border-box}
+button{background:#d9578a;color:#fff;border:0;border-radius:10px;padding:10px 16px;font-size:15px;font-weight:800;margin-top:6px}
+input{width:100%;box-sizing:border-box;font-size:16px;padding:10px;border:1px solid #cfc2d6;border-radius:10px}
+</style></head><body>
+<h1>地圖功能檢測（請把整個畫面截圖，或按最下面「複製結果」貼給我）</h1>
+<div class="card" id="env"></div>
+<div class="card" id="list"></div>
+<div class="card"><div style="font-size:14px;font-weight:800;margin-bottom:6px">手動試打地址（看有沒有出現 Google 建議）</div>
+<input id="addr" placeholder="例如：竹北中山六街107號" autocomplete="off"><div class="sub" id="acState">等待載入…</div></div>
+<div class="card"><div style="font-size:14px;font-weight:800;margin-bottom:6px">Google 回報的錯誤訊息（原文）</div><textarea id="errs" readonly></textarea></div>
+<div class="card"><button onclick="copyAll()">複製結果</button><textarea id="all" readonly style="margin-top:8px"></textarea></div>
+<script>
+const KEY="AIzaSyAxYym5ZR8puPb0iiycHdwzTJTKH0Aears";
+const $=id=>document.getElementById(id);
+const out=[]; const errs=[];
+function row(name,state,detail){
+  out.push((state==='ok'?'[正常] ':state==='bad'?'[失敗] ':'[資訊] ')+name+(detail?' → '+detail:''));
+  const d=document.createElement('div'); d.className='row';
+  d.innerHTML='<span class="tag '+(state==='ok'?'ok':state==='bad'?'bad':'wait')+'">'+(state==='ok'?'正常':state==='bad'?'失敗':'資訊')+'</span><div><div>'+name+'</div>'+(detail?'<div class="sub"></div>':'')+'</div>';
+  if(detail) d.querySelector('.sub').textContent=detail;
+  $('list').appendChild(d); $('all').value=out.join('\n')+'\n\n--- Google 錯誤原文 ---\n'+errs.join('\n');
+}
+function copyAll(){ const t=$('all'); t.select(); try{document.execCommand('copy');alert('已複製');}catch(e){} }
+// 攔截 Google 印在主控台的錯誤原文
+['error','warn'].forEach(k=>{ const o=console[k]; console[k]=function(){ try{ const m=[].slice.call(arguments).map(String).join(' '); if(/google|maps|places|api/i.test(m)){ errs.push('['+k+'] '+m.slice(0,400)); $('errs').value=errs.join('\n'); $('all').value=out.join('\n')+'\n\n--- Google 錯誤原文 ---\n'+errs.join('\n'); } }catch(e){} o.apply(console,arguments); }; });
+window.addEventListener('error',e=>{ errs.push('[js] '+(e.message||'')+' '+(e.filename||'')); $('errs').value=errs.join('\n'); });
+window.gm_authFailure=function(){ row('Google 金鑰驗證','bad','gm_authFailure 被觸發：金鑰被拒(網站限制/計費/API未啟用)，詳細原因看下方「Google 錯誤原文」'); };
+$('env').innerHTML='<div class="sub">網址：'+location.href+'</div><div class="sub">來源網域(referrer)：'+(document.referrer||'(無)')+'</div><div class="sub">瀏覽器：'+navigator.userAgent.slice(0,120)+'</div>';
+out.push('網址：'+location.href); out.push('瀏覽器：'+navigator.userAgent.slice(0,120));
+
+async function postJson(url,body,headers){
+  const r=await fetch(url,{method:'POST',headers:Object.assign({'Content-Type':'application/json'},headers||{}),body:JSON.stringify(body)});
+  const t=await r.text(); return {status:r.status,text:t.slice(0,300)};
+}
+async function newApiTests(){
+  try{
+    const r=await postJson('https://places.googleapis.com/v1/places:autocomplete',{input:'竹北中山六街107號',includedRegionCodes:['tw'],languageCode:'zh-TW'},{'X-Goog-Api-Key':KEY});
+    row('新版 Places API（Autocomplete New）',r.status===200?'ok':'bad','HTTP '+r.status+' '+r.text);
+  }catch(e){ row('新版 Places API（Autocomplete New）','bad','連線失敗：'+e.message); }
+  try{
+    const r=await postJson('https://routes.googleapis.com/distanceMatrix/v2:computeRouteMatrix',{origins:[{waypoint:{address:'新竹市東區安和街2巷14-1號'}}],destinations:[{waypoint:{address:'竹北市中山六街107號'}}],travelMode:'DRIVE'},{'X-Goog-Api-Key':KEY,'X-Goog-FieldMask':'originIndex,destinationIndex,distanceMeters,status,condition'});
+    row('新版 Routes API（算距離）',r.status===200?'ok':'bad','HTTP '+r.status+' '+r.text);
+  }catch(e){ row('新版 Routes API（算距離）','bad','連線失敗：'+e.message); }
+  try{
+    const r=await fetch('https://maps.googleapis.com/maps/api/geocode/json?address='+encodeURIComponent('竹北中山六街107號')+'&region=tw&key='+KEY);
+    const j=await r.json(); row('Geocoding API（地址轉座標）',j.status==='OK'?'ok':'bad',j.status+(j.error_message?'：'+j.error_message:''));
+  }catch(e){ row('Geocoding API（地址轉座標）','bad','連線失敗：'+e.message); }
+}
+function mapsTests(){
+  const g=window.google&&google.maps;
+  if(!g){ row('Google 地圖腳本載入','bad','window.google.maps 不存在（腳本沒載入，可能被網路/廣告阻擋/金鑰被拒）'); return; }
+  row('Google 地圖腳本載入','ok','版本 '+(g.version||'?'));
+  const places=g.places;
+  row('舊版 地址自動完成(places.Autocomplete)',places&&places.Autocomplete?'ok':'bad',places&&places.Autocomplete?'函式庫有載入':'函式庫沒載入');
+  row('新版 地址自動完成(PlaceAutocompleteElement)',(places&&places.PlaceAutocompleteElement)||g.importLibrary?'ok':'bad',places&&places.PlaceAutocompleteElement?'可用':(g.importLibrary?'可用importLibrary載入':'不可用'));
+  if(places&&places.Autocomplete){
+    try{ const ac=new places.Autocomplete($('addr'),{componentRestrictions:{country:'tw'},fields:['formatted_address']}); $('acState').textContent='已綁定舊版自動完成，請在上面輸入地址，看有沒有出現建議清單（沒出現＝舊版 Places API 沒開通）'; ac.addListener('place_changed',()=>{$('acState').textContent='已選取：'+ac.getPlace().formatted_address;}); }catch(e){ row('綁定自動完成','bad',e.message); }
+  }
+  // 觸發一次建議服務，直接看狀態碼
+  if(places&&places.AutocompleteService){
+    try{ new places.AutocompleteService().getPlacePredictions({input:'竹北中山六街',componentRestrictions:{country:'tw'}},(p,s)=>{ row('舊版 建議服務狀態（getPlacePredictions）',s==='OK'?'ok':'bad',String(s)+(p?'，共 '+p.length+' 筆建議':'')); }); }catch(e){ row('舊版 建議服務狀態','bad',e.message); }
+  }
+  if(g.DistanceMatrixService){
+    try{ new g.DistanceMatrixService().getDistanceMatrix({origins:['新竹市東區安和街2巷14-1號'],destinations:['竹北市中山六街107號'],travelMode:'DRIVING',region:'tw'},(r,s)=>{ const el=r&&r.rows&&r.rows[0]&&r.rows[0].elements&&r.rows[0].elements[0]; row('舊版 距離服務（DistanceMatrixService）',s==='OK'&&el&&el.status==='OK'?'ok':'bad',String(s)+(el?' / '+el.status+(el.distance?' / '+el.distance.text:''):'')); }); }catch(e){ row('舊版 距離服務','bad',e.message); }
+  }else row('舊版 距離服務（DistanceMatrixService）','bad','服務不存在');
+}
+window.addEventListener('load',()=>{ setTimeout(()=>{ mapsTests(); newApiTests(); },1200); });
+</script>
+<script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAxYym5ZR8puPb0iiycHdwzTJTKH0Aears&libraries=places" onerror="row('Google 地圖腳本載入','bad','腳本下載失敗（網路或被阻擋）')"></script>
+</body></html>

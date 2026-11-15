@@ -195,7 +195,7 @@
 
     <script>
         // --- 系統版本記錄 ---
-        const APP_VERSION = "v1.18.15"; // v1.18.15：對帳頁顯示這個月的結算紀錄(已結清日期、應付／交回金額、付款方式、轉入帳號、結算單號)，需gas v2.2.483； v1.18.14：新配色(紫色＋莓果色)：粉紅改莓果，提醒列(行李無、司機提醒、用車時數…)拿掉底色、標題改灰、只有內容莓果；「接機」改紫色；「多點」標籤莓果； v1.18.13：「加點」字樣改掉：清單標籤改「多點」、地址2起拿掉淡粉底色(只留深粉色字樣)、異常回報選項改「多一個地址等」(地址本來就是地址1、地址2…)； v1.18.12：包車明細改版：拿掉接送機場／航班／接送地址，改顯示「用車時數(起訖時間＋緩衝規則)」「行程」；不顯示任何車資或超時金額；付款下面加「超時」提醒(收現：請先通知客服，由客服確認後告知應收總額；非收現：請先通知客服)；任務列表包車顯示時數＋上車地點，單程改成起點➜終點(原本寫反)；需gas v2.2.448； v1.18.11：行李細項顯示支援「長型物件／其他」(球具雪板釣竿、紙箱輪椅等)； // v1.18.10：同一預約加開多台車時，任務卡片顯示粉色標籤「第N台／共M台」，並把後台自動寫的「【同行程共N台｜…】另一台去哪、司機是誰」獨立成一列「同行程車輛」(電話可直接點)，不混在司機備註裡(需gas v2.2.439)； // v1.18.9：行李順序改「大型→中型→登機」； // v1.18.8：人數／行李還原成分開兩列「乘車人數」「行李件數」(撤回v1.18.7合併一行)； // v1.18.6：行李附註改「┖含推車1」(跟客人卡片、行事曆一致)；  v1.18.5：月結單付款文字／標籤帶公司簡稱，例：月結簽單(昕鴻)(需gas v2.2.399)； v1.18.4：月結客戶「免簽名」(企業客戶工作表「司機要簽單」填否)：結案不跳簽名板、直接確認結案，任務卡標籤/付款文字寫「月結（免簽名）」(需gas v2.2.398)； v1.18.3： v1.18.3：行李件數分2行——第1行「大型 2 + 中型 1 + 登機 1」，第2行小字「含 推車 1 + 胖胖箱 1（29吋）」，人數改「大人 2 + 兒童 1」(需gas v2.2.390)；舊單(沒有中型)仍顯示「托運」； v1.18.2：「司機備註」文字顏色由黃褐色改成跟「客戶備註」同一個紫色； v1.18.1：試算表「司機備註」欄(AI)的內容原本後端沒送、司機明細完全看不到，現在會顯示在「司機備註」列(標籤由「車商備註」改成「司機備註」)； v1.18.0：①有加點時地址改成「地址1/地址2/地址3」依行車順序編號(單程含終點、接送機含加點)，加點列維持粉底；②轉帳/月結＋另外現場收現時，付款方式改寫「轉帳＋現場收現」(或「月結簽單＋現場收現」)，收現金額下面補一行說明「只收這筆現金，其餘…」，不再同時出現「轉帳，不簽不收」與現場收現造成混淆； v1.17.1：電話辨識支援國際電話(+國碼開頭)，一樣只顯示圖示、點了直接撥號； v1.17.0：依使用者要求，任務明細不再顯示任何電話號碼，備註/司機提醒/站點聯絡人裡的電話一律只留「☎ 電話圖示」，點圖示直接撥號(聯絡人只顯示名字＋圖示)； v1.16.1：星期改用年月日直接計算，不受手機時區影響。 v1.16.0：備註/司機提醒/地址裡的電話(手機、市話、分機)自動變成可按的撥號連結；站點聯絡人「地址（聯絡：王小姐 0912-345-678）」拆成獨立一行並可直接撥打，地圖連結只吃純地址。v1.15.2：客人電話帶分機時，致電按鈕會先撥主號碼、停4秒再自動撥分機；v1.15.1：v1.15.1：加點地址改粉底醒目，單程放在上車/下車地址中間；v1.15.0：v1.15.0：①手機返回鍵/滑動返回改為退回系統主頁（不再跳出到官方LINE）②任務明細縮成一頁，回報按鈕固定在畫面下方；v1.14.72：v1.14.72：依使用者回報，司機連續按好幾筆「確認收單」都成功，過不久畫面又跳回「待收單」逼司機重按：剛回報成功的保護時間由15秒拉長到3分鐘、存進手機(localStorage，重新開啟App也有效)，且只在後端回來的狀態比剛回報的還早時才蓋回去(後端已一樣或更後面不動)；配合gas.html v2.2.337(寫入後flush＋收尾再清快取)。 v1.14.71：依使用者要求，司機端「該收現金」的備援算法(後端沒給cashCollected時才會用到)改成原始車資扣掉折扣金額，要跟客人卡片付款欄的實付金額一致；主要算法在後端gas.html v2.2.329。v1.14.70：依使用者要求，畫面抬頭改成公司全名：分頁標題「AS派車 - 司機端」→「瑞陞汽車租賃有限公司 派車單 - 司機端(AS)」，頁面上方標頭「AS派車 Driver」→「瑞陞汽車租賃有限公司 派車 Driver」。v1.14.69：單程(不經機場的定點接送)司機端畫面調整：原本沿用接送機場欄位配置，導致單程被標成「接送機場」很奇怪(其實顯示的是終點地址)、還會多顯示用不到的「航班編號」。改成單程專屬格式：「上車地址／下車地址」各自帶地圖連結方便導航，不顯示航班編號。只限定t.type==='單程'才套用，接機/送機畫面完全不受影響
+        const APP_VERSION = "v1.18.17"; // v1.18.17：異常狀況回報改版：通報送到「異況回報」群組(卡片)、自己的LINE也收到通報內容、客服接手會通知；新增「塞車／可能遲到」與「預計晚到幾分鐘」(塞車、車輛故障才出現)；表單內加「📞 很緊急，直接打給客服」(按下去手機跳撥號，同時自動通知群組)；送出鈕改「立即通報調度（文字通知）」；需gas v2.2.491； v1.18.16：對帳頁顯示公司出的對帳單(看明細、按「確認無誤／有問題」，付款後顯示已付款)；從LINE「對帳單請確認」卡片打開直接到對帳頁；需gas v2.2.487； v1.18.15：對帳頁顯示這個月的結算紀錄(已結清日期、應付／交回金額、付款方式、轉入帳號、結算單號)，需gas v2.2.483； v1.18.14：新配色(紫色＋莓果色)：粉紅改莓果，提醒列(行李無、司機提醒、用車時數…)拿掉底色、標題改灰、只有內容莓果；「接機」改紫色；「多點」標籤莓果； v1.18.13：「加點」字樣改掉：清單標籤改「多點」、地址2起拿掉淡粉底色(只留深粉色字樣)、異常回報選項改「多一個地址等」(地址本來就是地址1、地址2…)； v1.18.12：包車明細改版：拿掉接送機場／航班／接送地址，改顯示「用車時數(起訖時間＋緩衝規則)」「行程」；不顯示任何車資或超時金額；付款下面加「超時」提醒(收現：請先通知客服，由客服確認後告知應收總額；非收現：請先通知客服)；任務列表包車顯示時數＋上車地點，單程改成起點➜終點(原本寫反)；需gas v2.2.448； v1.18.11：行李細項顯示支援「長型物件／其他」(球具雪板釣竿、紙箱輪椅等)； // v1.18.10：同一預約加開多台車時，任務卡片顯示粉色標籤「第N台／共M台」，並把後台自動寫的「【同行程共N台｜…】另一台去哪、司機是誰」獨立成一列「同行程車輛」(電話可直接點)，不混在司機備註裡(需gas v2.2.439)； // v1.18.9：行李順序改「大型→中型→登機」； // v1.18.8：人數／行李還原成分開兩列「乘車人數」「行李件數」(撤回v1.18.7合併一行)； // v1.18.6：行李附註改「┖含推車1」(跟客人卡片、行事曆一致)；  v1.18.5：月結單付款文字／標籤帶公司簡稱，例：月結簽單(昕鴻)(需gas v2.2.399)； v1.18.4：月結客戶「免簽名」(企業客戶工作表「司機要簽單」填否)：結案不跳簽名板、直接確認結案，任務卡標籤/付款文字寫「月結（免簽名）」(需gas v2.2.398)； v1.18.3： v1.18.3：行李件數分2行——第1行「大型 2 + 中型 1 + 登機 1」，第2行小字「含 推車 1 + 胖胖箱 1（29吋）」，人數改「大人 2 + 兒童 1」(需gas v2.2.390)；舊單(沒有中型)仍顯示「托運」； v1.18.2：「司機備註」文字顏色由黃褐色改成跟「客戶備註」同一個紫色； v1.18.1：試算表「司機備註」欄(AI)的內容原本後端沒送、司機明細完全看不到，現在會顯示在「司機備註」列(標籤由「車商備註」改成「司機備註」)； v1.18.0：①有加點時地址改成「地址1/地址2/地址3」依行車順序編號(單程含終點、接送機含加點)，加點列維持粉底；②轉帳/月結＋另外現場收現時，付款方式改寫「轉帳＋現場收現」(或「月結簽單＋現場收現」)，收現金額下面補一行說明「只收這筆現金，其餘…」，不再同時出現「轉帳，不簽不收」與現場收現造成混淆； v1.17.1：電話辨識支援國際電話(+國碼開頭)，一樣只顯示圖示、點了直接撥號； v1.17.0：依使用者要求，任務明細不再顯示任何電話號碼，備註/司機提醒/站點聯絡人裡的電話一律只留「☎ 電話圖示」，點圖示直接撥號(聯絡人只顯示名字＋圖示)； v1.16.1：星期改用年月日直接計算，不受手機時區影響。 v1.16.0：備註/司機提醒/地址裡的電話(手機、市話、分機)自動變成可按的撥號連結；站點聯絡人「地址（聯絡：王小姐 0912-345-678）」拆成獨立一行並可直接撥打，地圖連結只吃純地址。v1.15.2：客人電話帶分機時，致電按鈕會先撥主號碼、停4秒再自動撥分機；v1.15.1：v1.15.1：加點地址改粉底醒目，單程放在上車/下車地址中間；v1.15.0：v1.15.0：①手機返回鍵/滑動返回改為退回系統主頁（不再跳出到官方LINE）②任務明細縮成一頁，回報按鈕固定在畫面下方；v1.14.72：v1.14.72：依使用者回報，司機連續按好幾筆「確認收單」都成功，過不久畫面又跳回「待收單」逼司機重按：剛回報成功的保護時間由15秒拉長到3分鐘、存進手機(localStorage，重新開啟App也有效)，且只在後端回來的狀態比剛回報的還早時才蓋回去(後端已一樣或更後面不動)；配合gas.html v2.2.337(寫入後flush＋收尾再清快取)。 v1.14.71：依使用者要求，司機端「該收現金」的備援算法(後端沒給cashCollected時才會用到)改成原始車資扣掉折扣金額，要跟客人卡片付款欄的實付金額一致；主要算法在後端gas.html v2.2.329。v1.14.70：依使用者要求，畫面抬頭改成公司全名：分頁標題「AS派車 - 司機端」→「瑞陞汽車租賃有限公司 派車單 - 司機端(AS)」，頁面上方標頭「AS派車 Driver」→「瑞陞汽車租賃有限公司 派車 Driver」。v1.14.69：單程(不經機場的定點接送)司機端畫面調整：原本沿用接送機場欄位配置，導致單程被標成「接送機場」很奇怪(其實顯示的是終點地址)、還會多顯示用不到的「航班編號」。改成單程專屬格式：「上車地址／下車地址」各自帶地圖連結方便導航，不顯示航班編號。只限定t.type==='單程'才套用，接機/送機畫面完全不受影響
 
         // ⚠️ 請填入專屬的司機端 LIFF ID 和 官方帳號連結
         const LIFF_ID = "2009971109-pdmG3XEe"; 
@@ -635,6 +635,16 @@
             
             restoreCachedTasks('today');
             setTimeout(() => loadTasks({ mode: 'today', silentError: !!options.fromCache }), 80);
+            // v1.18.16：從「AS｜對帳單請確認」卡片打開(?tab=history&month=)→ 直接到對帳頁
+            try {
+                let qs = new URLSearchParams(window.location.search);
+                if (qs.get('liff.state')) qs = new URLSearchParams(decodeURIComponent(qs.get('liff.state')).replace(/^[^?]*\?/, ''));
+                if (qs.get('tab') === 'history') {
+                    if (/^\d{4}-\d{2}$/.test(qs.get('month') || '')) window.__reconMonthFromLink = qs.get('month');
+                    const btn = document.querySelector(`#bottomNav .nav-btn[onclick*="'history'"]`);
+                    if (btn) setTimeout(() => switchTab('history', btn), 300);
+                }
+            } catch (e) {}
         }
 
         function driverTaskCacheKey() {
@@ -830,7 +840,8 @@
         }
 
         async function loadHistory() {
-            const month = document.getElementById('driverReconMonth')?.value || new Date().toISOString().substring(0, 7);
+            const month = window.__reconMonthFromLink || document.getElementById('driverReconMonth')?.value || new Date().toISOString().substring(0, 7);
+            window.__reconMonthFromLink = '';
             if (reconciliationData && historyLoadedMonth === month) {
                 renderHistory();
                 return;
@@ -1439,6 +1450,53 @@
             return `自民國 ${date.getFullYear() - 1911} 年 ${date.getMonth() + 1} 月 ${date.getDate()} 日 ${date.getHours()} 時 ${date.getMinutes()} 分 起至 ${end.getFullYear() - 1911} 年 ${end.getMonth() + 1} 月 ${end.getDate()} 日 ${end.getHours()} 時 ${end.getMinutes()} 分止`;
         }
 
+        // v1.18.16：對帳單(公司出的)：看明細、按「確認無誤／有問題」，付款後顯示已結清
+        function renderDriverStatements_(recon) {
+            const list = recon.statements || [];
+            if (!list.length) return '';
+            const byId = Object.fromEntries((recon.orders || []).map(o => [o.orderId, o]));
+            const chip = st => {
+                const m = { '待司機確認': 'background:#FDF0F4;color:#A8345A;border:1px solid #F3C6D5', '司機有疑問': 'background:#fff;color:#A8345A;border:1.5px dashed #C2416B', '司機已確認': 'background:#fff;color:#553f62;border:1.5px solid #553f62', '已結清': 'background:#553f62;color:#fff' };
+                const label = { '待司機確認': '待你確認', '司機有疑問': '已回報問題', '司機已確認': '已確認，等付款', '已結清': '已付款' }[st] || st;
+                return `<span style="display:inline-block;border-radius:999px;padding:2px 9px;font-size:11px;font-weight:700;white-space:nowrap;${m[st] || ''}">${label}</span>`;
+            };
+            return list.map(st => {
+                const net = Number(st.net) || 0;
+                const rows = (st.orderIds || []).map(id => byId[id]).filter(Boolean).sort((a, b) => String(a.date + a.time).localeCompare(String(b.date + b.time)))
+                    .map(o => `<div class="flex justify-between gap-2 py-1 border-t border-dashed border-gray-100"><span class="text-gray-600">${String(o.date || '').slice(5).replace('-', '/')} ${o.recordType === '補貼/異常成本' ? '補貼' : (o.type || '')}</span><span class="whitespace-nowrap">$${Number(o.payout || 0).toLocaleString()}${parseCashAmount(o.cashCollected) ? `｜收現 $${parseCashAmount(o.cashCollected).toLocaleString()}` : ''}</span></div>`).join('');
+                const pending = st.status === '待司機確認' || st.status === '司機有疑問';
+                return `<div class="rounded-lg px-3 py-2 mb-3 text-xs leading-6 ${st.status === '待司機確認' ? 'border-2 border-[#C2416B]' : 'border border-[#553f62]'}">
+                    <div class="flex justify-between items-center gap-2"><span class="font-bold text-[#553f62]">對帳單｜${st.count} 趟</span>${chip(st.status)}</div>
+                    <div class="flex justify-between gap-2"><span class="text-gray-500">司機車資｜代收現金</span><span class="whitespace-nowrap">$${Number(st.payout || 0).toLocaleString()}｜−$${Number(st.cash || 0).toLocaleString()}</span></div>
+                    <div class="flex justify-between gap-2"><span class="text-gray-500">${net >= 0 ? '本次應付' : '本次應交回'}</span><span class="font-bold text-[#553f62] text-sm whitespace-nowrap">$${Math.abs(net).toLocaleString()}</span></div>
+                    ${st.status === '已結清' ? `<div class="flex justify-between gap-2"><span class="text-gray-500">${net >= 0 ? '已付款' : '已收到'}</span><span class="whitespace-nowrap">${String(st.payDate || '').slice(5).replace('-', '/')}｜${st.method || ''}${st.paidAmount ? `｜$${Number(st.paidAmount).toLocaleString()}` : ''}</span></div>${st.payeeAccount ? `<div class="flex justify-between gap-2"><span class="text-gray-500">帳號</span><span class="whitespace-nowrap">${st.payeeAccount}</span></div>` : ''}` : ''}
+                    ${st.driverNote ? `<div class="text-[#A8345A]">你回報的問題：${st.driverNote}</div>` : ''}
+                    <details class="mt-1"><summary class="text-[#553f62] cursor-pointer">看明細</summary>${rows || '<div class="text-gray-400">明細請到下方車趟清單看</div>'}</details>
+                    ${pending ? `<div class="flex gap-2 mt-2"><button type="button" onclick="driverStatementReply_('${st.statementNo}', false)" class="flex-1 rounded-lg border border-[#553f62] text-[#553f62] bg-white py-2 font-bold">有問題</button><button type="button" onclick="driverStatementReply_('${st.statementNo}', true)" class="flex-1 rounded-lg bg-[#553f62] text-white py-2 font-bold">確認無誤</button></div>` : ''}
+                    <div class="text-gray-400 text-[11px]">對帳單號 ${st.statementNo}</div></div>`;
+            }).join('');
+        }
+        async function driverStatementReply_(no, ok) {
+            let note = '';
+            if (ok) {
+                const r = await Swal.fire({ title: '確認對帳無誤？', text: '確認後公司會安排付款。', showCancelButton: true, confirmButtonText: '確認無誤', cancelButtonText: '再看看', confirmButtonColor: '#553f62' });
+                if (!r.isConfirmed) return;
+            } else {
+                const r = await Swal.fire({ title: '哪裡有問題？', input: 'textarea', inputPlaceholder: '例：10/09 那趟車資應該是 1,600', showCancelButton: true, confirmButtonText: '送出', cancelButtonText: '取消', confirmButtonColor: '#553f62', inputValidator: v => (!v || !v.trim()) ? '請寫哪一趟、什麼問題' : undefined });
+                if (!r.isConfirmed) return;
+                note = r.value.trim();
+            }
+            Swal.showLoading();
+            try {
+                const res = await apiCall('driverConfirmStatement', { lineId: driverData.lineId, statementNo: no, ok, note }, 20000);
+                if (!res || !res.success) return Swal.fire('沒有成功', (res && res.error) || '請稍後再試', 'error');
+                historyLoadedMonth = '';
+                reconciliationData = null;
+                await loadHistory();
+                Swal.fire({ icon: 'success', title: ok ? '已確認，謝謝！' : '已送出，客服會跟你聯絡', timer: 1800, showConfirmButton: false });
+            } catch (e) { Swal.fire('沒有成功', '網路不穩，請稍後再試', 'error'); }
+        }
+
         // --- 狀態更新邏輯 (針對「收單」加速，不讀取 GPS) ---
         function renderHistory() {
             const container = document.getElementById('view-history');
@@ -1488,6 +1546,7 @@
                         <div class="flex justify-between gap-2"><span class="text-gray-500">${Number(st.net) >= 0 ? '本次應付' : '本次交回'}</span><span class="font-bold text-[#553f62] whitespace-nowrap">$${Math.abs(Number(st.net) || 0).toLocaleString()}｜${st.method || ''}</span></div>
                         ${st.payeeAccount ? `<div class="flex justify-between gap-2"><span class="text-gray-500">${Number(st.net) >= 0 ? '轉入帳號' : '帳號'}</span><span class="whitespace-nowrap">${st.payeeAccount}</span></div>` : ''}
                         <div class="text-gray-400">結算單號 ${st.settleNo}</div></div>`).join('')}
+                    ${renderDriverStatements_(recon)}
                     <button type="button" onclick="toggleHistoryUnsettled()" class="w-full rounded-lg border border-[#553f62] px-3 py-2 mb-3 text-sm text-[#553f62] bg-white">${unsettledButtonText}</button>
                     <div class="text-xs text-gray-500">本月共 ${recon.count || 0} 筆。${pendingReportCount ? `其中 ${pendingReportCount} 趟未確實回報。` : ''}</div>
                 </div>`;
@@ -1640,25 +1699,73 @@
             }
         }
 
-        // --- 異常回報 (LINE Notify) ---
+        // --- 異常回報 ---
+        // v1.18.17：送到「AS後台｜異況回報」群組(卡片)，自己的LINE也會收到「異況已通報調度」；
+        // 新增「塞車／可能遲到」＋預計晚到幾分鐘；「直接打給客服」按下去手機跳撥號，同時通知群組(司機不用打字也有紀錄)
+        const ANOMALY_SERVICE_TEL = '0955311306';
+        function anomalyPayload_(orderId, extra) {
+            return Object.assign({
+                orderId: orderId,
+                lineId: driverData.lineId,
+                driverName: driverData.name,
+                driverPhone: driverData.phone,
+                driverCarNo: driverData.carNo,
+                driverCarType: driverData.carType
+            }, extra || {});
+        }
+        function anomalyCallService_(orderId) {
+            const type = (document.getElementById('anoType') || {}).value || '';
+            const eta = (document.querySelector('#anoEta .on') || {}).dataset ? ((document.querySelector('#anoEta .on') || {}).dataset.v || '') : '';
+            const note = (document.getElementById('anoNote') || {}).value || '';
+            try {
+                // keepalive：手機切到撥號畫面時請求照樣送得出去
+                fetch(GAS_URL, { method: 'POST', keepalive: true, headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'driverAnomalyCall', data: anomalyPayload_(orderId, { type, eta, note }) }) }).catch(() => {});
+            } catch (e) {}
+            setTimeout(() => { window.location.href = 'tel:' + ANOMALY_SERVICE_TEL; }, 150);
+        }
+        function anomalyTypeChanged_() {
+            const v = document.getElementById('anoType').value;
+            const show = v === '塞車/可能遲到' || v === '車輛故障/事故';
+            document.getElementById('anoEtaWrap').style.display = show ? 'block' : 'none';
+            if (!show) document.querySelectorAll('#anoEta button').forEach(b => b.classList.remove('on'));
+        }
+        function anomalyPickEta_(btn) {
+            const was = btn.classList.contains('on');
+            document.querySelectorAll('#anoEta button').forEach(b => b.classList.remove('on'));
+            if (!was) btn.classList.add('on');
+        }
         async function reportAnomaly(orderId) {
+            const etaBtns = ['5', '10', '15', '20', '30', '30以上'].map(v =>
+                `<button type="button" data-v="${v}" onclick="anomalyPickEta_(this)" class="ano-eta">${v}</button>`).join('');
             const { value: formValues } = await Swal.fire({
                 title: '異常狀況回報',
                 html: `
-                    <select id="anoType" class="w-full p-3 border rounded-xl mb-3 outline-none font-bold text-sm">
+                    <style>
+                      .ano-eta{border:1px solid #E2E2E4;border-radius:999px;padding:5px 12px;font-size:13px;font-weight:700;color:#555;background:#fff;white-space:nowrap}
+                      .ano-eta.on{border-color:#C2416B;background:#FDF0F4;color:#A8345A}
+                    </style>
+                    <select id="anoType" onchange="anomalyTypeChanged_()" class="w-full p-3 border rounded-xl mb-3 outline-none font-bold text-sm">
                         <option value="" selected disabled>請選擇異常類型</option>
                         <option value="人數/行李不符">現場人數/行李不符</option>
                         <option value="聯絡不上客人">聯絡不上客人</option>
                         <option value="臨時變更行程">客人臨時變更行程(多一個地址等)</option>
                         <option value="車輛故障/事故">車輛故障或事故</option>
+                        <option value="塞車/可能遲到">塞車／可能遲到</option>
                         <option value="其他">其他緊急狀況</option>
                     </select>
+                    <div id="anoEtaWrap" style="display:none" class="text-left mb-3">
+                        <div class="text-xs font-bold text-gray-600 mb-1">預計晚到幾分鐘？</div>
+                        <div id="anoEta" class="flex flex-wrap gap-2">${etaBtns}</div>
+                    </div>
                     <textarea id="anoNote" rows="3" class="w-full p-3 border rounded-xl outline-none text-sm placeholder-gray-400" placeholder="請簡述現場狀況..."></textarea>
+                    <button type="button" onclick="anomalyCallService_('${orderId}')" class="w-full mt-3 py-2.5 rounded-xl font-bold text-sm border border-[#553F62] text-[#553F62] bg-white whitespace-nowrap">📞 很緊急，直接打給客服 0955-311-306</button>
+                    <div class="text-[11px] text-gray-400 mt-1">打電話時系統會自動記錄，講完有空再補文字更好</div>
                 `,
                 focusConfirm: false,
                 showCancelButton: true,
-                confirmButtonColor: '#e3342f',
-                confirmButtonText: '立即通報調度',
+                confirmButtonColor: '#C2416B',
+                confirmButtonText: '立即通報調度（文字通知）',
                 cancelButtonText: '取消',
                 preConfirm: () => {
                     const type = document.getElementById('anoType').value;
@@ -1666,25 +1773,20 @@
                         Swal.showValidationMessage('請選擇異常類型');
                         return false;
                     }
-                    return { type, note: document.getElementById('anoNote').value }
+                    const on = document.querySelector('#anoEta .on');
+                    return { type, eta: on ? on.dataset.v : '', note: document.getElementById('anoNote').value };
                 }
             });
 
             if (formValues) {
                 Swal.fire({ title: '通報中', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
                 try {
-                    // ⚠️ 確保完整司機資訊送出
-                    await apiCall('driverReportAnomaly', {
-                        orderId: orderId,
-                        type: formValues.type,
-                        note: formValues.note,
-                        driverName: driverData.name,
-                        driverPhone: driverData.phone,
-                        driverCarNo: driverData.carNo,
-                        driverCarType: driverData.carType
-                    });
-                    Swal.fire('通報成功', '已發送至調度中心群組', 'success');
-                } catch(e) { Swal.fire('通報失敗', '請直接撥打電話聯絡調度', 'error'); }
+                    await apiCall('driverReportAnomaly', anomalyPayload_(orderId, { type: formValues.type, eta: formValues.eta, note: formValues.note }));
+                    Swal.fire({ icon: 'success', title: '通報成功', html: '已通報客服，你的 LINE 也會收到通報內容。<br>客服接手後會再通知你。', confirmButtonColor: '#553F62' });
+                } catch (e) {
+                    Swal.fire({ icon: 'error', title: '通報失敗', text: '請直接打給客服', showCancelButton: true, confirmButtonText: '📞 打給客服', cancelButtonText: '關閉', confirmButtonColor: '#C2416B' })
+                        .then(r => { if (r.isConfirmed) window.location.href = 'tel:' + ANOMALY_SERVICE_TEL; });
+                }
             }
         }
 
