@@ -263,6 +263,7 @@
   .stop-mv{flex:none;border:1px solid #E2E2E4;border-radius:6px;background:#fff;padding:4px 7px;font-size:12px;line-height:1.2}
   .stop-mv:disabled{opacity:.3}
   .stop-arrow{color:#8E8E93;font-size:12px;padding-left:22px;line-height:1;margin-top:2px}
+  .ret-blk{border:1px solid #F3C6D5;border-left:4px solid #C2416B;border-radius:10px;padding:10px;margin-top:8px;background:#FDF0F4}
   .seg-btn{border:1px solid #E2E2E4;border-radius:999px;padding:5px 14px;font-size:13px;font-weight:700;background:#fff;color:#553F62;white-space:nowrap}
   .seg-btn.on{background:#553F62;color:#fff;border-color:#553F62}
   .pay-same{font-size:11px;color:#8E8E93;font-weight:600;margin-left:6px}
@@ -327,7 +328,7 @@
            掛在同一個既有單號底下(維持-A/-B配對關係)，不需要客人重新整個表單再填一次。
            留空這個既有單號欄位的話，下面表單就照原本邏輯正常建立一筆全新的單。 -->
       <section class="panel" style="border:1px solid #F3C6D5;background:#FDF0F4">
-        <button type="button" id="recoveryToggle" class="section-title" style="cursor:pointer;background:none;border:none;padding:0;width:100%;text-align:left;color:#553f62">🔧 補建遺漏的去程/回程（點開）</button>
+        <button type="button" id="recoveryToggle" class="section-title" style="cursor:pointer;background:none;border:none;padding:0;width:100%;text-align:left;color:#553f62">🔧 補建遺漏的那一趟（來回其中一趟沒寫入，點開）</button>
         <div id="recoveryBody" class="hidden" style="margin-top:10px">
           <p class="hint" style="margin-bottom:10px">用在「來回預約其中一腿已經成功、另一腿因異常沒寫入」的狀況。下面表單照常填這一腿的完整資料，送出時會自動掛在既有單號底下，不會產生一筆全新、對不起來的單號。</p>
           <div class="grid-form">
@@ -339,8 +340,8 @@
               <label for="recoveryLegSuffix">這次要補的是</label>
               <select id="recoveryLegSuffix">
                 <option value="">-- 請選擇 --</option>
-                <option value="A">去程（-A）</option>
-                <option value="B">回程（-B）</option>
+                <option value="A">第1趟（-A）</option>
+                <option value="B">第2趟（-B）</option>
               </select>
             </div>
           </div>
@@ -371,16 +372,16 @@
       <!-- v1.2.0：補訂回程。客人先訂了單程(單號沒有-A/-B)，之後才要訂回程：原單改成「單號-A」、新增「單號-B」，同一個預約，對帳不會斷；
            跟中控台「更多→修改→補訂回程」是同一套後端功能(gas v2.2.420)。 -->
       <section class="panel" style="border:1px solid #E6E6E8;background:#F9F9FB">
-        <button type="button" id="addReturnToggle" class="section-title" style="cursor:pointer;background:none;border:none;padding:0;width:100%;text-align:left;color:#553f62">➕ 補訂回程（客人先訂了單趟，之後才要訂回程）</button>
+        <button type="button" id="addReturnToggle" class="section-title" style="cursor:pointer;background:none;border:none;padding:0;width:100%;text-align:left;color:#553f62">➕ 補訂另一趟（客人先訂了單趟，之後才要加訂另一趟變來回）</button>
         <div id="addReturnBody" class="hidden" style="margin-top:10px">
-          <p class="hint" style="margin-bottom:10px">原單會改成「單號-A」，新增「單號-B」(同一個預約，對帳不會斷)；客人資料、地址、人數行李、車型、付款方式自動帶去程的，只要填回程日期時間跟車資。不是新單，不會重新編號。</p>
+          <p class="hint" style="margin-bottom:10px">原單會改成「單號-A」，新增「單號-B」(同一個預約，對帳不會斷)；客人資料、地址、人數行李、車型、付款方式自動帶原單的，只要填另一趟的日期時間跟車資。不是新單，不會重新編號。</p>
           <div class="grid-form">
             <div class="full">
               <label for="addReturnOrderId">原單號（不含 -A / -B）</label>
               <input id="addReturnOrderId" placeholder="例如：AS-202608227259kMo">
             </div>
           </div>
-          <button type="button" id="addReturnBtn" class="secondary-btn" style="margin-top:10px">查詢原單並補訂回程</button>
+          <button type="button" id="addReturnBtn" class="secondary-btn" style="margin-top:10px">查詢原單並補訂另一趟</button>
         </div>
       </section>
 
@@ -448,7 +449,7 @@
           <div style="display:flex;justify-content:space-between;font-weight:900;color:#553f62"><span>💰 乘車金折抵</span><span style="font-weight:400;color:#555">這位客人餘額 <b id="creditBalanceText" style="color:#553f62">$0</b></span></div>
           <div style="display:flex;align-items:center;gap:8px;margin-top:8px">使用 <input id="creditUse" type="text" inputmode="numeric" placeholder="0" style="width:120px"> 元
             <button type="button" id="creditUseAllBtn" style="background:none;border:0;color:#553f62;text-decoration:underline;font-size:12.5px;cursor:pointer">全部用掉</button></div>
-          <div class="hint" id="creditHint">建單時才會真的扣；不能超過餘額，也不能超過這張單的總額。來回單只折在回程那一趟。</div>
+          <div class="hint" id="creditHint">建單時才會真的扣；不能超過餘額，也不能超過這張單的總額。來回單只折在第二趟。</div>
         </div>
         <div id="creditMultiHint" class="hint mt-2 hidden">這位客人有乘車金，但多台車不支援乘車金折抵，請分開建單或到中控台「乘車金調整」處理。</div>
         <div id="discountZeroWarning" class="hint mt-1 hidden" style="color:#c0392b"></div>
@@ -483,8 +484,8 @@
           <div>
             <label>時間</label>
             <div class="time-pair">
-              <select id="rideHour" aria-label="去程小時"></select>
-              <select id="rideMinute" aria-label="去程分鐘"></select>
+              <select id="rideHour" aria-label="小時"></select>
+              <select id="rideMinute" aria-label="分鐘"></select>
             </div>
           </div>
           <div id="flightNumberWrap">
@@ -536,55 +537,60 @@
           <div class="full">
             <label class="pill">
               <input id="hasReturn" type="checkbox">
-              同時預約回程
+              同時預約來回
             </label>
           </div>
         </div>
 
         <div id="returnPanel" class="mt-4 pt-4 border-t border-[#E2E2E4] hidden">
-          <div class="section-title !text-[15px]">回程資料</div>
-          <div id="returnOneWayHint" class="hint hidden" style="margin-bottom:8px">單程行程的回程會自動反向（終點地址 → 起點地址），不用另外填地址。</div>
+          <div class="section-title !text-[15px]"><span data-mt2>接機</span>資料</div>
+          <div id="returnOneWayHint" class="hint hidden" style="margin-bottom:8px">單程來回的第二趟會自動反向（終點地址 → 起點地址），不用另外填地址。</div>
           <div class="grid-form">
             <div id="returnServiceTypeWrap">
-              <label for="returnServiceType">回程行程</label>
+              <label for="returnServiceType">另一趟行程</label>
               <select id="returnServiceType" name="returnServiceType">
                 <option value="送機">送機</option>
                 <option value="接機">接機</option>
               </select>
             </div>
             <div>
-              <label for="returnFare">回程車資 <span class="c1-pill hidden">第1台 C1</span></label>
-              <input id="returnFare" name="returnFare" type="number" inputmode="numeric" min="0" placeholder="不填則同去程金額">
+              <label for="returnFare"><span data-mt2>接機</span>車資 <span class="c1-pill hidden">第1台 C1</span></label>
+              <input id="returnFare" name="returnFare" type="number" inputmode="numeric" min="0" placeholder="不填則同上面的車資">
               <div id="returnSpecialDateHint" class="hint !mt-1 hidden" style="color:#9a6a1f"></div>
             </div>
             <div>
-              <label for="returnDate">回程日期</label>
+              <label for="returnDate"><span data-mt2>接機</span>日期</label>
               <input id="returnDate" name="returnDate" type="date">
             </div>
             <div>
-              <label>回程時間</label>
+              <label><span data-mt2>接機</span>時間</label>
               <div class="time-pair">
-                <select id="returnHour" aria-label="回程小時"></select>
-                <select id="returnMinute" aria-label="回程分鐘"></select>
+                <select id="returnHour" aria-label="另一趟小時"></select>
+                <select id="returnMinute" aria-label="另一趟分鐘"></select>
               </div>
             </div>
             <div id="returnAirportWrap">
-              <label for="returnAirport">回程機場</label>
+              <label for="returnAirport"><span data-mt2>接機</span>機場</label>
               <select id="returnAirport" name="returnAirport">
-                <option value="">同去程</option>
+                <option value="">同一個機場</option>
                 <option value="桃園機場">桃園機場</option>
                 <option value="松山機場">松山機場</option>
                 <option value="台中機場">台中機場</option>
               </select>
-              <div class="hint !mt-1">機場不同時，請在「回程車資」填回程機場的報價</div>
+              <div class="hint !mt-1">機場不同時，<span data-mt2>接機</span>車資請填這個機場的報價</div>
             </div>
             <div class="full" id="returnFlightNumberWrap">
               <div class="flight-term-row">
-                <div><label for="returnFlightNumber">回程航班</label>
+                <div><label for="returnFlightNumber"><span data-mt2>接機</span>航班</label>
                 <input id="returnFlightNumber" name="returnFlightNumber" placeholder="例如 BR7、CI11" inputmode="email" autocapitalize="characters" autocorrect="off" autocomplete="off" spellcheck="false" lang="en" enterkeyhint="done" style="text-transform: uppercase;"></div>
-                <div class="terminal-wrap"><label for="returnFlightTerminal">回程航廈（桃園機場）</label>
+                <div class="terminal-wrap"><label for="returnFlightTerminal"><span data-mt2>接機</span>航廈（桃園機場）</label>
                 <select id="returnFlightTerminal" name="returnFlightTerminal"><option value="">請選擇</option><option value="T1">第一航廈 T1</option><option value="T2">第二航廈 T2</option><option value="?">不確定，幫我查詢</option></select></div>
               </div>
+            </div>
+            <div class="full">
+              <label class="pill"><input id="returnDiff" type="checkbox"> <span data-mt2>接機</span>的地址／車型／人數行李跟<span data-mt1>送機</span>不一樣</label>
+              <div class="hint !mt-1"><span data-mt2>接機</span>機場在上面選；沒勾＝<span data-mt2>接機</span>是<span data-mt1>送機</span>反過來、同車型同人數。</div>
+              <div id="returnDiffWrap" class="hidden"></div>
             </div>
           </div>
         </div>
@@ -654,8 +660,8 @@
           <div id="manualCashWrap" class="full hidden">
             <label>現場收現金額 <span class="c1-pill hidden">第1台 C1</span></label>
             <div class="mini-grid two">
-              <input id="manualCashCollected" inputmode="numeric" placeholder="去程現收，例如 500">
-              <input id="returnManualCashCollected" inputmode="numeric" placeholder="回程現收，例如 500">
+              <input id="manualCashCollected" inputmode="numeric" placeholder="現收，例如 500">
+              <input id="returnManualCashCollected" inputmode="numeric" placeholder="另一趟現收，例如 500">
             </div>
             <div class="hint">選擇「轉帳+收現」或「簽單+收現」時填寫；此金額會直接寫入預約單，司機端會顯示現場需收多少。</div>
           </div>
@@ -729,7 +735,7 @@
           </div>
           <div class="full hidden" id="extraCarsPanel" style="border:1px solid #F3C6D5;background:#FDF0F4;border-radius:14px;padding:12px">
             <div class="section-title" style="margin-bottom:6px">其他車輛（第 2 台起） <span style="font-size:11px;font-weight:700;color:#C2416B;background:#FDF0F4;border:1px solid #F3C6D5;border-radius:999px;padding:1px 8px;margin-left:6px">每台行程都可以不一樣</span></div>
-            <p class="hint !mt-0 mb-2">每一台各自填：行程(送機／接機／單程)、日期、時間、機場、航班、地址、回程、乘車人、車型人數行李、付款方式、車資、加值折扣、備註。新增時先帶第 1 台的資料，再改不一樣的地方；也可以用「📋 複製自」從任何一台複製。折扣不會複製(折扣碼只能用一次)。包車不能跟多台車一起建。</p>
+            <p class="hint !mt-0 mb-2">每一台各自填：行程(送機／接機／單程)、日期、時間、機場、航班、地址、來回、乘車人、車型人數行李、付款方式、車資、加值折扣、備註。新增時先帶第 1 台的資料，再改不一樣的地方；也可以用「📋 複製自」從任何一台複製。折扣不會複製(折扣碼只能用一次)。包車不能跟多台車一起建。</p>
             <div id="carC1Bar"></div>
             <div id="extraCarsList"></div>
             <div id="carsTotalBar"></div>
@@ -772,7 +778,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "manual-booking-v1.2.26"; // v1.2.26：多台車第2台起的地址改成「照車子實際走的順序」的站點清單(接機＝機場固定最上面、送機＝機場固定最下面、單程＝起點…終點)，可↑↓調順序，上面紫框即時顯示整條路線；確認視窗照順序寫出整條路線(含其他地址，回程反過來)；姓名已含先生／小姐不再重複加稱謂；航班欄只寫T1／T2當作沒填航班(不再出現「T2｜T2」)； v1.2.25  v1.2.25：多台車第2台起的時間、回程時間改成跟主表單一樣的「時／分」下拉(24小時制、每5分鐘)，不再用瀏覽器時間選擇器(會顯示上午／下午)； v1.2.24  v1.2.24：多台車改版＝同一位訂車人一次訂好幾台，每台行程都可以不一樣：C2起每台各自填行程(送機／接機／單程)、日期、時間、機場、航班航廈、地址、其他地址、要不要回程(回程日期時間機場航班)、乘車人、車型人數行李座椅、付款方式、車資、現收、加值折扣、備註；付款方式上面選一次當預設，某台不同再單獨改(標「已單獨改」，上面再換也不蓋掉)；特約企業只套在付款是月結/簽單的台；「複製自」可勾要帶哪些(日期時間航班預設不勾)；確認視窗每台列出行程、乘車人、人數行李、付款、金額；包車不能跟多台車一起建；需gas v2.2.493； v1.2.23  v1.2.23：「車輛台數＋其他車輛設定」搬到表單最後面(帳務備註下面)，C2起下面不會再接到第1台的人數行李；車型移到人數上面；2台以上時第1台的車型、車資、回程車資、現收、人數、行李、座椅、加值、折扣標題旁顯示「第1台 C1」； v1.2.22  v1.2.22：多台車表頭「同 C1 複製」改「📋 複製自 ▾」：可選任何一台(C1、其他各台，附摘要)複製到這台，先確認再複製；車型、車資、現收、人數行李座椅、加值、這台的乘車人／地址都帶，折扣不複製； v1.2.21  v1.2.21：多台車：①C2起每台多「人數／行李／座椅」三個框(大人兒童幼兒、大型中型登機、推車胖胖箱尺寸、座椅)，加台數時先帶C1的數字；②每台一張卡片，表頭紫／莓果深交替、大字「🚐 第N台 CN」、下面摘要(車型｜人數｜行李｜車資)，可收起；③「其他車輛設定」上面放第1台(C1)摘要、下面「全部車加起來」；④確認視窗每台列出自己的人數行李座椅、共用區不再顯示C1的人數行李；客人確認文字每台照自己的；需gas v2.2.492； v1.2.20：客人確認文字航班／航廈分兩行(航班編號：CI108、航廈：第二航廈(T2))； v1.2.19：貼文字解析：①兩段都用「行程：送機 ➔ 桃園機場／行程：桃園機場 ➔ 接機」開頭(沒有獨立標題行)也會拆成去程＋回程、自動勾來回；②「送機 ➔ 桃園機場」「桃園機場 ➔ 接機」看字的先後判斷送機／接機；③車型、備註寫在最後面也會帶到去程；④地址開頭郵遞區號拿掉； v1.2.18：貼文字解析沒寫車型時，照預約頁同一套規則用人數＋行李自動選車型(例如2人4件行李→大車)；有寫車型但裝不下會提醒； v1.2.17：貼文字解析：①$1600 不再只抓到 160；②一次貼「送機／接機」兩段會自動勾來回、帶回程日期時間航班車資(「去程$1600，回程$2000」分開帶)；③送機抓出發時間、接機抓班機時間，支援 a.m./p.m.；④「行李件數：4」沒寫大小先放大型；⑤同一個地址出現兩次不再變成加點；⑥沒寫年份且日期已過就當明年； v1.2.16：多個地址時，沒填「此站聯絡人」的地址不再自動帶乘車人姓名電話； v1.2.15：「確認建立預約」視窗：單趟不再標「去程」；卡片「車資」改顯示折扣前金額(折扣列在下面、總車資才扣)； v1.2.14：乘車金折抵：填好訂車人手機自動查餘額，可填要折抵多少(列在折扣明細，建單時才扣，來回只折回程)；需gas v2.2.467； v1.2.13：新配色(紫色＋莓果色)，原本粉紅改莓果、淡紫底改灰白； v1.2.12：「加點／中途停靠站」改叫「其他地址（地址2起）」、按鈕「＋ 新增地址」，客人卡片只有一個地址時不再多一行加點(費用名稱「加點費」不變)； v1.2.11：「用預約編號產生通知文字」跟建立時同格式：訂車人(統編公司／訂車人／電話)放最後面一次、拿掉乘車資訊裡的訂車貴賓；包車單顯示行程、用車N小時、基本車資＋超時規則，備註只留客人的；多天包車每天一段；「複製舊單」包車會把時數/超時/緩衝/住宿/行程/天數帶回包車欄位(需gas v2.2.449)； v1.2.10：送機／接機／單程的客人確認文字：拿掉「乘車資訊」裡的「訂車貴賓」那行，改在預約編號下面放「訂車人／統編 公司名稱／訂車人／電話」(跟包車同格式)；來回合併成一則時只放最後一次，分開複製去程/回程時每則各放； v1.2.9：包車照確認版示意圖：①「每天用車時數」改「用車時數」，新增「超時緩衝（分鐘）」預設15；②客人確認文字：有行程只放行程內容、「包車（用車N小時）」、費用改「基本車資（含N小時）」＋超時費用＋超時規則、訂車人資訊(統編公司／訂車人／電話)放在最後面；需gas v2.2.448； v1.2.8：行程新增「包車」：上車/下車地點(下車空白＝回上車地點)、每天用車時數、天數、超時每小時、住宿補貼(每晚)、行程內容(可用「第2天」分段)；多天每天一張單(-D1、-D2…)；確認視窗與客人確認文字顯示包車明細與總額(每天車資×天數＋住宿補貼)；需gas v2.2.447； v1.2.7：①建立成功後，客人確認文字改用預約單「實際存的」日期時間產生(後端回傳savedTrips)，跟表單不一致時先跳紅色警告；②成功視窗最上面大字顯示系統存的乘車日期時間；③所有「傳給客人的確認文字」框改唯讀並註明「改這裡不會改到預約單」，要改請回表單或中控台「修改資料」(起因：NA-C-202610201028AEDW 系統存12:00、傳給客人的文字09:00)，需gas v2.2.446； v1.2.6：①折扣項目選「回程／去回程各扣」但沒勾同時預約回程(例如單號複製後單獨訂回程)不再被擋，直接扣在這一趟；②新增「＋預約來回優惠 -$100」快速鈕；③新增「我是（客服名稱）」欄位(記住)，每筆折扣後端都記錄是哪位客服；④補訂回程視窗可勾「給預約來回優惠 -$100」；v1.2.5：胖胖箱尺寸改選填(客人預約頁不再收尺寸)；載入舊單時保留客人預約頁新增的「長型／其他」細項、客人文字也會顯示出來； // v1.2.4：客人文字的備註照原樣顯示(「空白收據」不再被改寫成「需開立收據」)； v1.2.3：「補訂回程」的回程航班欄位強制英文大寫；v1.2.2：加點只是航廈名稱(第一航廈/第二航廈)時不帶乘車人聯絡資料；v1.2.1：「地址1／地址2…」沒填聯絡人的地址預設帶乘車人姓名＋電話；v1.2.0：新增「➕ 補訂回程」(客人先訂單趟、之後才訂回程：原單改成 單號-A、新增 單號-B，同中控台功能，需gas v2.2.420)；接送機有加點時，客人確認文字／預約明細圖改成像司機系統「地址1／地址2／地址3…」依行車順序編號、每個地址下一行「聯絡 姓名 電話」(行事曆、客人卡片同步，需gas v2.2.428)；v1.1.3：新增「帳務備註」欄(選固定客戶範本會自動帶入「固定客戶」表的「帳務備註」欄，複製舊單也會帶，只有客服/中控看得到，司機看不到；需gas v2.2.423)； // v1.1.2：路線的箭頭改成「→ 」(後面多一個空格，跟系統卡片一樣)； // v1.1.1：客人確認文字(預約成功通知)單程拿掉「航班編號／接送機場／加點地址」，接送地址改成「起點→加點→終點」一條路線，回程整條反過來； // v1.1.0：複製舊單／帶入另一腿時，姓名欄只放名字、稱謂自動選進「稱謂」下拉(不再整串帶「王小姐」)(搭配gas v2.2.419更準，沒更新也會自己拆)； // v1.0.99：行李欄位順序改「大型→中型→登機」； // v1.0.98：貼上客人訊息解析地址時，自動拿掉地址尾巴的手機/市話(例如「…4樓之2；0912580590」)； v1.0.97：多台車(C2起)每台可選填不同的乘車人姓名／稱謂／電話／地址／加點(預設收合、空白沿用C1，訂車人維持C1，需gas v2.2.411)。 v1.0.96：車型選單補上「New Alphard 40系」(原本只有小車/大車/進口商務車，跟客人訂車頁不一致；第2台起的車型也同步)，貼文字解析車型時Alphard歸到New Alphard 40系、不再被當成進口商務車。 // v1.0.95：新增「特約／月結企業客戶」欄(輸入統編或特約代號，查到公司後帶入、付款方式改月結簽單，需gas v2.2.407)；  v1.0.94：數字欄位(車資等)拿掉上下箭頭，滾輪/方向鍵不會再改數字； v1.0.93：航班欄位(去程/回程)手機鍵盤預設英文＋自動大寫； v1.0.92：來回預約新增「回程機場」(預設同去程)，機場不同時回程單存回程機場、航廈T1/T2依各趟機場決定、確認畫面/客人確認文字回程顯示回程機場，複製舊單會帶回程機場(需gas v2.2.393)； v1.0.91：行李分類改版——登機/托運中型(21-26吋)/托運大型(27-29吋)三個欄位，另有「含推車」「含胖胖箱(+尺寸)」細項(包含在大型內)；客人確認文字、預約明細圖、確認視窗行李改成「登機 1 + 中型 1 + 大型 2」，細項另起一行「含 …」；載入舊單會帶回細項(需gas v2.2.390)； v1.0.90：修正客人確認文字「特殊備註」只要備註內有「收據」兩個字就整段被換成「需開立收據」，其他備註內容消失；現在只把含收據的片段換成「需開立收據」，其餘內容保留； v1.0.89：預約明細圖片資訊欄有選舉牌時多一列「舉牌」(需gas v2.2.388)； v1.0.88：「對話文字快速帶入」移到頁面最上面，標題可點擊收折/展開(記住上次狀態)； v1.0.87：新增「訂車人同乘客」勾選(預設勾選＝跟以前一樣)，取消勾選可另外填訂車人姓名/稱謂/電話(代訂)；折扣碼查詢用訂車人電話；訂車人與乘客不同時客人確認文字多一行「訂車貴賓」；載入舊單會帶回訂車人(需gas v2.2.369)； v1.0.86：客人確認文字改成顯示每個地址下面的「聯絡人 電話」(原本會拿掉)，聯絡人欄提示字改成「客人確認文字會顯示此聯絡人與電話；司機端只看得到電話圖示」(需gas v2.2.367)； v1.0.85：每個地址(接送地址/起點/終點/各加點)可展開填「聯絡人稱呼＋電話」，存成「地址（聯絡：王小姐 0912-345-678）」，司機端自動拆成獨立一行可直接撥打；客人確認文字會拿掉這段，不外流；v1.0.84：建立成功後的「客人確認文字」來回單可分開複製「去程」「回程」或「兩則合併」(單台來回、多台車每一台都適用)；v1.0.83：修正「其他車輛設定」(C2起各台車型/車資/折扣)原本放在頁面上方、往下捲看不到，改放在「車輛台數」正下方，選台數後自動捲到那裡；v1.0.82：新增「車輛台數」(多台車)：C2 起各自車型/車資/回程車資/現收/折扣/加值，確認視窗逐台列出，建立後每台一份客人確認文字，單號=基底-C1/-C2…(需gas v2.2.360)；v1.0.81：電話可填分機(ext.56082、#13、分機13、轉13 都會整理成「03-571-2121 #56082」)，司機撥號會自動帶分機；v1.0.80：電話欄可輸入市話(02-1234-5678、03-123-4567…)，新增「客人沒有電話」勾選(記為0900-000-000，司機端顯示無電話，客人確認文字顯示「無」)；v1.0.79：①不填航班編號、只選航廈時，航廈也會送出(顯示「航廈 T2」)，編輯舊單時會拆回航廈欄位 ②金額欄位拿掉右邊上下箭頭、滾輪不會再改到金額。 v1.0.78：依使用者要求，同時預約來回有加點時，回程的行程順序要跟去程相反(去程 新竹→竹北(加點)→機場，回程 機場→竹北→新竹)：送出前的確認預覽，回程那腿的行程/加點改成顯示反轉後的順序(跟後端gas.html v2.2.345實際寫入一致)，去程與沒有加點的預約不變。 v1.0.77：依使用者要求，航班編號旁邊新增「航廈」選單(第一航廈T1/第二航廈T2/不確定，幫我查詢)，只有選「桃園機場」才出現，有填航班編號就一定要選(沒選送出會跳出缺漏欄位提示)；去程/回程各一個；選了以「航班｜T1/T2/？」(例如CI108｜T2)接在航班編號後面送出，複製舊單/載入舊單時會把已存的「CI108｜T2」拆回兩個欄位。 v1.0.76： 🚨修正buildOrderFeeRows來回程「來回總額」算錯的問題：客服用「補套用折扣碼」只對來回其中一腿單獨套用時(去程/回程的折扣碼/折扣金額欄位各自獨立)，原本只扣這一腿自己的discountAmount，另一腿單獨套用的那組折扣完全沒被扣到，導致來回總額比實際應付多。修正：合併去程/回程兩腿各自的discountAmt，「來回總額」的扣除改用合併後的金額。跟gas.html v2.2.292 buildBookingFeeContents_、admin.html buildReservationUpdateFeePreview同一套邏輯
+    const APP_VERSION = "manual-booking-v1.2.29"; // v1.2.29：補建遺漏的那一趟(第1趟-A／第2趟-B)、補訂另一趟(原單／新的這一趟)、驗證訊息、系統存的時間橫幅也改用送機／接機或第1／2趟，不用去程／回程；需gas v2.2.495； v1.2.28  v1.2.28：畫面文字「去程／回程」改成「送機／接機」(依行程類型自動對調；兩趟都是單程用第一趟／第二趟)：同時預約來回、另一趟資料、日期時間機場航班車資現收、加值折扣套用對象(送機／接機／兩趟各加扣)、確認視窗、多台車卡片、複製客人文字分頁、預約明細圖小計； v1.2.27  v1.2.27：來回預約的回程可以跟去程不一樣：勾「回程的地址／車型／人數行李跟去程不一樣」，回程地址用站點清單(預設去程反過來，可改、加站、↑↓)、回程車型／人數／行李／座椅另外填；回程機場、回程車資原本就分開；主表單和多台車每台的回程都有；確認視窗與客人確認文字回程照回程自己的路線、車型、人數行李；需gas v2.2.494； v1.2.26  v1.2.26：多台車第2台起的地址改成「照車子實際走的順序」的站點清單(接機＝機場固定最上面、送機＝機場固定最下面、單程＝起點…終點)，可↑↓調順序，上面紫框即時顯示整條路線；確認視窗照順序寫出整條路線(含其他地址，回程反過來)；姓名已含先生／小姐不再重複加稱謂；航班欄只寫T1／T2當作沒填航班(不再出現「T2｜T2」)； v1.2.25  v1.2.25：多台車第2台起的時間、回程時間改成跟主表單一樣的「時／分」下拉(24小時制、每5分鐘)，不再用瀏覽器時間選擇器(會顯示上午／下午)； v1.2.24  v1.2.24：多台車改版＝同一位訂車人一次訂好幾台，每台行程都可以不一樣：C2起每台各自填行程(送機／接機／單程)、日期、時間、機場、航班航廈、地址、其他地址、要不要回程(回程日期時間機場航班)、乘車人、車型人數行李座椅、付款方式、車資、現收、加值折扣、備註；付款方式上面選一次當預設，某台不同再單獨改(標「已單獨改」，上面再換也不蓋掉)；特約企業只套在付款是月結/簽單的台；「複製自」可勾要帶哪些(日期時間航班預設不勾)；確認視窗每台列出行程、乘車人、人數行李、付款、金額；包車不能跟多台車一起建；需gas v2.2.493； v1.2.23  v1.2.23：「車輛台數＋其他車輛設定」搬到表單最後面(帳務備註下面)，C2起下面不會再接到第1台的人數行李；車型移到人數上面；2台以上時第1台的車型、車資、回程車資、現收、人數、行李、座椅、加值、折扣標題旁顯示「第1台 C1」； v1.2.22  v1.2.22：多台車表頭「同 C1 複製」改「📋 複製自 ▾」：可選任何一台(C1、其他各台，附摘要)複製到這台，先確認再複製；車型、車資、現收、人數行李座椅、加值、這台的乘車人／地址都帶，折扣不複製； v1.2.21  v1.2.21：多台車：①C2起每台多「人數／行李／座椅」三個框(大人兒童幼兒、大型中型登機、推車胖胖箱尺寸、座椅)，加台數時先帶C1的數字；②每台一張卡片，表頭紫／莓果深交替、大字「🚐 第N台 CN」、下面摘要(車型｜人數｜行李｜車資)，可收起；③「其他車輛設定」上面放第1台(C1)摘要、下面「全部車加起來」；④確認視窗每台列出自己的人數行李座椅、共用區不再顯示C1的人數行李；客人確認文字每台照自己的；需gas v2.2.492； v1.2.20：客人確認文字航班／航廈分兩行(航班編號：CI108、航廈：第二航廈(T2))； v1.2.19：貼文字解析：①兩段都用「行程：送機 ➔ 桃園機場／行程：桃園機場 ➔ 接機」開頭(沒有獨立標題行)也會拆成去程＋回程、自動勾來回；②「送機 ➔ 桃園機場」「桃園機場 ➔ 接機」看字的先後判斷送機／接機；③車型、備註寫在最後面也會帶到去程；④地址開頭郵遞區號拿掉； v1.2.18：貼文字解析沒寫車型時，照預約頁同一套規則用人數＋行李自動選車型(例如2人4件行李→大車)；有寫車型但裝不下會提醒； v1.2.17：貼文字解析：①$1600 不再只抓到 160；②一次貼「送機／接機」兩段會自動勾來回、帶回程日期時間航班車資(「去程$1600，回程$2000」分開帶)；③送機抓出發時間、接機抓班機時間，支援 a.m./p.m.；④「行李件數：4」沒寫大小先放大型；⑤同一個地址出現兩次不再變成加點；⑥沒寫年份且日期已過就當明年； v1.2.16：多個地址時，沒填「此站聯絡人」的地址不再自動帶乘車人姓名電話； v1.2.15：「確認建立預約」視窗：單趟不再標「去程」；卡片「車資」改顯示折扣前金額(折扣列在下面、總車資才扣)； v1.2.14：乘車金折抵：填好訂車人手機自動查餘額，可填要折抵多少(列在折扣明細，建單時才扣，來回只折回程)；需gas v2.2.467； v1.2.13：新配色(紫色＋莓果色)，原本粉紅改莓果、淡紫底改灰白； v1.2.12：「加點／中途停靠站」改叫「其他地址（地址2起）」、按鈕「＋ 新增地址」，客人卡片只有一個地址時不再多一行加點(費用名稱「加點費」不變)； v1.2.11：「用預約編號產生通知文字」跟建立時同格式：訂車人(統編公司／訂車人／電話)放最後面一次、拿掉乘車資訊裡的訂車貴賓；包車單顯示行程、用車N小時、基本車資＋超時規則，備註只留客人的；多天包車每天一段；「複製舊單」包車會把時數/超時/緩衝/住宿/行程/天數帶回包車欄位(需gas v2.2.449)； v1.2.10：送機／接機／單程的客人確認文字：拿掉「乘車資訊」裡的「訂車貴賓」那行，改在預約編號下面放「訂車人／統編 公司名稱／訂車人／電話」(跟包車同格式)；來回合併成一則時只放最後一次，分開複製去程/回程時每則各放； v1.2.9：包車照確認版示意圖：①「每天用車時數」改「用車時數」，新增「超時緩衝（分鐘）」預設15；②客人確認文字：有行程只放行程內容、「包車（用車N小時）」、費用改「基本車資（含N小時）」＋超時費用＋超時規則、訂車人資訊(統編公司／訂車人／電話)放在最後面；需gas v2.2.448； v1.2.8：行程新增「包車」：上車/下車地點(下車空白＝回上車地點)、每天用車時數、天數、超時每小時、住宿補貼(每晚)、行程內容(可用「第2天」分段)；多天每天一張單(-D1、-D2…)；確認視窗與客人確認文字顯示包車明細與總額(每天車資×天數＋住宿補貼)；需gas v2.2.447； v1.2.7：①建立成功後，客人確認文字改用預約單「實際存的」日期時間產生(後端回傳savedTrips)，跟表單不一致時先跳紅色警告；②成功視窗最上面大字顯示系統存的乘車日期時間；③所有「傳給客人的確認文字」框改唯讀並註明「改這裡不會改到預約單」，要改請回表單或中控台「修改資料」(起因：NA-C-202610201028AEDW 系統存12:00、傳給客人的文字09:00)，需gas v2.2.446； v1.2.6：①折扣項目選「回程／去回程各扣」但沒勾同時預約回程(例如單號複製後單獨訂回程)不再被擋，直接扣在這一趟；②新增「＋預約來回優惠 -$100」快速鈕；③新增「我是（客服名稱）」欄位(記住)，每筆折扣後端都記錄是哪位客服；④補訂回程視窗可勾「給預約來回優惠 -$100」；v1.2.5：胖胖箱尺寸改選填(客人預約頁不再收尺寸)；載入舊單時保留客人預約頁新增的「長型／其他」細項、客人文字也會顯示出來； // v1.2.4：客人文字的備註照原樣顯示(「空白收據」不再被改寫成「需開立收據」)； v1.2.3：「補訂回程」的回程航班欄位強制英文大寫；v1.2.2：加點只是航廈名稱(第一航廈/第二航廈)時不帶乘車人聯絡資料；v1.2.1：「地址1／地址2…」沒填聯絡人的地址預設帶乘車人姓名＋電話；v1.2.0：新增「➕ 補訂回程」(客人先訂單趟、之後才訂回程：原單改成 單號-A、新增 單號-B，同中控台功能，需gas v2.2.420)；接送機有加點時，客人確認文字／預約明細圖改成像司機系統「地址1／地址2／地址3…」依行車順序編號、每個地址下一行「聯絡 姓名 電話」(行事曆、客人卡片同步，需gas v2.2.428)；v1.1.3：新增「帳務備註」欄(選固定客戶範本會自動帶入「固定客戶」表的「帳務備註」欄，複製舊單也會帶，只有客服/中控看得到，司機看不到；需gas v2.2.423)； // v1.1.2：路線的箭頭改成「→ 」(後面多一個空格，跟系統卡片一樣)； // v1.1.1：客人確認文字(預約成功通知)單程拿掉「航班編號／接送機場／加點地址」，接送地址改成「起點→加點→終點」一條路線，回程整條反過來； // v1.1.0：複製舊單／帶入另一腿時，姓名欄只放名字、稱謂自動選進「稱謂」下拉(不再整串帶「王小姐」)(搭配gas v2.2.419更準，沒更新也會自己拆)； // v1.0.99：行李欄位順序改「大型→中型→登機」； // v1.0.98：貼上客人訊息解析地址時，自動拿掉地址尾巴的手機/市話(例如「…4樓之2；0912580590」)； v1.0.97：多台車(C2起)每台可選填不同的乘車人姓名／稱謂／電話／地址／加點(預設收合、空白沿用C1，訂車人維持C1，需gas v2.2.411)。 v1.0.96：車型選單補上「New Alphard 40系」(原本只有小車/大車/進口商務車，跟客人訂車頁不一致；第2台起的車型也同步)，貼文字解析車型時Alphard歸到New Alphard 40系、不再被當成進口商務車。 // v1.0.95：新增「特約／月結企業客戶」欄(輸入統編或特約代號，查到公司後帶入、付款方式改月結簽單，需gas v2.2.407)；  v1.0.94：數字欄位(車資等)拿掉上下箭頭，滾輪/方向鍵不會再改數字； v1.0.93：航班欄位(去程/回程)手機鍵盤預設英文＋自動大寫； v1.0.92：來回預約新增「回程機場」(預設同去程)，機場不同時回程單存回程機場、航廈T1/T2依各趟機場決定、確認畫面/客人確認文字回程顯示回程機場，複製舊單會帶回程機場(需gas v2.2.393)； v1.0.91：行李分類改版——登機/托運中型(21-26吋)/托運大型(27-29吋)三個欄位，另有「含推車」「含胖胖箱(+尺寸)」細項(包含在大型內)；客人確認文字、預約明細圖、確認視窗行李改成「登機 1 + 中型 1 + 大型 2」，細項另起一行「含 …」；載入舊單會帶回細項(需gas v2.2.390)； v1.0.90：修正客人確認文字「特殊備註」只要備註內有「收據」兩個字就整段被換成「需開立收據」，其他備註內容消失；現在只把含收據的片段換成「需開立收據」，其餘內容保留； v1.0.89：預約明細圖片資訊欄有選舉牌時多一列「舉牌」(需gas v2.2.388)； v1.0.88：「對話文字快速帶入」移到頁面最上面，標題可點擊收折/展開(記住上次狀態)； v1.0.87：新增「訂車人同乘客」勾選(預設勾選＝跟以前一樣)，取消勾選可另外填訂車人姓名/稱謂/電話(代訂)；折扣碼查詢用訂車人電話；訂車人與乘客不同時客人確認文字多一行「訂車貴賓」；載入舊單會帶回訂車人(需gas v2.2.369)； v1.0.86：客人確認文字改成顯示每個地址下面的「聯絡人 電話」(原本會拿掉)，聯絡人欄提示字改成「客人確認文字會顯示此聯絡人與電話；司機端只看得到電話圖示」(需gas v2.2.367)； v1.0.85：每個地址(接送地址/起點/終點/各加點)可展開填「聯絡人稱呼＋電話」，存成「地址（聯絡：王小姐 0912-345-678）」，司機端自動拆成獨立一行可直接撥打；客人確認文字會拿掉這段，不外流；v1.0.84：建立成功後的「客人確認文字」來回單可分開複製「去程」「回程」或「兩則合併」(單台來回、多台車每一台都適用)；v1.0.83：修正「其他車輛設定」(C2起各台車型/車資/折扣)原本放在頁面上方、往下捲看不到，改放在「車輛台數」正下方，選台數後自動捲到那裡；v1.0.82：新增「車輛台數」(多台車)：C2 起各自車型/車資/回程車資/現收/折扣/加值，確認視窗逐台列出，建立後每台一份客人確認文字，單號=基底-C1/-C2…(需gas v2.2.360)；v1.0.81：電話可填分機(ext.56082、#13、分機13、轉13 都會整理成「03-571-2121 #56082」)，司機撥號會自動帶分機；v1.0.80：電話欄可輸入市話(02-1234-5678、03-123-4567…)，新增「客人沒有電話」勾選(記為0900-000-000，司機端顯示無電話，客人確認文字顯示「無」)；v1.0.79：①不填航班編號、只選航廈時，航廈也會送出(顯示「航廈 T2」)，編輯舊單時會拆回航廈欄位 ②金額欄位拿掉右邊上下箭頭、滾輪不會再改到金額。 v1.0.78：依使用者要求，同時預約來回有加點時，回程的行程順序要跟去程相反(去程 新竹→竹北(加點)→機場，回程 機場→竹北→新竹)：送出前的確認預覽，回程那腿的行程/加點改成顯示反轉後的順序(跟後端gas.html v2.2.345實際寫入一致)，去程與沒有加點的預約不變。 v1.0.77：依使用者要求，航班編號旁邊新增「航廈」選單(第一航廈T1/第二航廈T2/不確定，幫我查詢)，只有選「桃園機場」才出現，有填航班編號就一定要選(沒選送出會跳出缺漏欄位提示)；去程/回程各一個；選了以「航班｜T1/T2/？」(例如CI108｜T2)接在航班編號後面送出，複製舊單/載入舊單時會把已存的「CI108｜T2」拆回兩個欄位。 v1.0.76： 🚨修正buildOrderFeeRows來回程「來回總額」算錯的問題：客服用「補套用折扣碼」只對來回其中一腿單獨套用時(去程/回程的折扣碼/折扣金額欄位各自獨立)，原本只扣這一腿自己的discountAmount，另一腿單獨套用的那組折扣完全沒被扣到，導致來回總額比實際應付多。修正：合併去程/回程兩腿各自的discountAmt，「來回總額」的扣除改用合併後的金額。跟gas.html v2.2.292 buildBookingFeeContents_、admin.html buildReservationUpdateFeePreview同一套邏輯
     // v1.0.72 - 新增「複製舊單，快速建立新預約」功能：取消的訂單客人又想用同樣行程重新預約時(只是要換日期/時間)，不用整張表單重填，填舊單號查詢後，客人資料/地址/車型/人數行李/金額/加值折扣項目會整包帶入下面表單，唯獨日期時間留白由客服自行填寫新的時段。跟既有的「補建遺漏的去程/回程」是兩個獨立功能：那個查完會用recoveryBaseId/recoveryLegSuffix掛回舊單底下(維持-A/-B配對)，這個完全不動那兩個欄位，送出後一律是全新單號，不影響原本那筆舊單。實作參考fetchRecoveryAutoFill同一套用getManualBookingTextData查單、setValue逐欄位帶入的做法，額外處理了：單程行程起訖點分別對應到address/airport欄位、回程行程/金額/航班另外從回程那筆資料帶入、加值服務用parseStoredFeeExtras依去程/回程分別還原明細、折扣只取去程那筆避免兩腿重複記的折扣被加乘兩次、現場收現金額只在付款方式真的需要時才帶入
     // 「固定客戶範本」選擇改成自訂清單，不再用原生下拉選單(在手機上選項一長就變成一長串塞在一起完全看不清楚)。改成一張張獨立卡片：來源標籤(粉紅底)+姓名+電話在同一行，地址另起一行，點擊即可帶入，選中的那筆會highlight。原本的select仍保留(隱藏)當作資料狀態，不影響既有的applyTemplate等邏輯
     // 不再用 Google callback 機制初始化地圖（callback 容易撞上 async 腳本執行時機競速問題，
@@ -880,6 +886,7 @@
       renderDiscountItems();
       renderExtraStops();
       bindExtraCarsEvents();
+      bindMainRetDiff_();
       updateVehicleUi();
       loadTemplates();
       toggleManualCashFields();
@@ -1191,7 +1198,7 @@
         if (rt.flightNumber) setValue("returnFlightNumber", rt.flightNumber);
         if (rt.airport && $("returnAirport")) setValue("returnAirport", rt.airport);
         if (rt.fare) setValue("returnFare", rt.fare);
-        applied.push("回程" + [rt.rideDate ? "日期" : "", rt.rideTime ? "時間" : "", rt.flightNumber ? "航班" : "", rt.fare ? "車資" : ""].filter(Boolean).join("/"));
+        applied.push("另一趟" + [rt.rideDate ? "日期" : "", rt.rideTime ? "時間" : "", rt.flightNumber ? "航班" : "", rt.fare ? "車資" : ""].filter(Boolean).join("/"));
         if (typeof syncTerminalVisibility === "function") syncTerminalVisibility();
       }
       ["customerName", "phone", "rideDate", "rideTime", "address", "fare"].forEach(key => {
@@ -1199,8 +1206,8 @@
       });
       if (result.titleGuessed) missing.push("稱謂(訊息沒寫，先帶先生)");
       if (rt && (rt.rideDate || rt.rideTime)) {
-        if (!rt.rideTime) missing.push("回程時間");
-        if (!rt.fare) missing.push("回程車資");
+        if (!rt.rideTime) missing.push("另一趟時間");
+        if (!rt.fare) missing.push("另一趟車資");
       }
       updateSummary();
       $("messageParserResult").innerHTML = [
@@ -1620,6 +1627,7 @@
       syncReturnType();
       toggleManualCashFields();
       renderExtraCars();
+      renderMainRetDiff_();
       updateSummary();
     }
 
@@ -2037,6 +2045,8 @@
         surchargeItems: surchargeItems.map(x => Object.assign({}, x)),
         discountItems: [],
         remarks: $("remarks").value,
+        returnDiff: !!($("returnDiff") && $("returnDiff").checked && $("hasReturn").checked),
+        ret: mainRet ? JSON.parse(JSON.stringify(mainRet)) : null,
         collapsed: false
       };
     }
@@ -2076,15 +2086,17 @@
     }
     function feeRowsHtml(carIdx, kind, list) {
       const word = kind === "discount" ? "扣" : "加";
+      const fc = extraCars[carIdx] || {};
+      const fn = tripNames_(fc.serviceType, carReturnType_(fc));
       if (!list.length) return `<div class="hint !mt-0">${kind === "discount" ? "尚未加入折扣" : "尚未加入加值"}</div>`;
       return list.map((item, idx) => `
         <div class="grid grid-cols-[1fr_88px_112px_34px] gap-1.5 items-center mt-1.5">
           <input type="text" value="${escapeHtml(item.label)}" data-car="${carIdx}" data-kind="${kind}" data-idx="${idx}" data-field="label" placeholder="${kind === "discount" ? "名稱，例如 客服折讓" : "名稱，例如 接機服務"}">
           <input type="number" min="0" value="${item.amount || ""}" data-car="${carIdx}" data-kind="${kind}" data-idx="${idx}" data-field="amount" placeholder="金額">
           <select data-car="${carIdx}" data-kind="${kind}" data-idx="${idx}" data-field="target">
-            <option value="outbound" ${item.target === "outbound" ? "selected" : ""}>去程</option>
-            <option value="return" ${item.target === "return" ? "selected" : ""}>回程</option>
-            <option value="both" ${item.target === "both" ? "selected" : ""}>去回程各${word}</option>
+            <option value="outbound" ${item.target === "outbound" ? "selected" : ""}>${fn.t1}</option>
+            <option value="return" ${item.target === "return" ? "selected" : ""}>${fn.t2}</option>
+            <option value="both" ${item.target === "both" ? "selected" : ""}>兩趟各${word}</option>
           </select>
           <button type="button" class="secondary-btn !min-h-[34px] !px-0" data-remove-fee="${kind}" data-car="${carIdx}" data-idx="${idx}" aria-label="刪除">✕</button>
         </div>`).join("");
@@ -2103,46 +2115,190 @@
       return `<div class="time-pair"><select data-car="${i}" data-field="${field}" data-part="h" aria-label="小時">${hours.map(h => `<option value="${h}" ${h === hh ? "selected" : ""}>${h}</option>`).join("")}</select><select data-car="${i}" data-field="${field}" data-part="m" aria-label="分鐘">${mins.map(x => `<option value="${x}" ${x === mm ? "selected" : ""}>${x}</option>`).join("")}</select></div>`;
     }
     // 站點清單：接機＝機場固定最上面、送機＝機場固定最下面；單程＝第一格起點、最後一格終點。可↑↓調順序
-    function carStopsList_(c) {
-      const st = Array.isArray(c.stops) ? c.stops.slice() : [];
-      const min = carIsOneWay_(c) ? 2 : 1;
+    // v1.2.28：兩趟一律用「送機／接機」稱呼(單程來回＝第一趟／第二趟)，不用去程／回程
+    function tripNames_(t1, t2) {
+      t1 = String(t1 || ""); t2 = String(t2 || "");
+      if (!t1 || !t2 || t1 === t2) return { t1: "第一趟", t2: "第二趟" };
+      return { t1, t2 };
+    }
+    function mainTripNames_() { const st = $("serviceType").value; return tripNames_(st, st === "單程" ? "單程" : $("returnServiceType").value); }
+    function pTripNames_(p) { return tripNames_(p.serviceType, p.returnServiceType || (p.serviceType === "送機" ? "接機" : p.serviceType === "接機" ? "送機" : p.serviceType)); }
+    function applyMainTripLabels_() {
+      const n = mainTripNames_();
+      document.querySelectorAll("[data-mt1]").forEach(e => { e.textContent = n.t1; });
+      document.querySelectorAll("[data-mt2]").forEach(e => { e.textContent = n.t2; });
+      const mc = $("manualCashCollected"), rc = $("returnManualCashCollected");
+      if (mc) mc.placeholder = ($("hasReturn").checked ? n.t1 : "") + "現收，例如 500";
+      if (rc) rc.placeholder = n.t2 + "現收，例如 500";
+    }
+    function fixStops_(arr, oneWay) {
+      const st = Array.isArray(arr) ? arr.slice() : [];
+      const min = oneWay ? 2 : 1;
       while (st.length < min) st.push("");
       return st;
     }
-    function carRoutePath_(c) {
-      const st = carStopsList_(c).map(x => String(x || "").trim() || "（未填）");
-      if (carIsOneWay_(c)) return st;
-      return c.serviceType === "接機" ? [c.airport].concat(st) : st.concat([c.airport]);
+    function carStopsList_(c) { return fixStops_(c.stops, carIsOneWay_(c)); }
+    // v1.2.27：回程跟去程不一樣(地址／車型／人數行李)。ret＝{stops(回程實際走的順序), carType, adult…, seatDetails}
+    function newRetFrom_(src, stopsOut, oneWay) {
+      return {
+        stops: fixStops_(stopsOut, oneWay).slice().reverse(), // 預設＝去程反過來
+        carType: src.carType, adult: src.adult, child: src.child, infant: src.infant,
+        checked: src.checked, medium: src.medium, carry: src.carry, stroller: src.stroller, fatbox: src.fatbox, fatboxSize: src.fatboxSize,
+        seatDetails: src.seatDetails || "無"
+      };
     }
-    function carStopsHtml_(c, i) {
-      const st = carStopsList_(c);
-      const oneWay = carIsOneWay_(c);
-      const ap = (txt) => `<div class="stop-row"><span class="stop-tag ap">${txt}</span><div class="stop-fix">✈ ${escapeHtml(c.airport)}（上面選的機場）</div></div><div class="stop-arrow">↓</div>`;
+    // 回程送給後端的欄位(系統格式：送機／接機＝主地址是第1站、其餘放其他地址；單程＝主地址起點、終點另外帶)
+    function retPayload_(ret, oneWay) {
+      const st = fixStops_(ret.stops, oneWay).map(x => String(x || "").trim());
+      return {
+        returnDiff: true,
+        returnCarType: ret.carType,
+        returnPaxCount: carPaxText_(ret), returnLuggageCount: carLugText_(ret), returnSportLuggage: carSportText_(ret),
+        returnSeatDetails: String(ret.seatDetails || "").trim() || "無",
+        returnAddress: st[0] || "",
+        returnExtraLocation: (oneWay ? st.slice(1, -1) : st.slice(1)).filter(Boolean).join("\n"),
+        returnEndAddress: oneWay ? (st[st.length - 1] || "") : ""
+      };
+    }
+    const NO_RET_DIFF_ = { returnDiff: false, returnCarType: "", returnPaxCount: "", returnLuggageCount: "", returnSportLuggage: "", returnSeatDetails: "", returnAddress: "", returnExtraLocation: "", returnEndAddress: "" };
+    // 通用站點編輯器：key＝"mr"(主表單回程)、"c{i}o"(第i台去程)、"c{i}r"(第i台回程)
+    function stopsTarget_(key) {
+      if (key === "mr") {
+        const oneWay = $("serviceType").value === "單程";
+        return { obj: mainRet, oneWay, type: oneWay ? "單程" : $("returnServiceType").value, airport: $("returnAirport").value || $("airport").value };
+      }
+      const m = String(key).match(/^c(\d+)([or])$/); if (!m) return null;
+      const car = extraCars[Number(m[1])]; if (!car) return null;
+      if (m[2] === "o") return { obj: car, oneWay: carIsOneWay_(car), type: car.serviceType, airport: car.airport };
+      if (!car.ret) car.ret = newRetFrom_(car, car.stops, carIsOneWay_(car));
+      return { obj: car.ret, oneWay: carIsOneWay_(car), type: carReturnType_(car), airport: car.returnAirport || car.airport };
+    }
+    function stopsPath_(t) {
+      const st = fixStops_(t.obj.stops, t.oneWay).map(x => String(x || "").trim() || "（未填）");
+      if (t.oneWay) return st;
+      return t.type === "接機" ? [t.airport].concat(st) : st.concat([t.airport]);
+    }
+    function stopsEditorHtml_(key) {
+      const t = stopsTarget_(key); if (!t) return "";
+      const st = fixStops_(t.obj.stops, t.oneWay);
+      const ap = (txt) => `<div class="stop-row"><span class="stop-tag ap">${txt}</span><div class="stop-fix">✈ ${escapeHtml(t.airport)}（${key.endsWith("o") ? "上面選的機場" : escapeHtml(t.type) + "機場"}）</div></div>`;
       const rows = st.map((v, k) => {
-        const tag = oneWay ? (k === 0 ? "起點" : (k === st.length - 1 ? "終點" : "中途" + k)) : "第" + (k + 1) + "站";
-        const canDel = oneWay ? (k > 0 && k < st.length - 1) : k > 0;
+        const tag = t.oneWay ? (k === 0 ? "起點" : (k === st.length - 1 ? "終點" : "中途" + k)) : "第" + (k + 1) + "站";
+        const canDel = t.oneWay ? (k > 0 && k < st.length - 1) : k > 0;
+        const ph = t.oneWay ? (k === 0 ? "起點地址" : k === st.length - 1 ? "終點地址" : "中途地址") : (k === 0 ? (t.type === "接機" ? "出機場後第一個下車的地址" : "第一個上車的地址") : "下一站地址");
         return `<div class="stop-row"><span class="stop-tag">${tag}</span>
-          <input type="text" value="${escapeHtml(v)}" data-car="${i}" data-field="stop" data-idx="${k}" placeholder="${oneWay ? (k === 0 ? "起點地址" : k === st.length - 1 ? "終點地址" : "中途地址") : (k === 0 ? (c.serviceType === "接機" ? "出機場後第一個下車的地址" : "第一個上車的地址") : "下一站地址")}">
-          <button type="button" class="stop-mv" data-stop-mv="-1" data-car="${i}" data-idx="${k}" ${k === 0 ? "disabled" : ""} aria-label="往上">↑</button>
-          <button type="button" class="stop-mv" data-stop-mv="1" data-car="${i}" data-idx="${k}" ${k === st.length - 1 ? "disabled" : ""} aria-label="往下">↓</button>
-          ${canDel ? `<button type="button" class="stop-mv" data-stop-del="${k}" data-car="${i}" aria-label="刪除">✕</button>` : `<span class="stop-mv" style="visibility:hidden">✕</span>`}
+          <input type="text" value="${escapeHtml(v)}" data-sk="${key}" data-sidx="${k}" placeholder="${ph}">
+          <button type="button" class="stop-mv" data-sk-mv="-1" data-sk="${key}" data-sidx="${k}" ${k === 0 ? "disabled" : ""} aria-label="往上">↑</button>
+          <button type="button" class="stop-mv" data-sk-mv="1" data-sk="${key}" data-sidx="${k}" ${k === st.length - 1 ? "disabled" : ""} aria-label="往下">↓</button>
+          ${canDel ? `<button type="button" class="stop-mv" data-sk-del="${k}" data-sk="${key}" aria-label="刪除">✕</button>` : `<span class="stop-mv" style="visibility:hidden">✕</span>`}
         </div>`;
       }).join('<div class="stop-arrow">↓</div>');
       return `
-              <div class="car-route" id="carRoute${i}">${escapeHtml(carRoutePath_(c).join(" → "))}<small>車子實際走的路線(填完自動更新)</small></div>
-              ${!oneWay && c.serviceType === "接機" ? ap("起點") : ""}
+              <div class="car-route" id="route-${key}">${escapeHtml(stopsPath_(t).join(" → "))}<small>${escapeHtml(t.type)}車子實際走的路線(填完自動更新)</small></div>
+              ${!t.oneWay && t.type === "接機" ? ap("起點") + '<div class="stop-arrow">↓</div>' : ""}
               ${rows}
-              ${!oneWay && c.serviceType !== "接機" ? '<div class="stop-arrow">↓</div>' + ap("終點").replace('<div class="stop-arrow">↓</div>', "") : ""}
-              <button type="button" class="secondary-btn mt-1.5 !min-h-[32px] !text-xs" data-stop-add="${i}">＋ 再加一站</button>`;
+              ${!t.oneWay && t.type !== "接機" ? '<div class="stop-arrow">↓</div>' + ap("終點") : ""}
+              <button type="button" class="secondary-btn mt-1.5 !min-h-[32px] !text-xs" data-sk-add="${key}">＋ 再加一站</button>`;
     }
+    function rerenderStopsOwner_(key) { if (key === "mr") renderMainRetDiff_(); else renderExtraCars(); updateSummary(); }
+    function bindStopsEditor_() {
+      document.addEventListener("input", e => {
+        const el = e.target; if (!el.matches || !el.matches("input[data-sk]")) return;
+        const key = el.dataset.sk, t = stopsTarget_(key); if (!t) return;
+        t.obj.stops = fixStops_(t.obj.stops, t.oneWay); t.obj.stops[Number(el.dataset.sidx)] = el.value;
+        const rt = $("route-" + key); if (rt) rt.innerHTML = escapeHtml(stopsPath_(t).join(" → ")) + `<small>${escapeHtml(t.type)}車子實際走的路線(填完自動更新)</small>`;
+        if (key !== "mr") { const ci = Number(key.match(/^c(\d+)/)[1]); const se = $("carSum" + ci); if (se) se.textContent = extraCarSummary_(extraCars[ci]); }
+        updateSummary();
+      });
+      document.addEventListener("click", e => {
+        const mv = e.target.closest && e.target.closest("[data-sk-mv]");
+        if (mv) { const key = mv.dataset.sk, t = stopsTarget_(key); const k = Number(mv.dataset.sidx), d = Number(mv.dataset.skMv); const st = fixStops_(t.obj.stops, t.oneWay); if (st[k + d] !== undefined) { [st[k], st[k + d]] = [st[k + d], st[k]]; t.obj.stops = st; rerenderStopsOwner_(key); } return; }
+        const del = e.target.closest && e.target.closest("[data-sk-del]");
+        if (del) { const key = del.dataset.sk, t = stopsTarget_(key); const st = fixStops_(t.obj.stops, t.oneWay); st.splice(Number(del.dataset.skDel), 1); t.obj.stops = st; rerenderStopsOwner_(key); return; }
+        const add = e.target.closest && e.target.closest("[data-sk-add]");
+        if (add) { const key = add.dataset.skAdd, t = stopsTarget_(key); const st = fixStops_(t.obj.stops, t.oneWay); if (t.oneWay) st.splice(st.length - 1, 0, ""); else st.push(""); t.obj.stops = st; rerenderStopsOwner_(key); return; }
+      });
+    }
+    // 人數／行李／座椅編輯器(主表單回程用 data-mr，卡片用 data-car＋data-field)
+    function paxEditorHtml_(o, attr) {
+      const sel = (f, max, min, lab) => `<div><div class="pb-lab">${lab}</div><select ${attr(f)}>${numOpts_(o[f], max, min)}</select></div>`;
+      return `
+              <div class="grid grid-cols-2 gap-1.5">
+                <div><div class="pb-lab">車型</div><select ${attr("carType")}>${optHtml_(CAR_TYPE_OPTIONS, o.carType)}</select></div>
+                <div><div class="pb-lab">座椅</div><input type="text" value="${escapeHtml(o.seatDetails || "無")}" ${attr("seatDetails")}></div>
+              </div>
+              <div class="pb-lab mt-2">人數</div>
+              <div class="grid grid-cols-3 gap-1.5">${sel("adult", 8, 1, "大人")}${sel("child", 8, 0, "兒童")}${sel("infant", 8, 0, "幼兒")}</div>
+              <div class="pb-inner">
+                <div class="pb-lab">行李</div>
+                <div class="grid grid-cols-3 gap-1.5">${sel("checked", 8, 0, "大型 27-29吋")}${sel("medium", 8, 0, "中型 21-26吋")}${sel("carry", 8, 0, "登機 20吋以下")}</div>
+                <div class="pb-lab mt-1.5">大型裡面含（不用另外加到大型）</div>
+                <div class="grid grid-cols-3 gap-1.5">${sel("stroller", 8, 0, "推車")}${sel("fatbox", 8, 0, "胖胖箱")}
+                  <div><div class="pb-lab">胖胖箱尺寸</div><input type="text" value="${escapeHtml(o.fatboxSize || "")}" ${attr("fatboxSize")} placeholder="選填"></div></div>
+              </div>`;
+    }
+    // 主表單的回程(勾「回程跟去程不一樣」才用)
+    let mainRet = null;
+    function mainOutAsCar_() {
+      const c = c1AsCar_();
+      return c;
+    }
+    function renderMainRetDiff_() {
+      const wrap = $("returnDiffWrap"); if (!wrap) return;
+      const on = $("returnDiff").checked && $("hasReturn").checked && $("serviceType").value !== "包車";
+      wrap.classList.toggle("hidden", !on);
+      if (!on) { wrap.innerHTML = ""; return; }
+      if (!mainRet) { const c = mainOutAsCar_(); mainRet = newRetFrom_(c, c.stops, $("serviceType").value === "單程"); }
+      wrap.innerHTML = `<div class="ret-blk">
+          <div class="pb-head" style="color:#A8345A">${mainTripNames_().t2}行程</div>
+          ${stopsEditorHtml_("mr")}
+          <div class="pb-head mt-3" style="color:#A8345A">${mainTripNames_().t2}用車</div>
+          ${paxEditorHtml_(mainRet, f => `data-mr="${f}"`)}
+        </div>`;
+    }
+    function bindMainRetDiff_() {
+      $("returnDiff").addEventListener("change", () => { if ($("returnDiff").checked) mainRet = null; renderMainRetDiff_(); updateSummary(); });
+      ["returnAirport", "airport", "returnServiceType", "serviceType"].forEach(id => $(id).addEventListener("change", () => { if ($("returnDiff").checked) renderMainRetDiff_(); }));
+      const wrap = $("returnDiffWrap");
+      const on = (e) => { const el = e.target; if (!el.dataset || !el.dataset.mr || !mainRet) return; mainRet[el.dataset.mr] = el.value; updateSummary(); };
+      wrap.addEventListener("input", on); wrap.addEventListener("change", on);
+      bindStopsEditor_();
+    }
+    // 回程的檢視資料：去程 p 套上回程自己的車型人數行李、地址(給確認視窗／客人確認文字用)
+    function returnView_(p) {
+      if (!p.hasReturn || !p.returnDiff) return p;
+      const v = Object.assign({}, p, {
+        carType: p.returnCarType || p.carType, paxCount: p.returnPaxCount || p.paxCount, luggageCount: p.returnLuggageCount || p.luggageCount,
+        sportLuggage: p.returnSportLuggage || p.sportLuggage, seatDetails: p.returnSeatDetails || p.seatDetails
+      });
+      if (String(p.returnAddress || "").trim()) {
+        if (p.serviceType === "單程") { v.address = p.returnEndAddress; v.airport = p.returnAddress; v.extraLocation = String(p.returnExtraLocation || "").split("\n").filter(Boolean).reverse().join("\n"); }
+        else { v.address = p.returnAddress; v.extraLocation = p.returnExtraLocation || ""; }
+      }
+      return v;
+    }
+    // 回程整條路線(照實際走的順序)
+    function returnPathText_(p) {
+      const ap = p.returnAirport || p.airport;
+      if (p.returnDiff && String(p.returnAddress || "").trim()) {
+        const mid = String(p.returnExtraLocation || "").split("\n").map(x => x.trim()).filter(Boolean);
+        if (p.serviceType === "單程") return [p.returnAddress].concat(mid, [p.returnEndAddress]).filter(Boolean).join(" → ");
+        const st = [p.returnAddress].concat(mid);
+        return ((p.returnServiceType === "接機") ? [ap].concat(st) : st.concat([ap])).filter(Boolean).join(" → ");
+      }
+      return null;
+    }
+    function carRoutePath_(c) { return stopsPath_(stopsTarget_("c" + extraCars.indexOf(c) + "o") || { obj: c, oneWay: carIsOneWay_(c), type: c.serviceType, airport: c.airport }); }
+    function carStopsHtml_(c, i) { return stopsEditorHtml_("c" + i + "o"); }
     function carTripHtml_(c, i) {
       const oneWay = carIsOneWay_(c);
       const seg = CAR_SERVICE_TYPES.map(t => `<button type="button" class="seg-btn ${c.serviceType === t ? "on" : ""}" data-car-type="${t}" data-car="${i}">${t}</button>`).join("");
-      const flightRow = (pre, airport, flight, term) => `
-              <div><div class="pb-lab">${pre}機場</div><select data-car="${i}" data-field="${pre ? "returnAirport" : "airport"}" data-rerender="1">${optHtml_(CAR_AIRPORTS, airport)}</select></div>
+      const cn = tripNames_(c.serviceType, carReturnType_(c));
+      const flightRow = (isRet, pre, airport, flight, term) => `
+              <div><div class="pb-lab">${pre}機場</div><select data-car="${i}" data-field="${isRet ? "returnAirport" : "airport"}" data-rerender="1">${optHtml_(CAR_AIRPORTS, airport)}</select></div>
               <div><div class="pb-lab">${pre}航班${airport === "桃園機場" ? "／航廈" : ""}</div><div class="flex gap-1">
-                <input type="text" value="${escapeHtml(flight || "")}" data-car="${i}" data-field="${pre ? "returnFlight" : "flight"}" placeholder="例 BR198" style="text-transform:uppercase;min-width:0" autocapitalize="characters">
-                ${airport === "桃園機場" ? termSel_(i, pre ? "returnTerminal" : "terminal", term) : ""}</div></div>`;
+                <input type="text" value="${escapeHtml(flight || "")}" data-car="${i}" data-field="${isRet ? "returnFlight" : "flight"}" placeholder="例 BR198" style="text-transform:uppercase;min-width:0" autocapitalize="characters">
+                ${airport === "桃園機場" ? termSel_(i, isRet ? "returnTerminal" : "terminal", term) : ""}</div></div>`;
       return `
             <div class="pax-blk mt-3">
               <div class="pb-head"><span class="pb-num">1</span>行程<span class="pb-tip">這台去哪裡、什麼時候</span></div>
@@ -2150,15 +2306,23 @@
               <div class="grid grid-cols-2 gap-1.5 mt-2">
                 <div><div class="pb-lab">日期</div><input type="date" value="${escapeHtml(c.rideDate || "")}" data-car="${i}" data-field="rideDate"></div>
                 <div><div class="pb-lab">時間（24小時）</div>${timeSel_(i, "rideTime", c.rideTime)}</div>
-                ${oneWay ? "" : flightRow("", c.airport, c.flight, c.terminal)}
+                ${oneWay ? "" : flightRow(false, "", c.airport, c.flight, c.terminal)}
               </div>
               ${carStopsHtml_(c, i)}
-              <div class="mt-2"><label class="pill"><input type="checkbox" data-car="${i}" data-field="hasReturn" data-rerender="1" ${c.hasReturn ? "checked" : ""}> 這台同時預約回程（${carReturnType_(c)}）</label></div>
+              <div class="mt-2"><label class="pill"><input type="checkbox" data-car="${i}" data-field="hasReturn" data-rerender="1" ${c.hasReturn ? "checked" : ""}> 這台同時預約來回（另一趟：${carReturnType_(c)}）</label></div>
               ${c.hasReturn ? `<div class="pb-inner"><div class="grid grid-cols-2 gap-1.5">
-                <div><div class="pb-lab">回程日期</div><input type="date" value="${escapeHtml(c.returnDate || "")}" data-car="${i}" data-field="returnDate"></div>
-                <div><div class="pb-lab">回程時間（24小時）</div>${timeSel_(i, "returnTime", c.returnTime)}</div>
-                ${oneWay ? "" : flightRow("回程", c.returnAirport, c.returnFlight, c.returnTerminal)}
-              </div></div>` : ""}
+                <div><div class="pb-lab">${cn.t2}日期</div><input type="date" value="${escapeHtml(c.returnDate || "")}" data-car="${i}" data-field="returnDate"></div>
+                <div><div class="pb-lab">${cn.t2}時間（24小時）</div>${timeSel_(i, "returnTime", c.returnTime)}</div>
+                ${oneWay ? "" : flightRow(true, cn.t2, c.returnAirport, c.returnFlight, c.returnTerminal)}
+              </div>
+              <div class="mt-2"><label class="pill"><input type="checkbox" data-car="${i}" data-field="returnDiff" data-rerender="1" ${c.returnDiff ? "checked" : ""}> ${cn.t2}的地址／車型／人數行李跟${cn.t1}不一樣</label></div>
+              ${c.returnDiff ? `<div class="ret-blk">
+                <div class="pb-head" style="color:#A8345A">${cn.t2}行程</div>
+                ${stopsEditorHtml_("c" + i + "r")}
+                <div class="pb-head mt-3" style="color:#A8345A">${cn.t2}用車</div>
+                ${paxEditorHtml_(c.ret || (c.ret = newRetFrom_(c, c.stops, oneWay)), f => `data-car="${i}" data-field="ret.${f}"`)}
+              </div>` : ""}
+              </div>` : ""}
             </div>
             <div class="pax-blk">
               <div class="pb-head"><span class="pb-num">2</span>乘車人<span class="pb-tip">空白＝同第1台乘客</span></div>
@@ -2172,16 +2336,17 @@
     function carFeeHtml_(c, i) {
       const pay = carPay_(c);
       const cash = needsManualCash(pay);
+      const cn = tripNames_(c.serviceType, carReturnType_(c));
       return `
             <div class="pax-blk">
               <div class="pb-head"><span class="pb-num">4</span>費用</div>
               <div class="pb-lab">付款方式（這台）${c.payOverride ? `<span class="pay-own">已單獨改</span> <button type="button" class="pay-reset" data-pay-reset="${i}">改回同訂車人</button>` : `<span class="pay-same">同上面的付款方式</span>`}</div>
               <select data-car="${i}" data-field="paymentMethod" data-rerender="1">${optHtml_(PAY_OPTIONS, pay)}</select>
               <div class="grid grid-cols-2 gap-1.5 mt-2">
-                <div><div class="pb-lab">車資</div><input type="number" inputmode="numeric" min="0" value="${c.fare || ""}" data-car="${i}" data-field="fare" placeholder="客服手動輸入"></div>
-                ${c.hasReturn ? `<div><div class="pb-lab">回程車資</div><input type="number" inputmode="numeric" min="0" value="${c.returnFare || ""}" data-car="${i}" data-field="returnFare" placeholder="不填則同去程"></div>` : ""}
-                ${cash ? `<div><div class="pb-lab">去程現收</div><input inputmode="numeric" value="${escapeHtml(c.manualCashCollected || "")}" data-car="${i}" data-field="manualCashCollected" placeholder="例如 500"></div>` : ""}
-                ${cash && c.hasReturn ? `<div><div class="pb-lab">回程現收</div><input inputmode="numeric" value="${escapeHtml(c.returnManualCashCollected || "")}" data-car="${i}" data-field="returnManualCashCollected" placeholder="例如 500"></div>` : ""}
+                <div><div class="pb-lab">${c.hasReturn ? cn.t1 : ""}車資</div><input type="number" inputmode="numeric" min="0" value="${c.fare || ""}" data-car="${i}" data-field="fare" placeholder="客服手動輸入"></div>
+                ${c.hasReturn ? `<div><div class="pb-lab">${cn.t2}車資</div><input type="number" inputmode="numeric" min="0" value="${c.returnFare || ""}" data-car="${i}" data-field="returnFare" placeholder="不填則同上"></div>` : ""}
+                ${cash ? `<div><div class="pb-lab">${c.hasReturn ? cn.t1 : ""}現收</div><input inputmode="numeric" value="${escapeHtml(c.manualCashCollected || "")}" data-car="${i}" data-field="manualCashCollected" placeholder="例如 500"></div>` : ""}
+                ${cash && c.hasReturn ? `<div><div class="pb-lab">${cn.t2}現收</div><input inputmode="numeric" value="${escapeHtml(c.returnManualCashCollected || "")}" data-car="${i}" data-field="returnManualCashCollected" placeholder="例如 500"></div>` : ""}
               </div>
               <div class="mt-2"><div class="pb-lab">加值（這一台自己的）</div>${feeRowsHtml(i, "surcharge", c.surchargeItems)}
                 <button type="button" class="secondary-btn mt-1.5 !min-h-[34px] !text-xs" data-add-fee="surcharge" data-car="${i}">＋ 新增加值</button></div>
@@ -2231,7 +2396,7 @@
       { key: "type", label: "行程類型、機場", fields: ["serviceType", "airport"] },
       { key: "time", label: "日期、時間、航班", fields: ["rideDate", "rideTime", "flight", "terminal"], off: true, tip: "不同天就不要勾" },
       { key: "addr", label: "地址（全部站點）", fields: ["stops"] },
-      { key: "ret", label: "回程設定（含回程日期時間航班）", fields: ["hasReturn", "returnDate", "returnTime", "returnAirport", "returnFlight", "returnTerminal"] },
+      { key: "ret", label: "來回設定（另一趟的日期時間航班、地址、車型）", fields: ["hasReturn", "returnDate", "returnTime", "returnAirport", "returnFlight", "returnTerminal", "returnDiff", "ret"] },
       { key: "pax", label: "乘車人", fields: ["customerName", "customerTitle", "phone"] },
       { key: "car", label: "車型、人數、行李、座椅", fields: ["carType", "adult", "child", "infant", "checked", "medium", "carry", "stroller", "fatbox", "fatboxSize", "seatDetails"] },
       { key: "fee", label: "付款方式、車資、現收、加值", fields: ["payOverride", "paymentMethod", "fare", "returnFare", "manualCashCollected", "returnManualCashCollected", "surchargeItems"] },
@@ -2289,7 +2454,7 @@
     }
     function extraCarSummary_(c) {
       const pay = carPay_(c) + (c.payOverride ? "(已單獨改)" : "");
-      return [carTripShort_(c) + (c.hasReturn ? "＋回程" + shortDate_(c.returnDate) : ""), c.carType, shortPaxLug_(c.adult || 0, c.child || 0, c.infant || 0, c.checked || 0, c.medium || 0, c.carry || 0), money(c.fare) ? "$" + money(c.fare).toLocaleString() : "車資未填", pay].join("｜");
+      return [carTripShort_(c) + (c.hasReturn ? "＋" + carReturnType_(c) + shortDate_(c.returnDate) + (c.returnDiff && c.ret ? "(" + c.ret.carType + ")" : "") : ""), c.carType, shortPaxLug_(c.adult || 0, c.child || 0, c.infant || 0, c.checked || 0, c.medium || 0, c.carry || 0), money(c.fare) ? "$" + money(c.fare).toLocaleString() : "車資未填", pay].join("｜");
     }
     function extraCarPaxHtml_(c, i) {
       const sel = (field, v, max, min, lab) => `<div><div class="pb-lab">${lab}</div><select data-car="${i}" data-field="${field}">${numOpts_(v, max, min)}</select></div>`;
@@ -2326,6 +2491,10 @@
           if (item) item[field] = field === "amount" ? money(el.value) : el.value;
         } else if (el.type === "checkbox") {
           car[field] = el.checked;
+          if (field === "returnDiff" && el.checked) car.ret = newRetFrom_(car, car.stops, carIsOneWay_(car));
+        } else if (field.indexOf("ret.") === 0) {
+          if (!car.ret) car.ret = newRetFrom_(car, car.stops, carIsOneWay_(car));
+          car.ret[field.slice(4)] = el.value;
         } else if (field === "stop") {
           car.stops = carStopsList_(car); car.stops[Number(el.dataset.idx)] = el.value;
           const rt = $("carRoute" + ci); if (rt) rt.innerHTML = escapeHtml(carRoutePath_(car).join(" → ")) + "<small>車子實際走的路線(填完自動更新)</small>";
@@ -2425,6 +2594,7 @@
           companyApplies: !!manualCompany && (pay.includes("月結") || pay.includes("簽單"))
         };
         if (v.companyApplies) v.companyShort = manualCompany.shortName || manualCompany.name;
+        Object.assign(v, (c.hasReturn && c.returnDiff && c.ret) ? retPayload_(c.ret, oneWay) : NO_RET_DIFF_);
         Object.assign(v, carIdentityOverride(c, p));
         list.push(v);
       });
@@ -2470,9 +2640,9 @@
             <input type="text" value="${escapeHtml(item.label)}" data-idx="${idx}" data-field="label" class="surcharge-field" placeholder="名稱，例如 接機服務">
             <input type="number" min="0" value="${item.amount || ""}" data-idx="${idx}" data-field="amount" class="surcharge-field" placeholder="金額">
             <select data-idx="${idx}" data-field="target" class="surcharge-field">
-              <option value="outbound" ${item.target === "outbound" ? "selected" : ""}>去程</option>
-              <option value="return" ${item.target === "return" ? "selected" : ""}>回程</option>
-              <option value="both" ${item.target === "both" ? "selected" : ""}>去回程各加</option>
+              <option value="outbound" ${item.target === "outbound" ? "selected" : ""}>${mainTripNames_().t1}</option>
+              <option value="return" ${item.target === "return" ? "selected" : ""}>${mainTripNames_().t2}</option>
+              <option value="both" ${item.target === "both" ? "selected" : ""}>兩趟各加</option>
             </select>
             <button type="button" class="secondary-btn !min-h-[36px] !px-0" data-remove-idx="${idx}" aria-label="刪除">✕</button>
           </div>`).join("");
@@ -2518,9 +2688,9 @@
             <input type="text" value="${escapeHtml(item.label)}" data-idx="${idx}" data-field="label" class="discount-field" placeholder="名稱，例如 客服折讓">
             <input type="number" min="0" value="${item.amount || ""}" data-idx="${idx}" data-field="amount" class="discount-field" placeholder="金額">
             <select data-idx="${idx}" data-field="target" class="discount-field">
-              <option value="outbound" ${item.target === "outbound" ? "selected" : ""}>去程</option>
-              <option value="return" ${item.target === "return" ? "selected" : ""}>回程</option>
-              <option value="both" ${item.target === "both" ? "selected" : ""}>去回程各扣</option>
+              <option value="outbound" ${item.target === "outbound" ? "selected" : ""}>${mainTripNames_().t1}</option>
+              <option value="return" ${item.target === "return" ? "selected" : ""}>${mainTripNames_().t2}</option>
+              <option value="both" ${item.target === "both" ? "selected" : ""}>兩趟各扣</option>
             </select>
             <button type="button" class="secondary-btn !min-h-[36px] !px-0" data-remove-idx="${idx}" aria-label="刪除">✕</button>
           </div>`).join("");
@@ -2569,8 +2739,8 @@
         return (target === "both" || target === "return") ? sum + amount : sum;
       }, 0);
       const zeroedLegs = [];
-      if (outboundFare > 0 && outboundDiscount >= outboundFare) zeroedLegs.push("去程");
-      if (returnFare !== null && returnFare > 0 && returnDiscount >= returnFare) zeroedLegs.push("回程");
+      if (outboundFare > 0 && outboundDiscount >= outboundFare) zeroedLegs.push(mainTripNames_().t1);
+      if (returnFare !== null && returnFare > 0 && returnDiscount >= returnFare) zeroedLegs.push(mainTripNames_().t2);
       warnEl.textContent = zeroedLegs.length ? `⚠️ 折扣金額已達或超過車資，${zeroedLegs.join("、")}車資將變成 $0（如果是招待行程沒問題，如果不是請檢查折扣金額是否打錯）` : "";
       warnEl.classList.toggle("hidden", !zeroedLegs.length);
     }
@@ -2663,7 +2833,7 @@
       multi.classList.toggle("hidden", !(creditBalance_ > 0 && vehicleCount > 1));
       $("creditBalanceText").textContent = "$" + creditBalance_.toLocaleString();
       const used = creditUseAmount_();
-      $("creditHint").textContent = used > 0 ? `本次折抵 $${used.toLocaleString()}，建單後剩餘 $${(creditBalance_ - used).toLocaleString()}。來回單只折在回程那一趟。` : "建單時才會真的扣；不能超過餘額，也不能超過這張單的總額。來回單只折在回程那一趟。";
+      $("creditHint").textContent = used > 0 ? `本次折抵 $${used.toLocaleString()}，建單後剩餘 $${(creditBalance_ - used).toLocaleString()}。來回單只折在第二趟。` : "建單時才會真的扣；不能超過餘額，也不能超過這張單的總額。來回單只折在第二趟。";
     }
     function scheduleCreditLookup_() {
       clearTimeout(creditTimer_);
@@ -2731,6 +2901,8 @@
         accountNote: $("accountNote").value.trim(),
         appVersion: APP_VERSION
       };
+      // v1.2.27：主表單回程跟去程不一樣
+      Object.assign(payload, (payload.hasReturn && $("returnDiff").checked && mainRet) ? retPayload_(mainRet, $("serviceType").value === "單程") : NO_RET_DIFF_);
       payload.vehicleCount = vehicleCount;
       // 特約／月結：有查到公司、而且付款方式是月結/簽單才帶；後端會再用統編/代號重查一次，不信任前端
       payload.companyKey = $("companyKey").value.trim();
@@ -2913,10 +3085,10 @@
       contactErrorsForText("其他地址", p.extraLocation).forEach(e => errors.push(e));
       if (!money(p.fare)) errors.push("車資金額");
       if (!isOneWay && p.airport === "桃園機場") {
-        if ($("flightNumber").value.trim() && !$("flightTerminal").value) errors.push("去程航廈（不確定請選「不確定，幫我查詢」）");
+        if ($("flightNumber").value.trim() && !$("flightTerminal").value) errors.push(($("hasReturn").checked ? mainTripNames_().t1 : "") + "航廈（不確定請選「不確定，幫我查詢」）");
       }
       if (!isOneWay && p.hasReturn && (p.returnAirport || p.airport) === "桃園機場") {
-        if ($("returnFlightNumber").value.trim() && !$("returnFlightTerminal").value) errors.push("回程航廈（不確定請選「不確定，幫我查詢」）");
+        if ($("returnFlightNumber").value.trim() && !$("returnFlightTerminal").value) errors.push(mainTripNames_().t2 + "航廈（不確定請選「不確定，幫我查詢」）");
       }
       if (!p.paxCount) errors.push("人數");
       if (!p.luggageCount) errors.push("行李");
@@ -2926,10 +3098,10 @@
         if (stroller + fat > (Number($("checkedLuggageCount").value) || 0)) errors.push("推車＋胖胖箱合計不能超過大型件數");
       }
       if (needsManualCash(p.paymentMethod)) {
-        if (!money(p.manualCashCollected)) errors.push("去程現場收現金額");
-        if (p.hasReturn && !money(p.returnManualCashCollected)) errors.push("回程現場收現金額");
-        if (money(p.manualCashCollected) > getManualTripFare(p, "outbound")) errors.push("去程現收不可大於去程車資");
-        if (p.hasReturn && money(p.returnManualCashCollected) > getManualTripFare(p, "return")) errors.push("回程現收不可大於回程車資");
+        if (!money(p.manualCashCollected)) errors.push((p.hasReturn ? pTripNames_(p).t1 : "") + "現場收現金額");
+        if (p.hasReturn && !money(p.returnManualCashCollected)) errors.push(pTripNames_(p).t2 + "現場收現金額");
+        if (money(p.manualCashCollected) > getManualTripFare(p, "outbound")) errors.push((p.hasReturn ? pTripNames_(p).t1 : "") + "現收不可大於" + (p.hasReturn ? pTripNames_(p).t1 : "") + "車資");
+        if (p.hasReturn && money(p.returnManualCashCollected) > getManualTripFare(p, "return")) errors.push(pTripNames_(p).t2 + "現收不可大於" + pTripNames_(p).t2 + "車資");
       }
       let items = [];
       try { items = JSON.parse(p.discountItemsJson || "[]"); } catch (e) { items = []; }
@@ -2937,8 +3109,14 @@
         if (!item.label || !item.label.trim()) errors.push("折扣項目需要填名稱");
       });
       if (p.hasReturn) {
-        if (!p.returnDate) errors.push("回程日期");
-        if (!p.returnTime) errors.push("回程時間");
+        if (!p.returnDate) errors.push(pTripNames_(p).t2 + "日期");
+        if (!p.returnTime) errors.push(pTripNames_(p).t2 + "時間");
+        if (p.returnDiff) {
+          if (!String(p.returnAddress || "").trim()) errors.push(pTripNames_(p).t2 + (p.serviceType === "單程" ? "起點" : "第1站地址"));
+          if (p.serviceType === "單程" && !String(p.returnEndAddress || "").trim()) errors.push(pTripNames_(p).t2 + "終點");
+          if (mainRet && fixStops_(mainRet.stops, p.serviceType === "單程").some((x, k, a) => k > 0 && k < a.length - (p.serviceType === "單程" ? 1 : 0) && !String(x || "").trim())) errors.push(pTripNames_(p).t2 + "有空白的站點(不用的請按 ✕ 刪掉)");
+          if (mainRet && (Number(mainRet.stroller) || 0) + (Number(mainRet.fatbox) || 0) > (Number(mainRet.checked) || 0)) errors.push(pTripNames_(p).t2 + "推車＋胖胖箱合計不能超過大型件數");
+        }
       }
       if (p.vehicles && p.vehicles.length > 1) {
         if (p.serviceType === "包車") errors.push("包車不能跟多台車一起建，請把台數改回 1 台、包車單獨建立");
@@ -2953,18 +3131,23 @@
           if (carStopsList_(exc).some((x, k) => !String(x || "").trim() && k > 0 && !(cp.serviceType === "單程" && k === carStopsList_(exc).length - 1))) errors.push(L + "有空白的站點(不用的請按 ✕ 刪掉)");
           if (cp.serviceType !== "單程" && exc.airport === "桃園機場" && String(exc.flight || "").trim() && !exc.terminal) errors.push(L + "航廈");
           if (cp.hasReturn) {
-            if (!cp.returnDate) errors.push(L + "回程日期");
-            if (!cp.returnTime) errors.push(L + "回程時間");
-            if (cp.serviceType !== "單程" && (exc.returnAirport || exc.airport) === "桃園機場" && String(exc.returnFlight || "").trim() && !exc.returnTerminal) errors.push(L + "回程航廈");
-            if (cp.returnDate && cp.rideDate && cp.returnDate < cp.rideDate) errors.push(L + "回程日期不能早於去程");
+            if (!cp.returnDate) errors.push(L + pTripNames_(cp).t2 + "日期");
+            if (!cp.returnTime) errors.push(L + pTripNames_(cp).t2 + "時間");
+            if (cp.serviceType !== "單程" && (exc.returnAirport || exc.airport) === "桃園機場" && String(exc.returnFlight || "").trim() && !exc.returnTerminal) errors.push(L + pTripNames_(cp).t2 + "航廈");
+            if (cp.returnDate && cp.rideDate && cp.returnDate < cp.rideDate) errors.push(L + pTripNames_(cp).t2 + "日期不能早於" + pTripNames_(cp).t1);
+            if (cp.returnDiff) {
+              if (!String(cp.returnAddress || "").trim()) errors.push(L + pTripNames_(cp).t2 + (cp.serviceType === "單程" ? "起點" : "第1站地址"));
+              if (cp.serviceType === "單程" && !String(cp.returnEndAddress || "").trim()) errors.push(L + pTripNames_(cp).t2 + "終點");
+              if (exc.ret && (Number(exc.ret.stroller) || 0) + (Number(exc.ret.fatbox) || 0) > (Number(exc.ret.checked) || 0)) errors.push(L + pTripNames_(cp).t2 + "推車＋胖胖箱合計不能超過大型件數");
+            }
           }
           if (!cp.carType) errors.push(L + "車型");
           if (!money(cp.fare)) errors.push(L + "車資金額");
           if (needsManualCash(cp.paymentMethod)) {
-            if (!money(cp.manualCashCollected)) errors.push(L + "去程現場收現金額");
-            if (cp.hasReturn && !money(cp.returnManualCashCollected)) errors.push(L + "回程現場收現金額");
-            if (money(cp.manualCashCollected) > getManualTripFare(cp, "outbound")) errors.push(L + "去程現收不可大於去程車資");
-            if (cp.hasReturn && money(cp.returnManualCashCollected) > getManualTripFare(cp, "return")) errors.push(L + "回程現收不可大於回程車資");
+            if (!money(cp.manualCashCollected)) errors.push(L + (cp.hasReturn ? pTripNames_(cp).t1 : "") + "現場收現金額");
+            if (cp.hasReturn && !money(cp.returnManualCashCollected)) errors.push(L + pTripNames_(cp).t2 + "現場收現金額");
+            if (money(cp.manualCashCollected) > getManualTripFare(cp, "outbound")) errors.push(L + (cp.hasReturn ? pTripNames_(cp).t1 : "") + "現收不可大於車資");
+            if (cp.hasReturn && money(cp.returnManualCashCollected) > getManualTripFare(cp, "return")) errors.push(L + pTripNames_(cp).t2 + "現收不可大於" + pTripNames_(cp).t2 + "車資");
           }
           if (String(exc.phone || "").trim()) {
             const ph = formatPhoneNumber(exc.phone);
@@ -3007,18 +3190,21 @@
           legMain = path[0]; legExtra = path.slice(1).join("\n");
         }
       }
-      const route = type === "接機" ? `${legEnd} → ${legMain}` : `${legMain} → ${legEnd}`;
+      let route = type === "接機" ? `${legEnd} → ${legMain}` : `${legMain} → ${legEnd}`;
+      // v1.2.27：回程跟去程不一樣 → 整條回程路線照實際順序寫出來，車型人數行李用回程的
+      const q = isReturn ? returnView_(p) : p;
+      if (isReturn && returnPathText_(p)) { route = returnPathText_(p); legExtra = ""; }
       return `
         <div class="border border-gray-200 rounded-lg p-2.5 ${isReturn ? "mt-2" : ""}">
-          <div class="font-bold text-[#553f62] text-sm mb-1">${p.hasReturn ? (isReturn ? "回程｜" : "去程｜") : ""}${escapeManualHtml(date)} ${escapeManualHtml(time)} ${escapeManualHtml(type)}${flight ? "｜" + escapeManualHtml(flight) : ""}</div>
+          <div class="font-bold text-[#553f62] text-sm mb-1">${p.hasReturn ? (isReturn ? pTripNames_(p).t2 + "｜" : pTripNames_(p).t1 + "｜") : ""}${escapeManualHtml(date)} ${escapeManualHtml(time)} ${escapeManualHtml(type)}${flight ? "｜" + escapeManualHtml(flight) : ""}</div>
           <div class="text-xs text-gray-600 mb-1.5">${escapeManualHtml(route)}</div>
           ${confirmRow(type === "包車" ? "停靠站" : "其他地址", legExtra)}
           ${type === "包車" ? confirmRow("包車", charterSummaryText_(p)) : ""}
           ${type === "包車" ? confirmRow("行程內容", p.charterItinerary) : ""}
-          ${shared ? "" : confirmRow("車型", p.carType)}
-          ${shared ? "" : confirmRow("人數", p.paxCount)}
-          ${shared ? "" : confirmRow("行李", formatCustomerLuggage(p.luggageCount, p.sportLuggage, ""))}
-          ${shared ? "" : confirmRow("安全座椅", p.seatDetails)}
+          ${shared ? "" : confirmRow("車型", q.carType)}
+          ${shared ? "" : confirmRow("人數", q.paxCount)}
+          ${shared ? "" : confirmRow("行李", formatCustomerLuggage(q.luggageCount, q.sportLuggage, ""))}
+          ${shared ? "" : confirmRow("安全座椅", q.seatDetails)}
           ${confirmRow("舉牌", p.signboard)}
           ${confirmRow("付款方式", p.companyApplies ? p.paymentMethod + "（" + p.companyShort + "）" : p.paymentMethod)}
           ${!shared && cashCollected && money(cashCollected) > 0 ? confirmRow("現場收現", "$" + money(cashCollected).toLocaleString()) : ""}
@@ -3034,7 +3220,7 @@
       const SEP = "\n\n━━━━━━━━━━━━━━━━\n\n";
       const hasReturnAny = groups.some(g => g.parts.length > 1);
       const views = groups.map(g => g.parts.length > 1
-        ? [{ name: "兩則合併", text: mergeCustomerParts_(g.parts) }, { name: "去程", text: g.parts[0] }, { name: "回程", text: g.parts[1] }]
+        ? [{ name: "兩則合併", text: mergeCustomerParts_(g.parts) }, { name: (g.legNames || [])[0] || "第一趟", text: g.parts[0] }, { name: (g.legNames || [])[1] || "第二趟", text: g.parts[1] }]
         : [{ name: "", text: g.parts[0] }]);
       let curCar = 0, curView = 0;
       const sty = (on) => `border:1px solid #553f62;border-radius:9px;padding:4px 14px;font-weight:700;background:${on ? "#553f62" : "#fff"};color:${on ? "#fff" : "#553f62"}`;
@@ -3055,7 +3241,7 @@
       const allText = () => groups.map((g, i) => (multi ? `【${g.label}】\n` : "") + views[i][0].text).join(SEP);
       const flash = (btn, txt, back) => { if (btn) { btn.textContent = txt; setTimeout(() => { btn.textContent = back; }, 1500); } };
       const carTabs = multi ? `<div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">${groups.map((g, i) => `<button type="button" class="cr-car-tab" data-n="${i}" onclick="window.__crCar(${i})" style="${sty(i === 0)}">${escapeHtml(g.label)}</button>`).join("")}</div>` : "";
-      const viewTabs = hasReturnAny ? `<div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">${["兩則合併", "去程", "回程"].map((nm, n) => `<button type="button" class="cr-view-tab" data-n="${n}" onclick="window.__crView(${n})" style="${sty(n === 0)}">${nm}</button>`).join("")}</div>` : "";
+      const viewTabs = hasReturnAny ? `<div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">${["兩則合併", (groups[0].legNames || [])[0] || "第一趟", (groups[0].legNames || [])[1] || "第二趟"].map((nm, n) => `<button type="button" class="cr-view-tab" data-n="${n}" onclick="window.__crView(${n})" style="${sty(n === 0)}">${nm}</button>`).join("")}</div>` : "";
       await Swal.fire({
         title,
         html: `<div style="text-align:left;line-height:1.7;font-size:14px;">
@@ -3098,7 +3284,7 @@
         if (g && g.reservationIds) return g.reservationIds;
         return allIds.filter(id => new RegExp("-C" + n + "(-[AB])?$").test(String(id)));
       };
-      const groups = cars.map((cp, i) => ({ label: `C${i + 1}`, carType: cp.carType, ids: idsOf(i + 1), parts: buildCustomerConfirmMessageParts(cp, idsOf(i + 1)) }));
+      const groups = cars.map((cp, i) => ({ label: `C${i + 1}`, carType: cp.carType, ids: idsOf(i + 1), legNames: [pTripNames_(cp).t1, pTripNames_(cp).t2], parts: buildCustomerConfirmMessageParts(cp, idsOf(i + 1)) }));
       saveLastCustomerMessage(groups.map(g => `【${g.label}】\n${mergeCustomerParts_(g.parts)}`).join("\n\n━━━━━━━━━━━━━━━━\n\n"));
       const idsText = groups.map(g => `${g.label} ${g.carType}：${g.ids.join("、")}`).join("\n");
       await showCopyResultDialog(`預約已建立（${cars.length} 台）`, "已寫入預約單、原始檔，並同步建立行事曆。每台車是各自獨立的一筆訂單。", idsText, groups);
@@ -3124,27 +3310,30 @@
         const dis = cleanFeeItems(itemsFromJson(cp.discountItemsJson));
         const sur = cleanFeeItems(itemsFromJson(cp.surchargeItemsJson));
         const cash = needsManualCash(cp.paymentMethod);
-        const tgt = (t, a) => t === "both" ? a : t === "return" ? "回程" : "去程";
+        const tn = pTripNames_(cp);
+        const tgt = (t, a) => t === "both" ? a : t === "return" ? tn.t2 : tn.t1;
         const notes = []
-          .concat(sur.map(it => `加值 ${escapeManualHtml(it.label)}（${tgt(it.target, "去回程各加")}）+$${it.amount.toLocaleString()}`))
-          .concat(dis.map(it => `折扣 ${escapeManualHtml(it.label)}（${tgt(it.target, "去回程各扣")}）-$${it.amount.toLocaleString()}`));
-        if (cash && money(cp.manualCashCollected) > 0) notes.push(`去程現收 $${money(cp.manualCashCollected).toLocaleString()}`);
-        if (cash && cp.hasReturn && money(cp.returnManualCashCollected) > 0) notes.push(`回程現收 $${money(cp.returnManualCashCollected).toLocaleString()}`);
+          .concat(sur.map(it => `加值 ${escapeManualHtml(it.label)}（${tgt(it.target, "兩趟各加")}）+$${it.amount.toLocaleString()}`))
+          .concat(dis.map(it => `折扣 ${escapeManualHtml(it.label)}（${tgt(it.target, "兩趟各扣")}）-$${it.amount.toLocaleString()}`));
+        if (cash && money(cp.manualCashCollected) > 0) notes.push(`${cp.hasReturn ? tn.t1 : ""}現收 $${money(cp.manualCashCollected).toLocaleString()}`);
+        if (cash && cp.hasReturn && money(cp.returnManualCashCollected) > 0) notes.push(`${tn.t2}現收 $${money(cp.returnManualCashCollected).toLocaleString()}`);
         if (cp.remarks) notes.push(`備註 ${escapeManualHtml(cp.remarks)}`);
         const leg = (isReturn) => {
           const d = isReturn ? cp.returnDate : cp.rideDate, t = isReturn ? cp.returnTime : cp.rideTime;
           const type = isReturn ? cp.returnServiceType : cp.serviceType;
           const fl = isReturn ? cp.returnFlightNumber : cp.flightNumber;
-          return `<div class="text-xs pl-6"><b class="text-[#553f62]">${cp.hasReturn ? (isReturn ? "回程｜" : "去程｜") : ""}${escapeManualHtml(d)} ${escapeManualHtml(t)} ${escapeManualHtml(type)}${fl ? "｜" + escapeManualHtml(fl) : ""}</b><br><span class="text-[#553f62] font-bold">${escapeManualHtml(carRouteText_(cp, isReturn))}</span></div>`;
+          const rv = isReturn ? returnView_(cp) : cp;
+          const diffLine = cp.returnDiff ? `<br><span class="text-[#553f62]">車型 <b class="text-[#A8345A]">${escapeManualHtml(rv.carType)}</b>｜人數 <b class="text-[#A8345A]">${escapeManualHtml(formatCustomerPax(rv.paxCount))}</b>｜行李 <b class="text-[#A8345A]">${escapeManualHtml(formatCustomerLuggage(rv.luggageCount, rv.sportLuggage, "").replace(/\n/g, " "))}</b></span>` : "";
+          return `<div class="text-xs pl-6"><b class="text-[#553f62]">${cp.hasReturn ? (isReturn ? pTripNames_(cp).t2 + "｜" : pTripNames_(cp).t1 + "｜") : ""}${escapeManualHtml(d)} ${escapeManualHtml(t)} ${escapeManualHtml(type)}${fl ? "｜" + escapeManualHtml(fl) : ""}</b><br><span class="text-[#553f62] font-bold">${escapeManualHtml((isReturn && returnPathText_(cp)) || carRouteText_(cp, isReturn))}</span>${diffLine}</div>`;
         };
         const payTxt = cp.companyApplies ? `${cp.paymentMethod}（${cp.companyShort || ""}）` : cp.paymentMethod;
         return `
           <div class="py-2 ${i ? "border-t-2 border-gray-200" : ""}">
-            <div class="flex justify-between gap-3 text-sm"><span><b class="text-white px-2 rounded" style="background:${carColor_(i + 1)}">🚐 第 ${i + 1} 台 C${i + 1}</b> ${escapeManualHtml(cp.carType)}</span><span class="font-bold">$${(out + ret).toLocaleString()}</span></div>
+            <div class="flex justify-between gap-3 text-sm"><span><b class="text-white px-2 rounded" style="background:${carColor_(i + 1)}">🚐 第 ${i + 1} 台 C${i + 1}</b> ${escapeManualHtml(cp.carType)}${cp.returnDiff && cp.returnCarType && cp.returnCarType !== cp.carType ? "／" + escapeManualHtml(pTripNames_(cp).t2) + escapeManualHtml(cp.returnCarType) : ""}</span><span class="font-bold">$${(out + ret).toLocaleString()}</span></div>
             ${leg(false)}${cp.hasReturn ? leg(true) : ""}
             <div class="text-xs pl-6 text-[#553f62]">乘車人 ${escapeManualHtml(displayCustomerName(cp))}｜${isNoPhoneValue(cp.phone) ? "無電話" : escapeManualHtml(cp.phone)}</div>
-            <div class="text-xs pl-6 text-[#553f62]">人數 <b class="text-[#A8345A]">${escapeManualHtml(formatCustomerPax(cp.paxCount))}</b>｜行李 <b class="text-[#A8345A]">${escapeManualHtml(formatCustomerLuggage(cp.luggageCount, cp.sportLuggage, "").replace(/\n/g, " "))}</b>${cp.seatDetails && cp.seatDetails !== "無" ? `｜座椅 ${escapeManualHtml(cp.seatDetails)}` : ""}</div>
-            <div class="text-xs pl-6 text-[#553f62]">付款 <b>${escapeManualHtml(payTxt)}</b>${cp.hasReturn ? `｜去 $${out.toLocaleString()}／回 $${ret.toLocaleString()}` : ""}</div>
+            ${cp.returnDiff ? "" : `<div class="text-xs pl-6 text-[#553f62]">人數 <b class="text-[#A8345A]">${escapeManualHtml(formatCustomerPax(cp.paxCount))}</b>｜行李 <b class="text-[#A8345A]">${escapeManualHtml(formatCustomerLuggage(cp.luggageCount, cp.sportLuggage, "").replace(/\n/g, " "))}</b>${cp.seatDetails && cp.seatDetails !== "無" ? `｜座椅 ${escapeManualHtml(cp.seatDetails)}` : ""}</div>`}
+            <div class="text-xs pl-6 text-[#553f62]">付款 <b>${escapeManualHtml(payTxt)}</b>${cp.hasReturn ? `｜${tn.t1} $${out.toLocaleString()}／${tn.t2} $${ret.toLocaleString()}` : ""}</div>
             ${notes.map(n => `<div class="text-xs text-[#A8345A] pl-6">${n}</div>`).join("")}
           </div>`;
       }).join("");
@@ -3159,7 +3348,7 @@
       if (creditUseAmount_() > 0 && !payload.vehicles) {
         const leg = (payload.hasReturn && payload.serviceType !== "包車") ? "return" : "outbound";
         const raw = (leg === "return" ? money(payload.returnFare || payload.fare) : money(payload.fare)) + getSurchargeForLeg(payload, leg) - getDiscountForLeg(payload, leg);
-        if (raw < 0) errors.push(`乘車金折抵超過${leg === "return" ? "回程" : "這趟"}的金額，最多只能折 $${(raw + creditUseAmount_()).toLocaleString()}`);
+        if (raw < 0) errors.push(`乘車金折抵超過${leg === "return" ? pTripNames_(payload).t2 : "這趟"}的金額，最多只能折 $${(raw + creditUseAmount_()).toLocaleString()}`);
       }
       if (errors.length) {
         Swal.fire("資料未填完整", errors.join("、"), "warning");
@@ -3170,10 +3359,10 @@
       let surchargeSummaryItems = [];
       try { surchargeSummaryItems = JSON.parse(payload.surchargeItemsJson || "[]"); } catch (e) { surchargeSummaryItems = []; }
       const surchargeHtml = surchargeSummaryItems.length
-        ? `<div class="mt-2 space-y-0.5">${surchargeSummaryItems.map(item => confirmRow(`加值：${item.label}${payload.hasReturn ? `（${item.target === "both" ? "去回程各加" : item.target === "return" ? "回程" : "去程"}）` : ""}`, "+$" + money(item.amount).toLocaleString())).join("")}</div>`
+        ? `<div class="mt-2 space-y-0.5">${surchargeSummaryItems.map(item => confirmRow(`加值：${item.label}${payload.hasReturn ? `（${item.target === "both" ? "兩趟各加" : item.target === "return" ? pTripNames_(payload).t2 : pTripNames_(payload).t1}）` : ""}`, "+$" + money(item.amount).toLocaleString())).join("")}</div>`
         : "";
       const discountHtml = discountSummaryItems.length
-        ? `<div class="mt-2 space-y-0.5">${discountSummaryItems.map(item => confirmRow(`折扣：${item.label}${payload.hasReturn ? `（${item.target === "both" ? "去回程各扣" : item.target === "return" ? "回程" : "去程"}）` : ""}`, "-$" + money(item.amount).toLocaleString())).join("")}</div>`
+        ? `<div class="mt-2 space-y-0.5">${discountSummaryItems.map(item => confirmRow(`折扣：${item.label}${payload.hasReturn ? `（${item.target === "both" ? "兩趟各扣" : item.target === "return" ? pTripNames_(payload).t2 : pTripNames_(payload).t1}）` : ""}`, "-$" + money(item.amount).toLocaleString())).join("")}</div>`
         : "";
       const totalFare = manualGrandTotal(payload);
       const isMulti = Boolean(payload.vehicles && payload.vehicles.length > 1);
@@ -3247,7 +3436,7 @@
         saveLastCustomerMessage(customerText);
         if (payload.hasReturn && !isRecoveryMode) {
           // 來回：可分開複製「去程」「回程」或兩則合併
-          await showCopyResultDialog("預約已建立", savedTimeBannerHtml_(payload) + "已寫入預約單、原始檔，並同步建立行事曆。", ids, [{ label: "", carType: payload.carType, ids: res.reservationIds || [], parts: buildCustomerConfirmMessageParts(payload, res.reservationIds || []) }]);
+          await showCopyResultDialog("預約已建立", savedTimeBannerHtml_(payload) + "已寫入預約單、原始檔，並同步建立行事曆。", ids, [{ label: "", carType: payload.carType, ids: res.reservationIds || [], legNames: [pTripNames_(payload).t1, pTripNames_(payload).t2], parts: buildCustomerConfirmMessageParts(payload, res.reservationIds || []) }]);
           updateSummary(ids.replace(/\n/g, "、") || "已建立");
           return;
         }
@@ -3292,6 +3481,7 @@
       const p = collectPayload();
       const total = manualGrandTotal(p);
       try { renderCarsBars_(); } catch (e) {}
+      try { applyMainTripLabels_(); } catch (e) {}
       $("summaryText").textContent = `${currentSource() || "未選來源"}｜${$("serviceType").value || "行程"}${vehicleCount > 1 ? `｜${vehicleCount}台車` : ""}｜總車資 $${total.toLocaleString()}`;
       updateDiscountTotalDisplay();
       updateSpecialDateHints(p);
@@ -3330,8 +3520,8 @@
     async function applySavedTripTimes_(p, res) {
       const saved = (res && Array.isArray(res.savedTrips)) ? res.savedTrips : [];
       if (!saved.length) return;
-      const legs = [{ key: "去程", d: "rideDate", t: "rideTime", s: saved[0] }];
-      if (p.hasReturn && saved[1]) legs.push({ key: "回程", d: "returnDate", t: "returnTime", s: saved[1] });
+      const legs = [{ key: p.hasReturn ? pTripNames_(p).t1 : "這趟", d: "rideDate", t: "rideTime", s: saved[0] }];
+      if (p.hasReturn && saved[1]) legs.push({ key: pTripNames_(p).t2, d: "returnDate", t: "returnTime", s: saved[1] });
       const diffs = [];
       legs.forEach(l => {
         if (!l.s) return;
@@ -3361,8 +3551,8 @@
       const leg = (label, d, t) => `<div style="font-size:20px;font-weight:900;color:#A8345A;letter-spacing:.5px">${label}${escapeHtml(formatCustomerDate(d))} ${escapeHtml(t || "")}</div>`;
       return `<div style="background:#FDF0F4;border:2px solid #F3C6D5;border-radius:12px;padding:10px 12px;margin-bottom:10px">
         <div style="font-size:12px;color:#6b7280;margin-bottom:2px">系統已存的乘車日期時間（請跟客人要的時間核對）</div>
-        ${leg(p.hasReturn ? "去程　" : "", p.rideDate, p.rideTime)}
-        ${p.hasReturn ? leg("回程　", p.returnDate, p.returnTime) : ""}
+        ${leg(p.hasReturn ? pTripNames_(p).t1 + "　" : "", p.rideDate, p.rideTime)}
+        ${p.hasReturn ? leg(pTripNames_(p).t2 + "　", p.returnDate, p.returnTime) : ""}
       </div>`;
     }
     const READONLY_NOTE_HTML_ = `<div style="font-size:12px;color:#b91c1c;margin:-2px 0 6px">這段文字不能直接改；要改時間或內容，請回表單或到中控台「修改資料」，系統才會一起更新。</div>`;
@@ -3447,7 +3637,7 @@
       }];
       if (p.hasReturn) {
         trips.push({
-          text: buildCustomerTripBlock(p, {
+          text: buildCustomerTripBlock(returnView_(p), {
           label: "回程",
           serviceType: p.returnServiceType,
           rideDate: p.returnDate,
@@ -3509,7 +3699,7 @@
         const orders = (data.orders || []).filter(Boolean);
         if (!orders.length) throw new Error("查無這筆預約");
         if (orders.length > 1 || /-(A|B|去程|回程)$/i.test(orders[0].reservationId)) {
-          Swal.fire("這個預約已經是來回單", "這張已經有去程跟回程了，不能再補訂回程。", "info");
+          Swal.fire("這個預約已經是來回單", "這張已經有兩趟了，不能再補訂另一趟。", "info");
           return;
         }
         o = orders[0];
@@ -3532,29 +3722,29 @@
       const chk = (cid, checked, text) => `<label style="display:flex;gap:8px;align-items:flex-start;padding:4px 0;font-size:13px;cursor:pointer"><input id="${cid}" type="checkbox" ${checked ? "checked" : ""} style="margin-top:3px;accent-color:#C2416B"><span>${text}</span></label>`;
       const html = `<div style="font-size:12px;color:#6b7280;margin-bottom:8px;text-align:left">原單 ${escapeHtml(baseId)}（${escapeHtml(o.rideDate || "")} ${escapeHtml(o.rideTime || "")} ${escapeHtml(o.serviceType || "")}｜車資 $${fareDefault.toLocaleString()}）</div>
         <div style="${sec};background:#F9F9FB;border-color:#E6E6E8"><div style="${h3}">單號會這樣變（同一個預約，對帳不會斷）</div>
-          <div style="font-size:13px;line-height:1.9">去程　${escapeHtml(baseId)} <span style="color:#C2416B;font-weight:700">➜</span> <b>${escapeHtml(baseId)}-A</b><br>回程　新增 <b>${escapeHtml(baseId)}-B</b></div></div>
-        <div style="${sec}"><div style="${h3}">回程資料</div>
+          <div style="font-size:13px;line-height:1.9">原單　${escapeHtml(baseId)} <span style="color:#C2416B;font-weight:700">➜</span> <b>${escapeHtml(baseId)}-A</b><br>另一趟　新增 <b>${escapeHtml(baseId)}-B</b></div></div>
+        <div style="${sec}"><div style="${h3}">另一趟（${retType}）資料</div>
           <div style="${rowS}"><span style="${lbl}">日期</span><input id="qarDate" type="date" min="${escapeHtml(o.rideDate || "")}" style="${inS}"><select id="qarHour" style="${inS}">${hourOpts}</select>:<select id="qarMin" style="${inS}">${minOpts}</select></div>
           <div style="${rowS}"><span style="${lbl}">服務</span><span>${retType}（自動反向）</span></div>
-          ${isOneWay ? "" : `<div style="${rowS}"><span style="${lbl}">航班</span><input id="qarFlight" placeholder="回程航班（選填）" inputmode="email" autocapitalize="characters" autocorrect="off" autocomplete="off" spellcheck="false" lang="en" oninput="var p=this.selectionStart;this.value=this.value.toUpperCase();try{this.setSelectionRange(p,p)}catch(e){}" style="${inS};width:200px;text-transform:uppercase"></div>`}
-          <div style="${rowS}"><span style="${lbl}">回程車資</span><input id="qarFare" type="number" min="0" value="${fareDefault || ""}" placeholder="必填" style="${inS};width:110px"><span style="font-size:11px;color:#9ca3af">預設帶去程車資，可改</span></div></div>
+          ${isOneWay ? "" : `<div style="${rowS}"><span style="${lbl}">航班</span><input id="qarFlight" placeholder="航班（選填）" inputmode="email" autocapitalize="characters" autocorrect="off" autocomplete="off" spellcheck="false" lang="en" oninput="var p=this.selectionStart;this.value=this.value.toUpperCase();try{this.setSelectionRange(p,p)}catch(e){}" style="${inS};width:200px;text-transform:uppercase"></div>`}
+          <div style="${rowS}"><span style="${lbl}">車資</span><input id="qarFare" type="number" min="0" value="${fareDefault || ""}" placeholder="必填" style="${inS};width:110px"><span style="font-size:11px;color:#9ca3af">預設帶原單車資，可改</span></div></div>
         <div style="${sec}"><div style="${h3}">金額怎麼算？</div>
-          <label style="display:flex;gap:8px;align-items:flex-start;padding:4px 0;font-size:13px;cursor:pointer"><input type="radio" name="qarMode" value="separate" checked style="margin-top:3px;accent-color:#C2416B"><span>各算各的<span style="display:block;font-size:11px;color:#9ca3af">去程、回程各自的金額，互不影響</span></span></label>
+          <label style="display:flex;gap:8px;align-items:flex-start;padding:4px 0;font-size:13px;cursor:pointer"><input type="radio" name="qarMode" value="separate" checked style="margin-top:3px;accent-color:#C2416B"><span>各算各的<span style="display:block;font-size:11px;color:#9ca3af">兩趟各自的金額，互不影響</span></span></label>
           <label style="display:flex;gap:8px;align-items:flex-start;padding:4px 0;font-size:13px;cursor:pointer"><input type="radio" name="qarMode" value="combined" style="margin-top:3px;accent-color:#C2416B"><span>合成「來回總額」<span style="display:block;font-size:11px;color:#9ca3af">兩趟加總後成為一個總額(原單有其他金額調整時不能用)</span></span></label></div>
         <div style="${sec}"><div style="${h3}">優惠</div>
           ${chk("qarRtDisc", true, "給「預約來回優惠」-$100（客服自己決定，取消勾選就不給；不受特殊日期限制）")}</div>
         <div style="${sec}"><div style="${h3}">改號之後，要順便做哪些？</div>
-          ${chk("qarCalA", true, "重同步去程行事曆（日曆標題才會變成 -A）")}
-          ${chk("qarCalB", true, "回程也建立行事曆")}
-          <div style="font-size:11px;color:#9ca3af;margin-top:4px">要傳更新卡片給客人、通知去程司機，請到中控台處理。</div></div>`;
+          ${chk("qarCalA", true, "重同步原單行事曆（日曆標題才會變成 -A）")}
+          ${chk("qarCalB", true, "新的這一趟也建立行事曆")}
+          <div style="font-size:11px;color:#9ca3af;margin-top:4px">要傳更新卡片給客人、通知原單司機，請到中控台處理。</div></div>`;
       const r = await Swal.fire({
-        title: "幫這張單補訂回程", width: 640, html, showCancelButton: true,
-        confirmButtonText: "確認補訂回程", cancelButtonText: "取消", confirmButtonColor: "#C2416B",
+        title: "幫這張單補訂另一趟（變來回）", width: 640, html, showCancelButton: true,
+        confirmButtonText: "確認補訂", cancelButtonText: "取消", confirmButtonColor: "#C2416B",
         preConfirm: () => {
           const g = x => document.getElementById(x);
-          if (!g("qarDate").value) { Swal.showValidationMessage("請選回程日期"); return false; }
+          if (!g("qarDate").value) { Swal.showValidationMessage("請選這一趟的日期"); return false; }
           const fareRaw = g("qarFare").value;
-          if (fareRaw === "" || !(Number(fareRaw) >= 0)) { Swal.showValidationMessage("請填回程車資(沒有車資請填 0)"); return false; }
+          if (fareRaw === "" || !(Number(fareRaw) >= 0)) { Swal.showValidationMessage("請填這一趟的車資(沒有車資請填 0)"); return false; }
           return {
             returnDate: g("qarDate").value, returnTime: `${g("qarHour").value}:${g("qarMin").value}`,
             returnFlight: g("qarFlight") ? g("qarFlight").value.trim().toUpperCase() : "", returnFare: Number(fareRaw),
@@ -3567,21 +3757,21 @@
       if (!r.isConfirmed) return;
       const v = r.value;
       if (String(v.returnDate) < String(o.rideDate || "")) {
-        const ok = await Swal.fire({ title: "回程日期比去程早", text: `回程 ${v.returnDate} 比去程 ${o.rideDate} 還早，確定嗎？`, icon: "warning", showCancelButton: true, confirmButtonText: "確定，照這個建立", cancelButtonText: "回去改" });
+        const ok = await Swal.fire({ title: "新的這一趟比原單早", text: `新的這一趟 ${v.returnDate} 比原單 ${o.rideDate} 還早，確定嗎？`, icon: "warning", showCancelButton: true, confirmButtonText: "確定，照這個建立", cancelButtonText: "回去改" });
         if (!ok.isConfirmed) return openQuickAddReturnLeg();
       }
-      Swal.fire({ title: "建立回程中…", text: "會一併處理單號與行事曆，請稍候", allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      Swal.fire({ title: "建立中…", text: "會一併處理單號與行事曆，請稍候", allowOutsideClick: false, didOpen: () => Swal.showLoading() });
       let res;
       try {
         res = await fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "addReturnLegToReservation", data: Object.assign({ orderId: baseId, reservationId: baseId }, v) }) }).then(x => safeJsonParse(x));
       } catch (e) { res = { success: false, error: (e && e.message) || "連線失敗，請稍後再試" }; }
       if (!res || !res.success) {
-        Swal.fire("補訂回程失敗", (res && (res.error || res.message)) || "請稍後再試（若後端還沒更新到 v2.2.420 以上也會失敗）", "error");
+        Swal.fire("補訂另一趟失敗", (res && (res.error || res.message)) || "請稍後再試（若後端還沒更新到 v2.2.420 以上也會失敗）", "error");
         return;
       }
       const done = await Swal.fire({
-        icon: "success", title: "已補訂回程",
-        html: `<div style="text-align:left;font-size:13px;line-height:1.9">去程：<b>${escapeHtml(res.orderIdA || baseId + "-A")}</b><br>回程：<b>${escapeHtml(res.orderIdB || baseId + "-B")}</b><br>${res.totalAfter != null ? "來回合計：$" + Number(res.totalAfter).toLocaleString() + "<br>" : ""}${res.refsUpdated ? "已同步更新對帳／折扣券等記錄的單號<br>" : ""}${res.calendar && res.calendar.A ? "去程日曆：" + escapeHtml(res.calendar.A) + "<br>" : ""}${res.calendar && res.calendar.B ? "回程日曆：" + escapeHtml(res.calendar.B) : ""}</div>`,
+        icon: "success", title: "已補訂另一趟",
+        html: `<div style="text-align:left;font-size:13px;line-height:1.9">原單：<b>${escapeHtml(res.orderIdA || baseId + "-A")}</b><br>新的這一趟：<b>${escapeHtml(res.orderIdB || baseId + "-B")}</b><br>${res.totalAfter != null ? "來回合計：$" + Number(res.totalAfter).toLocaleString() + "<br>" : ""}${res.refsUpdated ? "已同步更新對帳／折扣券等記錄的單號<br>" : ""}${res.calendar && res.calendar.A ? "原單日曆：" + escapeHtml(res.calendar.A) + "<br>" : ""}${res.calendar && res.calendar.B ? "新的這一趟日曆：" + escapeHtml(res.calendar.B) : ""}</div>`,
         showCancelButton: true, confirmButtonText: "產生客人確認文字", cancelButtonText: "關閉", confirmButtonColor: "#553f62"
       });
       if (done.isConfirmed) { $("lookupReservationId").value = baseId; await generateMessageByReservationId(); }
@@ -3664,6 +3854,10 @@
       let fee = {};
       try { fee = JSON.parse(order.cardFeeJson || "{}"); } catch (e) { fee = {}; }
       const isRoundTripPart = order.label === "去程" || order.label === "回程";
+      // v1.2.28：顯示用「送機／接機」稱呼(兩趟服務項目一樣時用第一趟／第二趟)；order.label 仍是內部判斷用的去程／回程
+      const sib_ = Array.isArray(siblingOrders) ? siblingOrders.find(o => o !== order && (o.label === "去程" || o.label === "回程")) : null;
+      const legA_ = order.label === "去程" ? order : sib_, legB_ = order.label === "回程" ? order : sib_;
+      const nm_ = tripNames_(legA_ && legA_.serviceType, legB_ && legB_.serviceType);
       const displayTotal = order.tripAmt || money(order.fare);
       const discountAmount = Math.abs(Number(order.discountAmt || 0));
       const rows = [];
@@ -3687,7 +3881,7 @@
         rows.push({ label: "優惠折扣", value: "", isSectionHeader: true });
         discounts.forEach(d => rows.push({ label: d.label, value: "-$" + d.amount.toLocaleString(), isDiscount: true }));
       }
-      rows.push({ label: order.label === "回程" ? "回程小計" : (order.label === "去程" ? "去程小計" : "總額"), value: "$" + displayTotal.toLocaleString(), isSubtotal: true });
+      rows.push({ label: order.label === "回程" ? nm_.t2 + "小計" : (order.label === "去程" ? nm_.t1 + "小計" : "總額"), value: "$" + displayTotal.toLocaleString(), isSubtotal: true });
       if (isReturnLeg && discounts.length) {
         rows.push({ label: "優惠折扣", value: "", isSectionHeader: true });
         discounts.forEach(d => rows.push({ label: d.label, value: "-$" + d.amount.toLocaleString(), isDiscount: true }));
@@ -3703,8 +3897,8 @@
           const otherDiscountAmount = Math.abs(Number(other.discountAmt || 0));
           const combinedDiscountAmount = discountAmount + otherDiscountAmount;
           const roundTotal = outTotal + retTotal - combinedDiscountAmount;
-          rows.push({ label: "去程小計", value: `+$${outTotal.toLocaleString()}`, isMuted: true, isSectionStart: true });
-          rows.push({ label: "回程小計", value: `+$${retTotal.toLocaleString()}`, isMuted: true });
+          rows.push({ label: nm_.t1 + "小計", value: `+$${outTotal.toLocaleString()}`, isMuted: true, isSectionStart: true });
+          rows.push({ label: nm_.t2 + "小計", value: `+$${retTotal.toLocaleString()}`, isMuted: true });
           if (combinedDiscountAmount > 0) rows.push({ label: "優惠折扣", value: `-$${combinedDiscountAmount.toLocaleString()}`, isMuted: true });
           rows.push({ label: "來回總額", value: "$" + roundTotal.toLocaleString(), isTotal: true });
         }
@@ -4182,7 +4376,7 @@
         const otherSuffix = legSuffix === "A" ? "B" : "A";
         const otherLabel = otherSuffix === "A" ? "去程" : "回程";
         const other = (res.orders || []).find(o => o.reservationId.endsWith("-" + otherSuffix)) || (res.orders || []).find(o => o.label === otherLabel);
-        if (!other) throw new Error(`找不到${otherLabel}那一腿的資料，請確認單號是否正確`);
+        if (!other) throw new Error(`找不到另一趟(-${otherSuffix})的資料，請確認單號是否正確`);
         // 跟applyTemplate()同一套填值方式：把另一腿的客人資料/車輛/付款方式帶進來，
         // 日期/時間/航班/行程類型(接機↔送機自動反向)這幾個「兩腿本來就會不同」的欄位不動，留給客服自己填。
         const known = knownSources();

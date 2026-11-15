@@ -69,7 +69,7 @@
           </div>
           <div>
             <label class="label">時間</label>
-            <div style="display:flex;align-items:center;gap:8px"><select id="rideHour" class="field focus-ring" aria-label="去程時"></select><span class="font-bold">:</span><select id="rideMinute" class="field focus-ring" aria-label="去程分"></select></div>
+            <div style="display:flex;align-items:center;gap:8px"><select id="rideHour" class="field focus-ring" aria-label="時"></select><span class="font-bold">:</span><select id="rideMinute" class="field focus-ring" aria-label="去程分"></select></div>
             <input id="rideTime" type="hidden" value="09:00">
           </div>
         </div>
@@ -205,29 +205,29 @@
         <div id="returnBlock" class="hidden border-t border-gray-100 pt-3 space-y-3">
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="label">回程行程</label>
+              <label class="label">另一趟行程</label>
               <select id="returnServiceType" class="field focus-ring">
                 <option value="接機">接機</option>
                 <option value="送機">送機</option>
               </select>
             </div>
             <div>
-              <label class="label">回程時間</label>
-              <div style="display:flex;align-items:center;gap:8px"><select id="returnHour" class="field focus-ring" aria-label="回程時"></select><span class="font-bold">:</span><select id="returnMinute" class="field focus-ring" aria-label="回程分"></select></div>
+              <label class="label">另一趟時間</label>
+              <div style="display:flex;align-items:center;gap:8px"><select id="returnHour" class="field focus-ring" aria-label="另一趟時"></select><span class="font-bold">:</span><select id="returnMinute" class="field focus-ring" aria-label="另一趟分"></select></div>
               <input id="returnTime" type="hidden" value="18:00">
             </div>
           </div>
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="label">回程日期</label>
+              <label class="label">另一趟日期</label>
               <input id="returnDate" type="date" class="field focus-ring">
             </div>
             <div>
-              <label class="label">回程地區</label>
+              <label class="label">另一趟地區</label>
               <input id="returnZone" list="zoneList" class="field focus-ring">
             </div>
           </div>
-          <input id="returnAddress" class="field focus-ring" placeholder="回程地址文字">
+          <input id="returnAddress" class="field focus-ring" placeholder="另一趟地址文字">
         </div>
       </div>
       <div class="card p-4">
@@ -257,7 +257,7 @@
     </div>
   </div>
   <script>
-    const APP_VERSION = "quote-v1.0.26"; // v1.0.26：新配色(紫色＋莓果色)，原本粉紅改莓果、淡紫底改灰白； v1.0.25：「加點站」改叫「其他地址（地址2起）」，報價文字／圖片的「加點：」改「其他地址：」(費用名稱「加點費」不變)； v1.0.24：報價圖片標題底色由#574266統一改成品牌主紫#553F62； v1.0.23：急單加價等「有金額又有備註」的項目，報價文字／畫面／圖片都同時顯示金額(+NT$500)與備註，明細加起來等於預估總額。 v1.0.22：加點費自動試算的起點改帶「縣市＋鄉鎮區＋地址」(跟客人預約系統一致，以前只用地址文字導致算出不同距離與加點費)，改地區也會重算。 v1.0.21：車型顯示名稱跟客人訂車頁一致(New Alphard 40系、進口商務車不再帶括號)。 // 新增「單程」(多接送點)與「包車」(可填行程、緩衝/超時、跨夜住宿補貼)報價：金額由客服手動填，可同時報2種車型，座椅/增高墊每張$200；文字版與圖片版同步支援
+    const APP_VERSION = "quote-v1.0.27"; // v1.0.27：「去程／回程」改成「送機／接機」(另一趟)，費用分組跟著後端新的前綴；需gas v2.2.495； v1.0.26  v1.0.26：新配色(紫色＋莓果色)，原本粉紅改莓果、淡紫底改灰白； v1.0.25：「加點站」改叫「其他地址（地址2起）」，報價文字／圖片的「加點：」改「其他地址：」(費用名稱「加點費」不變)； v1.0.24：報價圖片標題底色由#574266統一改成品牌主紫#553F62； v1.0.23：急單加價等「有金額又有備註」的項目，報價文字／畫面／圖片都同時顯示金額(+NT$500)與備註，明細加起來等於預估總額。 v1.0.22：加點費自動試算的起點改帶「縣市＋鄉鎮區＋地址」(跟客人預約系統一致，以前只用地址文字導致算出不同距離與加點費)，改地區也會重算。 v1.0.21：車型顯示名稱跟客人訂車頁一致(New Alphard 40系、進口商務車不再帶括號)。 // 新增「單程」(多接送點)與「包車」(可填行程、緩衝/超時、跨夜住宿補貼)報價：金額由客服手動填，可同時報2種車型，座椅/增高墊每張$200；文字版與圖片版同步支援
     const GAS_URL = "https://script.google.com/macros/s/AKfycbz6wgk6T8ypEI1pW5ih7M3Bom54Tu7unv-sc_ldFtPSBWw4yAbahs70GErKGpsRqcG3/exec";
     const BOOKING_URL = location.href.includes("quote.html") ? location.href.replace("quote.html", "index.html") : "index.html";
     let priceRows = [];
@@ -594,7 +594,9 @@
         .filter(item => !item.isTotal && !String(item.label || "").includes("小計"))
         .forEach(item => {
           const label = String(item.label || "");
-          const key = label.startsWith("去程") ? "go" : label.startsWith("回程") ? "back" : /優惠|折扣|折抵/.test(label) ? "discount" : "other";
+          // v1.0.27：兩趟用「送機／接機」(或第一趟／第二趟)當前綴，舊版是去程／回程
+          const m = label.match(/^(送機|接機|第一趟|第二趟|去程|回程)\s/);
+          const key = m ? "trip_" + m[1] : /優惠|折扣|折抵/.test(label) ? "discount" : "other";
           if (key !== lastKey) { groups.push([]); lastKey = key; }
           groups[groups.length - 1].push(item);
         });
@@ -726,7 +728,7 @@
       if (payload.extraAddress || payload.extraZone) lines.push(`▪︎ 其他地址：${payload.extraAddress || payload.extraZone}`);
       if (payload.hasReturn) {
         lines.push("");
-        lines.push("【回程資訊】");
+        lines.push(`【${payload.returnServiceType && payload.returnServiceType !== payload.serviceType ? payload.returnServiceType : "第二趟"}資訊】`);
         lines.push(`▪︎ 行程：${payload.returnServiceType}服務`);
         lines.push(`▪︎ 路線：${routeLine(payload.returnServiceType, payload.airport, payload.returnAddress || payload.returnZone)}`);
         if (payload.returnDate) lines.push(`▪︎ 日期：${formatQuoteDate(payload.returnDate)}`);
@@ -813,7 +815,7 @@
               <div style="font-size:14px;color:#8a8291;margin-bottom:3px;">${escapeQuoteHtml(formatQuoteDate(payload.rideDate))} ${escapeQuoteHtml(payload.rideTime)}</div>
               <div style="font-size:18px;font-weight:700;color:#1A0B3D;">${escapeQuoteHtml(payload.serviceType)}服務｜${escapeQuoteHtml(carName(payload.carType))}</div>
               <div style="font-size:15.5px;color:#4b4553;margin-top:4px;">${escapeQuoteHtml(route)}</div>
-              ${payload.hasReturn ? `<div style="border-top:1px dashed #E3E3E5;margin-top:12px;padding-top:12px;"><div style="font-size:14px;color:#8a8291;">回程　${escapeQuoteHtml(formatQuoteDate(payload.returnDate))} ${escapeQuoteHtml(payload.returnTime)}</div><div style="font-size:15.5px;font-weight:700;color:#1A0B3D;margin-top:3px;">${escapeQuoteHtml(payload.returnServiceType)}服務</div><div style="font-size:15.5px;color:#4b4553;margin-top:3px;">${escapeQuoteHtml(returnRoute)}</div></div>` : ""}
+              ${payload.hasReturn ? `<div style="border-top:1px dashed #E3E3E5;margin-top:12px;padding-top:12px;"><div style="font-size:14px;color:#8a8291;">${escapeQuoteHtml(payload.returnServiceType && payload.returnServiceType !== payload.serviceType ? payload.returnServiceType : "第二趟")}　${escapeQuoteHtml(formatQuoteDate(payload.returnDate))} ${escapeQuoteHtml(payload.returnTime)}</div><div style="font-size:15.5px;font-weight:700;color:#1A0B3D;margin-top:3px;">${escapeQuoteHtml(payload.returnServiceType)}服務</div><div style="font-size:15.5px;color:#4b4553;margin-top:3px;">${escapeQuoteHtml(returnRoute)}</div></div>` : ""}
               ${payload.extraAddress ? `<div style="font-size:14.5px;color:#8a8291;margin-top:10px;">其他地址：${escapeQuoteHtml(payload.extraAddress)}</div>` : ""}
             </div>`;
       const manualFeeHtml = m ? (() => {

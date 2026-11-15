@@ -60,7 +60,7 @@
     html += `<div class="sync">🔄 這個連結會自動同步最新的預約與司機資料，重新整理即可查看。</div>`;
     if (navigator.share || navigator.clipboard) html += `<button class="copy" id="copyBtn" type="button">🔗 複製這個連結，分享給同行的人</button><div style="font-size:12px;color:var(--g);text-align:center;margin:-8px 0 12px">對方打開也需要驗證碼，請另外告訴他</div>`;
     legs.forEach((l, i) => {
-      const legLabel = multi ? (i === 0 ? '去程｜' : '回程｜') : '';
+      const legLabel = multi ? ((l.type && !(l.title || '').startsWith(l.type) ? l.type : (i === 0 ? '第1趟' : '第2趟')) + '｜') : ''; // 不用去程／回程
       const addr = (l.addresses || []).map((a, j) => kv(a[0], a[1], j > 0 && /^地址\d+$/.test(a[0]) ? 'sub2' : '')).join('');
       const drv = l.cancelled ? '' : (l.driver
         ? `<div class="drv"><div class="dt">接送司機</div><div>${esc(l.driver.name || '')}</div><div class="big">車號：${esc(l.driver.carNo || '')}</div><div class="big">車款：${esc(l.driver.car || '')}</div></div>`
